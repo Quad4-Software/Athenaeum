@@ -11,10 +11,13 @@
   } from "@lucide/svelte";
   import FolderBrowser from "$lib/components/FolderBrowser.svelte";
   import Button from "$lib/components/Button.svelte";
+  import FontSelect from "$lib/components/FontSelect.svelte";
   import Skeleton from "$lib/components/Skeleton.svelte";
   import UploadPanel from "$lib/components/UploadPanel.svelte";
-  import { listAppThemes } from "$lib/brand";
+  import { listAppThemes, UI_FONT_PRESETS } from "$lib/brand";
   import { theme } from "$lib/stores/theme.svelte";
+  import { typography } from "$lib/stores/typography.svelte";
+  import { i18n } from "$lib/stores/i18n.svelte";
   import { library } from "$lib/stores/library.svelte";
   import { libraries } from "$lib/stores/libraries.svelte";
   import { auth } from "$lib/stores/auth.svelte";
@@ -23,6 +26,8 @@
   import { ApiError } from "$lib/api/client";
   import { formatBytes } from "$lib/utils/format";
   import type { LibraryS3Input, SidebarSectionId } from "$lib/api/types";
+  import type { UiFontId } from "$lib/brand/fonts";
+  import type { FontOption } from "$lib/components/FontSelect.svelte";
   import KeybindingsSettings from "$lib/components/KeybindingsSettings.svelte";
   import { scan } from "$lib/stores/scan.svelte";
 
@@ -197,6 +202,16 @@
       scanningAll = false;
     }
   }
+
+  let fontOptions = $derived.by(() => {
+    void i18n.locale;
+    return UI_FONT_PRESETS.map((preset): FontOption => ({
+      id: preset.id,
+      label: preset.id === "system" ? i18n.t("theme.system") : preset.label,
+      sample: preset.sample,
+      family: preset.family,
+    }));
+  });
 </script>
 
 <FolderBrowser
@@ -207,8 +222,8 @@
 
 <div class="space-y-6">
   <div class="rounded-[var(--radius-card)] border border-border bg-surface p-5">
-    <h2 class="text-sm font-semibold text-fg">Appearance</h2>
-    <p class="mt-1 text-sm text-muted">Choose your preferred color theme.</p>
+    <h2 class="text-sm font-semibold text-fg">{i18n.t("settings.appearance")}</h2>
+    <p class="mt-1 text-sm text-muted">{i18n.t("settings.appearanceHint")}</p>
     <div class="mt-3 flex flex-wrap gap-2">
       {#each listAppThemes() as appTheme (appTheme.id)}
         <button
@@ -223,7 +238,11 @@
           {:else if appTheme.id === "dark"}
             <Moon size={16} />
           {/if}
-          {appTheme.label}
+          {appTheme.id === "light"
+            ? i18n.t("theme.light")
+            : appTheme.id === "dark"
+              ? i18n.t("theme.dark")
+              : appTheme.label}
         </button>
       {/each}
       <button
@@ -232,8 +251,16 @@
           : 'btn-ghost'}"
         onclick={() => theme.set("system")}
       >
-        System
+        {i18n.t("theme.system")}
       </button>
+    </div>
+    <div class="mt-4 max-w-md">
+      <FontSelect
+        label={i18n.t("settings.interfaceFont")}
+        value={typography.id}
+        options={fontOptions}
+        onchange={(id) => typography.set(id as UiFontId)}
+      />
     </div>
   </div>
 

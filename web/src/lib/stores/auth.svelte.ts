@@ -25,14 +25,14 @@ class AuthStore {
 
   handleForbidden() {
     if (typeof window === "undefined") return;
-    if (isAuthPagePathname(window.location.pathname)) return;
+    if (isAuthPagePathname(router.appPathname())) return;
     router.navigate("/error/forbidden", true);
   }
 
   handleUnauthorized(reason: AuthRedirectReason = "required") {
     this.user = null;
     if (typeof window === "undefined") return;
-    const target = unauthorizedRedirect(window.location.pathname, reason);
+    const target = unauthorizedRedirect(router.appPathname(), reason);
     if (target) router.navigate(target, true);
   }
 

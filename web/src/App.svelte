@@ -129,7 +129,7 @@
 
   $effect(() => {
     if (typeof window === "undefined" || router.current.name !== "login") return;
-    const cleaned = sanitizeLoginLocation(window.location.pathname, window.location.search);
+    const cleaned = sanitizeLoginLocation(router.appPathname(), window.location.search);
     if (cleaned) router.navigate(cleaned, true);
   });
 

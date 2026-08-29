@@ -237,7 +237,14 @@
     "offlineCacheHint": "Сохранили локально для нестабильных подключений. {pct}% загружен.",
     "downloading": "Скачиваю...",
     "download": "Скачать",
-    "clearCache": "Ясно"
+    "clearCache": "Ясно",
+    "prevTrack": "Previous track",
+    "nextTrack": "Next track",
+    "volume": "Volume",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "more": "More",
+    "skipInterval": "Skip interval"
   },
   "narrator": {
     "player": "Рассказчик",
@@ -262,7 +269,7 @@
     "subtitle": "Управляйте библиотекой, учетной записью и конфигурацией сервера.",
     "tabs": {
       "library": "Генеральный",
-      "libraryDesc": "Тема, библиотеки, боковая панель",
+      "libraryDesc": "Тема, шрифт, библиотеки, боковая панель",
       "api": "API",
       "apiDesc": "Ключи и документация",
       "profile": "Счет",
@@ -375,7 +382,10 @@
     "webhooksEmptyBody": "Create a webhook above to receive event notifications.",
     "webhooksSuccess": "ok",
     "webhooksFailed": "failed",
-    "webhooksAttempts": "attempts"
+    "webhooksAttempts": "attempts",
+    "appearance": "Внешний вид",
+    "appearanceHint": "Выберите цветовую тему и шрифт.",
+    "interfaceFont": "Шрифт интерфейса"
   },
   "sort": {
     "label": "Сортировка книг",
@@ -528,9 +538,17 @@
     "comicDirectionRtl": "RTL (манга)",
     "font": "Шрифт",
     "fontBook": "По умолчанию",
-    "fontSerif": "Шериф",
-    "fontSans": "Без шерифных",
-    "fontMono": "Монопространство",
+    "fontSourceSerif": "Source Serif",
+    "fontLiterata": "Literata",
+    "fontCrimson": "Crimson Pro",
+    "fontNewsreader": "Newsreader",
+    "fontSourceSans": "Source Sans",
+    "fontIbmPlex": "IBM Plex Sans",
+    "fontDmSans": "DM Sans",
+    "fontFraunces": "Fraunces",
+    "fontSerif": "С засечками",
+    "fontSans": "Без засечек",
+    "fontMono": "Моноширинный",
     "fontPalatino": "Палатино",
     "fontVerdana": "Вердана",
     "fontCustom": "Услуги по шрифту",

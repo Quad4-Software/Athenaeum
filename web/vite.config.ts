@@ -89,8 +89,8 @@ export default defineConfig({
         theme_color: brand.themeColor.dark,
         background_color: brand.themeColor.dark,
         display: "standalone",
-        scope: "/",
-        start_url: "/",
+        scope: isDemoBuild ? "./" : "/",
+        start_url: isDemoBuild ? "./" : "/",
         icons: [
           {
             src: "favicon.svg",

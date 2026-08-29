@@ -1,4 +1,5 @@
 import { brand } from "./config";
+import { applyUiFont, DEFAULT_UI_FONT, isUiFontId } from "./fonts";
 import { storageKey } from "./storage";
 import { applyThemeTokens, getAppTheme, resolveThemeId } from "./themes";
 
@@ -29,10 +30,15 @@ export function initBrand(): void {
     applyThemeTokens(theme);
     setMeta("theme-color", brand.themeColor[theme.tokens.colorScheme]);
   }
+
+  const savedFont = localStorage.getItem(storageKey("ui-font"));
+  applyUiFont(savedFont && isUiFontId(savedFont) ? savedFont : DEFAULT_UI_FONT);
 }
 
 export { brand } from "./config";
 export { storageKey, legacyStorageKey } from "./storage";
+export { applyUiFont, DEFAULT_UI_FONT, getUiFont, isUiFontId, UI_FONT_PRESETS } from "./fonts";
+export type { UiFontId, UiFontPreset } from "./fonts";
 export {
   applyThemeTokens,
   getAppTheme,

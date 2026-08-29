@@ -237,14 +237,21 @@
     "offlineCacheHint": "Förvaras lokalt för instabila anslutningar. {pct}% laddade ner.",
     "downloading": "Ladda ner...",
     "download": "Ladda ner",
-    "clearCache": "Clear"
+    "clearCache": "Clear",
+    "prevTrack": "Previous track",
+    "nextTrack": "Next track",
+    "volume": "Volume",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "more": "More",
+    "skipInterval": "Skip interval"
   },
   "settings": {
     "title": "Inställningar",
     "subtitle": "Hantera ditt bibliotek, konto och serverkonfiguration.",
     "tabs": {
       "library": "General general",
-      "libraryDesc": "Tema, bibliotek, sidebar",
+      "libraryDesc": "Tema, typsnitt, bibliotek, sidofält",
       "api": "API",
       "apiDesc": "Nycklar och dokumentation",
       "profile": "Kontokonto",
@@ -357,7 +364,10 @@
     "webhooksEmptyBody": "Create a webhook above to receive event notifications.",
     "webhooksSuccess": "ok",
     "webhooksFailed": "failed",
-    "webhooksAttempts": "attempts"
+    "webhooksAttempts": "attempts",
+    "appearance": "Utseende",
+    "appearanceHint": "Välj färgtema och typsnitt.",
+    "interfaceFont": "Gränssnittstypsnitt"
   },
   "sort": {
     "label": "Sort böcker",
@@ -510,6 +520,14 @@
     "comicDirectionRtl": "RTL (manga)",
     "font": "Font",
     "fontBook": "Boka standard",
+    "fontSourceSerif": "Source Serif",
+    "fontLiterata": "Literata",
+    "fontCrimson": "Crimson Pro",
+    "fontNewsreader": "Newsreader",
+    "fontSourceSans": "Source Sans",
+    "fontIbmPlex": "IBM Plex Sans",
+    "fontDmSans": "DM Sans",
+    "fontFraunces": "Fraunces",
     "fontSerif": "Serif",
     "fontSans": "Sans-serif",
     "fontMono": "Monospace",

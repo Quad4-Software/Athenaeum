@@ -4,6 +4,7 @@ import { api } from "$lib/api/client";
 import { initBrand } from "$lib/brand";
 import { initPwa } from "$lib/pwa/register";
 import { i18n } from "$lib/stores/i18n.svelte";
+import "$lib/stores/typography.svelte";
 import { registerGlobalErrorHandlers } from "$lib/telemetry/global-errors";
 import App from "./App.svelte";
 

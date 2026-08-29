@@ -282,10 +282,10 @@
 
   .main-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    gap: 0.375rem;
-    padding: 0.375rem 0.5rem 0.125rem;
+    gap: 0.5rem;
+    padding: 0.4rem 0.625rem 0.15rem;
   }
 
   .meta-btn {
@@ -293,6 +293,7 @@
     align-items: center;
     gap: 0.5rem;
     min-width: 0;
+    justify-self: start;
     padding: 0;
     border: 0;
     background: none;
@@ -351,13 +352,17 @@
   .transport {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: center;
+    gap: 0.35rem;
+    justify-self: center;
   }
 
   .tools {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.125rem;
+    justify-self: end;
   }
 
   .skip-btn {

@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "@fontsource-variable/fraunces/wght.css";
 @import "@fontsource-variable/source-sans-3/wght.css";
+@import "@fontsource-variable/source-serif-4/wght.css";
+@import "@fontsource-variable/literata/wght.css";
+@import "@fontsource-variable/crimson-pro/wght.css";
+@import "@fontsource-variable/newsreader/wght.css";
+@import "@fontsource-variable/ibm-plex-sans/wght.css";
+@import "@fontsource-variable/dm-sans/wght.css";
 
 /*
  * Design tokens

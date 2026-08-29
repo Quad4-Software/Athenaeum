@@ -50,8 +50,8 @@
     applyEpubThemeOverrides,
     buildEpubPrefKeys,
     createEpubPrefsSaver,
+    canSelectEpubFont,
     decideEpubNarration,
-    epubFontIdFromSelect,
     epubFontUploadErrorKey,
     epubjsSpread,
     epubLoadErrorMessage,
@@ -217,9 +217,8 @@
     prefsSaver.queue();
   }
 
-  function onFontChange(event: Event) {
-    const value = epubFontIdFromSelect(event, !!customFont);
-    if (!value) return;
+  function onFontChange(value: string) {
+    if (!canSelectEpubFont(value, !!customFont)) return;
     fontId = value as EpubFontId;
     saveFontPreference(value as EpubFontId);
   }

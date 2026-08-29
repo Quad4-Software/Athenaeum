@@ -237,7 +237,14 @@
     "offlineCacheHint": "Yerel olarak sabit olmayan bağlantılar için depolanan.",
     "downloading": "- İndirmek...",
     "download": "İndir",
-    "clearCache": "Açık"
+    "clearCache": "Açık",
+    "prevTrack": "Previous track",
+    "nextTrack": "Next track",
+    "volume": "Volume",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "more": "More",
+    "skipInterval": "Skip interval"
   },
   "narrator": {
     "player": "Hikayeci",
@@ -262,7 +269,7 @@
     "subtitle": "Kütüphanenizi, hesabınızı ve sunucu yapılandırmasını yönetin.",
     "tabs": {
       "library": "Genel",
-      "libraryDesc": "Tema, kütüphaneler, yan çubuğu",
+      "libraryDesc": "Tema, yazı tipi, kütüphaneler, kenar çubuğu",
       "api": "API",
       "apiDesc": "Anahtar ve belge",
       "profile": "Hesap",
@@ -375,7 +382,10 @@
     "webhooksEmptyBody": "Create a webhook above to receive event notifications.",
     "webhooksSuccess": "ok",
     "webhooksFailed": "failed",
-    "webhooksAttempts": "attempts"
+    "webhooksAttempts": "attempts",
+    "appearance": "Görünüm",
+    "appearanceHint": "Renk temasını ve yazı tipini seçin.",
+    "interfaceFont": "Arayüz yazı tipi"
   },
   "sort": {
     "label": "Kitapları sıralamak",
@@ -528,9 +538,17 @@
     "comicDirectionRtl": "RTL (manga)",
     "font": "Yazı tipi",
     "fontBook": "Kitap öntanımlı",
-    "fontSerif": "- Şerif .",
-    "fontSans": "- Sen-serif",
-    "fontMono": "Monospace",
+    "fontSourceSerif": "Source Serif",
+    "fontLiterata": "Literata",
+    "fontCrimson": "Crimson Pro",
+    "fontNewsreader": "Newsreader",
+    "fontSourceSans": "Source Sans",
+    "fontIbmPlex": "IBM Plex Sans",
+    "fontDmSans": "DM Sans",
+    "fontFraunces": "Fraunces",
+    "fontSerif": "Serif",
+    "fontSans": "Sans-serif",
+    "fontMono": "Eş aralıklı",
     "fontPalatino": "Palatino",
     "fontVerdana": "Verdana",
     "fontCustom": "Özel yazı tipi",

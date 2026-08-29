@@ -3,14 +3,18 @@ import { parseLocaleJSON } from "./core";
 
 export type { Messages };
 export {
+  clearMissingKeys,
   detectBrowserLocale,
   flattenMessages,
+  getMissingKeys,
   interpolate,
   parseLocaleJSON,
+  setMissingKeyHandler,
   translate,
   localeCodeFromPath,
   localeFileName,
 } from "./core";
+export type { MissingKeyHandler, MissingKeyReason } from "./core";
 
 export interface LocaleInfo {
   code: string;

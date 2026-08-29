@@ -2,6 +2,33 @@ export type Messages = Record<string, string>;
 
 const META_PREFIX = "$";
 
+export type MissingKeyReason = "absent" | "fallback";
+
+export type MissingKeyHandler = (key: string, reason: MissingKeyReason) => void;
+
+const missingKeys = new Set<string>();
+let missingKeyHandler: MissingKeyHandler | null = null;
+
+/** Register a listener invoked once per missing key until clearMissingKeys(). */
+export function setMissingKeyHandler(handler: MissingKeyHandler | null): void {
+  missingKeyHandler = handler;
+}
+
+/** Keys reported missing since the last clear (sorted). */
+export function getMissingKeys(): string[] {
+  return [...missingKeys].sort();
+}
+
+export function clearMissingKeys(): void {
+  missingKeys.clear();
+}
+
+function reportMissing(key: string, reason: MissingKeyReason): void {
+  const first = !missingKeys.has(key);
+  missingKeys.add(key);
+  if (first) missingKeyHandler?.(key, reason);
+}
+
 export function flattenMessages(obj: Record<string, unknown>, prefix = ""): Messages | null {
   const out: Messages = {};
   for (const [key, val] of Object.entries(obj)) {
@@ -45,8 +72,15 @@ export function translate(
   params?: Record<string, string | number>,
   fallback?: Messages,
 ): string {
-  const raw = messages[key] ?? fallback?.[key] ?? key;
-  return interpolate(raw, params);
+  if (Object.prototype.hasOwnProperty.call(messages, key)) {
+    return interpolate(messages[key]!, params);
+  }
+  if (fallback && Object.prototype.hasOwnProperty.call(fallback, key)) {
+    reportMissing(key, "fallback");
+    return interpolate(fallback[key]!, params);
+  }
+  reportMissing(key, "absent");
+  return interpolate(key, params);
 }
 
 export function detectBrowserLocale(available: string[]): string {

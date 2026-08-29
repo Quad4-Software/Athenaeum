@@ -58,8 +58,7 @@
   });
 
   function goLogin() {
-    const returnTo =
-      typeof window !== "undefined" ? safeReturnPath(window.location.pathname) : null;
+    const returnTo = typeof window !== "undefined" ? safeReturnPath(router.appPathname()) : null;
     router.navigate(loginUrl("required", returnTo));
   }
 

@@ -237,14 +237,21 @@
     "offlineCacheHint": "Armazenado localmente para conexões instáveis. {pct}% baixado.",
     "downloading": "Baixando...",
     "download": "Baixar",
-    "clearCache": "Limpar"
+    "clearCache": "Limpar",
+    "prevTrack": "Previous track",
+    "nextTrack": "Next track",
+    "volume": "Volume",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "more": "More",
+    "skipInterval": "Skip interval"
   },
   "settings": {
     "title": "Configurações",
     "subtitle": "Gerencie sua biblioteca, conta e configuração do servidor.",
     "tabs": {
       "library": "Geral",
-      "libraryDesc": "Tema, bibliotecas, barra lateral",
+      "libraryDesc": "Tema, fonte, bibliotecas, barra lateral",
       "api": "API",
       "apiDesc": "Chaves e documentação",
       "profile": "Conta",
@@ -357,7 +364,10 @@
     "webhooksEmptyBody": "Create a webhook above to receive event notifications.",
     "webhooksSuccess": "ok",
     "webhooksFailed": "failed",
-    "webhooksAttempts": "attempts"
+    "webhooksAttempts": "attempts",
+    "appearance": "Aparência",
+    "appearanceHint": "Escolha o tema de cores e a tipografia.",
+    "interfaceFont": "Fonte da interface"
   },
   "sort": {
     "label": "Ordenar livros",
@@ -510,6 +520,14 @@
     "comicDirectionRtl": "RTL (mangá)",
     "font": "Fonte",
     "fontBook": "Padrão do livro",
+    "fontSourceSerif": "Source Serif",
+    "fontLiterata": "Literata",
+    "fontCrimson": "Crimson Pro",
+    "fontNewsreader": "Newsreader",
+    "fontSourceSans": "Source Sans",
+    "fontIbmPlex": "IBM Plex Sans",
+    "fontDmSans": "DM Sans",
+    "fontFraunces": "Fraunces",
     "fontSerif": "Serifada",
     "fontSans": "Sem serifa",
     "fontMono": "Monoespaçada",

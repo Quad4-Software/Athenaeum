@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
-    ChevronDown,
+    ChevronsLeft,
+    ChevronsRight,
     CloudOff,
     Download,
     Gauge,
@@ -71,6 +72,7 @@
   let cachePill = $derived(
     audioCachePill(audioPlayer.usingOffline, audioPlayer.cacheStatus.complete, audioPlayer.online),
   );
+  let multiTrack = $derived(audioPlayer.playlist.length > 1);
   let trackItems = $derived(
     buildTrackMenuItems(audioPlayer.playlist, audioPlayer.trackIndex, (n) =>
       i18n.t("audio.trackN", { n: String(n) }),
@@ -148,7 +150,7 @@
           />
         {:else}
           <div class="artwork-fallback">
-            <Headphones size={44} strokeWidth={1.25} />
+            <Headphones size={48} strokeWidth={1.25} />
           </div>
         {/if}
       </div>
@@ -159,6 +161,11 @@
         {/if}
         {#if audioPlayer.currentChapter}
           <p class="meta-chapter">{audioPlayer.currentChapter.title}</p>
+        {:else if multiTrack}
+          <p class="meta-chapter">
+            {audioPlayer.playlist[audioPlayer.trackIndex]?.title ||
+              i18n.t("audio.trackN", { n: String(audioPlayer.trackIndex + 1) })}
+          </p>
         {/if}
       </div>
     </div>
@@ -166,9 +173,9 @@
     {#if audioPlayer.sleepEndsAt}
       <div class="sleep-banner">
         <Moon size={14} />
-        <span>Sleep in {formatSleepRemaining(sleepLeftMs)}</span>
+        <span>{i18n.t("audio.sleepIn", { time: formatSleepRemaining(sleepLeftMs) })}</span>
         <button type="button" class="sleep-cancel" onclick={() => audioPlayer.clearSleepTimer()}
-          >Cancel</button
+          >{i18n.t("audio.clearSleep")}</button
         >
       </div>
     {/if}
@@ -188,7 +195,7 @@
           step={0.1}
           value={seekTime}
           disabled={!audioPlayer.duration}
-          aria-label="Seek"
+          aria-label={i18n.t("audio.seek")}
           onpointerdown={() => {
             audioPlayer.scrubbing = true;
             audioPlayer.scrubValue = audioPlayer.current;
@@ -207,6 +214,18 @@
     </div>
 
     <div class="transport">
+      {#if multiTrack}
+        <button
+          type="button"
+          class="transport-edge"
+          aria-label={i18n.t("audio.prevTrack")}
+          onclick={() => audioPlayer.selectTrack(audioPlayer.trackIndex - 1)}
+          disabled={audioPlayer.trackIndex <= 0}
+        >
+          <ChevronsLeft size={22} />
+        </button>
+      {/if}
+
       <button
         type="button"
         class="transport-skip"
@@ -214,7 +233,7 @@
         onclick={() => audioPlayer.seekBy(-audioPlayer.skipSeconds)}
         disabled={!audioPlayer.duration}
       >
-        <SkipBack size={20} />
+        <SkipBack size={22} />
         <span class="transport-skip-label">{audioPlayer.skipSeconds}</span>
       </button>
 
@@ -226,9 +245,9 @@
         disabled={!audioPlayer.duration}
       >
         {#if audioPlayer.playing}
-          <Pause size={26} />
+          <Pause size={28} />
         {:else}
-          <Play size={26} class="play-offset" />
+          <Play size={28} class="play-offset" />
         {/if}
       </button>
 
@@ -240,13 +259,25 @@
         disabled={!audioPlayer.duration}
       >
         <span class="transport-skip-label">{audioPlayer.skipSeconds}</span>
-        <SkipForward size={20} />
+        <SkipForward size={22} />
       </button>
+
+      {#if multiTrack}
+        <button
+          type="button"
+          class="transport-edge"
+          aria-label={i18n.t("audio.nextTrack")}
+          onclick={() => audioPlayer.selectTrack(audioPlayer.trackIndex + 1)}
+          disabled={audioPlayer.trackIndex >= audioPlayer.playlist.length - 1}
+        >
+          <ChevronsRight size={22} />
+        </button>
+      {/if}
     </div>
 
     <div class="toolbar">
-      {#if audioPlayer.playlist.length > 1}
-        <Popover bind:open={tracksOpen} placement="top" align="start" minWidth={260}>
+      {#if multiTrack}
+        <Popover bind:open={tracksOpen} placement="top" align="center" minWidth={260}>
           {#snippet trigger(toggle)}
             <button
               type="button"
@@ -257,7 +288,6 @@
             >
               <ListMusic size={15} class="toolbar-icon" />
               <span>{i18n.t("audio.tracks")}</span>
-              <ChevronDown size={14} class="toolbar-chevron" />
             </button>
           {/snippet}
           <MenuList
@@ -276,7 +306,7 @@
       {/if}
 
       {#if audioPlayer.chapters.length > 0}
-        <Popover bind:open={chaptersOpen} placement="top" align="start" minWidth={240}>
+        <Popover bind:open={chaptersOpen} placement="top" align="center" minWidth={240}>
           {#snippet trigger(toggle)}
             <button
               type="button"
@@ -287,7 +317,6 @@
             >
               <ListMusic size={15} class="toolbar-icon" />
               <span>{i18n.t("audio.chapters")}</span>
-              <ChevronDown size={14} class="toolbar-chevron" />
             </button>
           {/snippet}
           <MenuList
@@ -303,7 +332,7 @@
         </Popover>
       {/if}
 
-      <Popover bind:open={speedOpen} placement="top" align="start" minWidth={120}>
+      <Popover bind:open={speedOpen} placement="top" align="center" minWidth={120}>
         {#snippet trigger(toggle)}
           <button
             type="button"
@@ -314,11 +343,10 @@
           >
             <Gauge size={15} class="toolbar-icon" />
             <span>{audioPlayer.rate}x</span>
-            <ChevronDown size={14} class="toolbar-chevron" />
           </button>
         {/snippet}
         <MenuList
-          title={i18n.t("audio.speed")}
+          title={i18n.t("audio.speedTitle")}
           items={speedItems.map((item) => ({
             id: item.id,
             label: item.label,
@@ -341,13 +369,12 @@
             onclick={toggle}
           >
             <Moon size={15} class="toolbar-icon" />
-            <span>Sleep</span>
-            <ChevronDown size={14} class="toolbar-chevron" />
+            <span>{i18n.t("audio.sleepTimer")}</span>
           </button>
         {/snippet}
         <MenuList>
           <section class="more-section">
-            <p class="more-label">Sleep timer</p>
+            <p class="more-label">{i18n.t("audio.sleepTimer")}</p>
             <div class="chip-row">
               {#each AUDIO_SLEEP_OPTIONS as min (min)}
                 <button
@@ -370,7 +397,8 @@
                     sleepOpen = false;
                   }}
                 >
-                  <RotateCcw size={12} /> Clear
+                  <RotateCcw size={12} />
+                  {i18n.t("audio.clearSleep")}
                 </button>
               {/if}
             </div>
@@ -378,11 +406,11 @@
         </MenuList>
       </Popover>
 
-      <div class="toolbar-item toolbar-volume">
+      <div class="toolbar-item toolbar-volume" title={i18n.t("audio.volume")}>
         <button
           type="button"
           class="toolbar-icon-btn"
-          aria-label={audioPlayer.muted ? "Unmute" : "Mute"}
+          aria-label={audioPlayer.muted ? i18n.t("audio.unmute") : i18n.t("audio.mute")}
           onclick={() => audioPlayer.toggleMute()}
         >
           {#if isVolumeMutedIcon(audioPlayer.muted, audioPlayer.volume)}
@@ -398,27 +426,26 @@
           max={1}
           step={0.05}
           value={volumeSliderValue(audioPlayer.muted, audioPlayer.volume)}
-          aria-label="Volume"
+          aria-label={i18n.t("audio.volume")}
           oninput={(e) => audioPlayer.setVolume(Number(e.currentTarget.value))}
         />
       </div>
 
-      <Popover bind:open={showMore} placement="top" align="end" minWidth={260}>
+      <Popover bind:open={showMore} placement="top" align="center" minWidth={260}>
         {#snippet trigger(toggle)}
           <button
             type="button"
-            class="toolbar-item toolbar-more"
-            class:toolbar-more--open={showMore}
+            class="toolbar-item"
+            class:toolbar-item--active={showMore}
             aria-expanded={showMore}
             onclick={toggle}
           >
-            <ChevronDown size={15} class="toolbar-chevron" />
-            <span>More</span>
+            <span>{i18n.t("audio.more")}</span>
           </button>
         {/snippet}
         <MenuList>
           <section class="more-section">
-            <p class="more-label">Skip interval</p>
+            <p class="more-label">{i18n.t("audio.skipInterval")}</p>
             <div class="chip-row">
               {#each AUDIO_SKIP_OPTIONS as sec (sec)}
                 <button

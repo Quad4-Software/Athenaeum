@@ -237,7 +237,14 @@
     "offlineCacheHint": "Przechowywane lokalnie dla niestabilnych połączeń.",
     "downloading": "- Załatwiamy...",
     "download": "Pobierz",
-    "clearCache": "Jasne"
+    "clearCache": "Jasne",
+    "prevTrack": "Previous track",
+    "nextTrack": "Next track",
+    "volume": "Volume",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "more": "More",
+    "skipInterval": "Skip interval"
   },
   "narrator": {
     "player": "Opowieści",
@@ -262,7 +269,7 @@
     "subtitle": "Zarządzaj biblioteką, kontem i konfiguracją serwera.",
     "tabs": {
       "library": "Generalny",
-      "libraryDesc": "Tematyka, biblioteki, paska boczna",
+      "libraryDesc": "Motyw, czcionka, biblioteki, pasek boczny",
       "api": "API",
       "apiDesc": "Klucze i dokumentacja",
       "profile": "Konta",
@@ -375,7 +382,10 @@
     "webhooksEmptyBody": "Create a webhook above to receive event notifications.",
     "webhooksSuccess": "ok",
     "webhooksFailed": "failed",
-    "webhooksAttempts": "attempts"
+    "webhooksAttempts": "attempts",
+    "appearance": "Wygląd",
+    "appearanceHint": "Wybierz motyw kolorystyczny i czcionkę.",
+    "interfaceFont": "Czcionka interfejsu"
   },
   "sort": {
     "label": "Sort książek",
@@ -528,8 +538,16 @@
     "comicDirectionRtl": "RTL (manga)",
     "font": "Słowa",
     "fontBook": "Wypłaty książki",
-    "fontSerif": "- W porządku.",
-    "fontSans": "Bez serifu",
+    "fontSourceSerif": "Source Serif",
+    "fontLiterata": "Literata",
+    "fontCrimson": "Crimson Pro",
+    "fontNewsreader": "Newsreader",
+    "fontSourceSans": "Source Sans",
+    "fontIbmPlex": "IBM Plex Sans",
+    "fontDmSans": "DM Sans",
+    "fontFraunces": "Fraunces",
+    "fontSerif": "Szeryfowa",
+    "fontSans": "Bezszeryfowa",
     "fontMono": "Monospace",
     "fontPalatino": "Palatino",
     "fontVerdana": "Verdana",

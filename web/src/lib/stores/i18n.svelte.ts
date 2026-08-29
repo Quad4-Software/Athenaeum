@@ -2,9 +2,11 @@ import { api } from "$lib/api/client";
 import type { LocaleInfo } from "$lib/i18n";
 import {
   bundledLocaleCodes,
+  clearMissingKeys,
   detectBrowserLocale,
   loadBundledLocale,
   mergeMessages,
+  setMissingKeyHandler,
   translate,
   type Messages,
 } from "$lib/i18n";
@@ -24,6 +26,16 @@ class I18nStore {
   #custom = new Map<string, Messages>();
   #messages = $state<Messages>({});
   #fallback = $state<Messages>({});
+  #warned = new Set<string>();
+
+  constructor() {
+    setMissingKeyHandler((key, reason) => {
+      if (!import.meta.env.DEV) return;
+      if (this.#warned.has(key)) return;
+      this.#warned.add(key);
+      console.warn(`[i18n] missing key "${key}" (${reason}) locale=${this.locale}`);
+    });
+  }
 
   t(key: string, params?: Record<string, string | number>): string {
     return translate(this.#messages, key, params, this.#fallback);
@@ -45,6 +57,9 @@ class I18nStore {
 
   async init(): Promise<void> {
     if (this.ready) return;
+
+    clearMissingKeys();
+    this.#warned.clear();
 
     const fallback = await this.#ensureBundled(DEFAULT_LOCALE);
     this.#fallback = fallback?.messages ?? {};
@@ -114,9 +129,13 @@ class I18nStore {
       );
     }
     const base = (await this.#ensureBundled(DEFAULT_LOCALE))?.messages ?? {};
-    const next = mergeMessages(base, bundled?.messages ?? custom ?? remote ?? {});
-    this.#messages = next;
+    this.#fallback = base;
+    // Keep the active catalog locale-only so translate() can report gaps via fallback.
+    const primary = bundled?.messages ?? custom ?? remote ?? {};
+    this.#messages = code === DEFAULT_LOCALE ? mergeMessages(base, primary) : primary;
     this.locale = code;
+    this.#warned.clear();
+    clearMissingKeys();
     if (persist) localStorage.setItem(STORAGE_KEY, code);
     document.documentElement.lang = code;
   }

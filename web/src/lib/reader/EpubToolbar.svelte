@@ -25,7 +25,7 @@
     onSearchSelect: (hit: ReaderSearchHit) => void;
     onSmallerFont: () => void;
     onLargerFont: () => void;
-    onFontChange: (event: Event) => void;
+    onFontChange: (fontId: string) => void;
     onFontUpload: (event: Event) => void;
     onRemoveCustomFont: () => void;
     onSpreadMode: (mode: EpubSpreadMode) => void;

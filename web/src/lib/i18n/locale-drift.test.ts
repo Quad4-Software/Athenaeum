@@ -43,13 +43,33 @@ describe("i18n locale drift", () => {
 
   it("keeps non-en locales in key parity with en", () => {
     const en = loadLocale("en");
+    const failures: string[] = [];
     for (const code of codes) {
       if (code === "en") continue;
       const keys = loadLocale(code);
       const missing = [...en].filter((k) => !keys.has(k)).sort();
       const extra = [...keys].filter((k) => !en.has(k)).sort();
-      expect(missing, `${code} missing keys`).toEqual([]);
-      expect(extra, `${code} extra keys`).toEqual([]);
+      if (missing.length > 0) {
+        failures.push(`${code} missing (${missing.length}): ${missing.slice(0, 20).join(", ")}`);
+      }
+      if (extra.length > 0) {
+        failures.push(`${code} extra (${extra.length}): ${extra.slice(0, 20).join(", ")}`);
+      }
+    }
+    expect(failures, failures.join("\n")).toEqual([]);
+  });
+
+  it("requires appearance settings keys in en", () => {
+    const en = loadLocale("en");
+    for (const key of [
+      "settings.appearance",
+      "settings.appearanceHint",
+      "settings.interfaceFont",
+      "settings.tabs.libraryDesc",
+      "reader.fontLiterata",
+      "reader.fontSourceSerif",
+    ]) {
+      expect(en.has(key), `en missing ${key}`).toBe(true);
     }
   });
 });
