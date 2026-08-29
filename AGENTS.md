@@ -4,8 +4,10 @@ Guidelines for AI agents working in this repository (Athenaeum).
 
 ## Repository
 
-Athenaeum is a self-hosted EPUB, PDF, comic, and audiobook library server.
-Go backend embeds a Svelte 5 web UI. Docs are a Docusaurus site under `docs/`.
+Athenaeum is a universal library tool. Today the Go backend embeds a Svelte 5
+web UI as a self-hosted EPUB, PDF, comic, and audiobook catalog and reader.
+Docs are a Docusaurus site under `docs/`. The roadmap covers apps, papers, ZIM,
+feeds, peer sharing, and opt-in local-first AI.
 
 ```text
 cmd/athenaeum/     binary entrypoint

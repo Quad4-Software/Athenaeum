@@ -16,7 +16,7 @@ const demoHref = 'pathname:///demo/';
 const config: Config = {
   title: 'Athenaeum',
   tagline:
-    'Self-hosted EPUB, PDF, and audiobook library in a single static binary.',
+    'A universal library tool. Self-hosted catalog and reader for EPUB, PDF, comics, and audiobooks. Server today. Desktop and mobile apps next.',
   favicon: 'img/favicon.svg',
 
   future: {
@@ -135,6 +135,7 @@ const config: Config = {
           title: 'Project',
           items: [
             {label: 'Roadmap', to: '/roadmap'},
+            {label: 'Privacy', to: '/privacy'},
             {label: 'GitHub', href: githubUrl},
             {label: 'Changelog', href: `${githubUrl}/blob/main/CHANGELOG.md`},
             {label: 'Contributing', href: `${githubUrl}/blob/main/CONTRIBUTING.md`},

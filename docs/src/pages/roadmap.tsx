@@ -5,6 +5,12 @@ import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import {
   AudioLines,
+  BookMarked,
+  Bot,
+  FileText,
+  Library,
+  MessageSquare,
+  MonitorSmartphone,
   Network,
   Podcast,
   Puzzle,
@@ -12,6 +18,7 @@ import {
   RefreshCw,
   Rss,
   Share2,
+  Tags,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -86,6 +93,65 @@ const listeningItems: RoadmapItem[] = [
   },
 ];
 
+const libraryItems: RoadmapItem[] = [
+  {
+    id: 'papers',
+    title: 'Research and medical papers',
+    summary:
+      'Treat PDFs of journal articles, preprints, and clinical papers as first-class library items, not only as generic books.',
+    detail:
+      'DOI, arXiv, and PubMed metadata lookup. Citation fields (authors, journal, year, abstract). BibTeX import and export.',
+    Icon: FileText,
+    status: 'planned',
+  },
+  {
+    id: 'zim',
+    title: 'ZIM / Kiwix archives',
+    summary:
+      'Browse offline OpenZIM files (Wikipedia and other Kiwix dumps) in the library beside books and papers.',
+    detail:
+      'Index and serve .zim archives. Article search and in-app reading without a separate Kiwix install.',
+    Icon: BookMarked,
+    status: 'planned',
+  },
+];
+
+const appsItems: RoadmapItem[] = [
+  {
+    id: 'wails-apps',
+    title: 'Desktop and mobile apps',
+    summary:
+      'Ship Athenaeum as an installable library tool on Windows, macOS, Linux, iOS, and Android with Wails v3, not only as a browser tab against a daemon.',
+    detail:
+      'Same Go library and UI as the server. Desktop first. Mobile follows as Wails v3 mobile support matures.',
+    Icon: MonitorSmartphone,
+    status: 'planned',
+  },
+];
+
+const aiItems: RoadmapItem[] = [
+  {
+    id: 'ai-research',
+    title: 'Research assistance and chat',
+    summary:
+      'Ask questions about books and papers in your library. Opt-in only. Off until you turn it on.',
+    detail:
+      'Local backends first: Ollama and LM Studio. Cloud and other OpenAI-compatible endpoints when you configure them.',
+    Icon: MessageSquare,
+    status: 'planned',
+  },
+  {
+    id: 'ai-metadata',
+    title: 'AI tagging and metadata',
+    summary:
+      'Suggest tags, summaries, and metadata fill-ins for titles that lack clean catalog data. Opt-in. Review before apply.',
+    detail:
+      'Defaults prefer a local model. Nothing leaves your machine unless you point Athenaeum at a remote API.',
+    Icon: Tags,
+    status: 'planned',
+  },
+];
+
 const platformItems: RoadmapItem[] = [
   {
     id: 'extensions',
@@ -136,16 +202,19 @@ export default function RoadmapPage(): ReactNode {
   return (
     <Layout
       title="Roadmap"
-      description="Planned Athenaeum work: Reticulum peer sharing, podcasts, RSS, extensions, and updates.">
+      description="Athenaeum roadmap: a universal library tool. Server today. Desktop and mobile apps, papers, ZIM, feeds, peer sharing, and opt-in local-first AI next.">
       <header className={styles.hero}>
         <div className={clsx('container', styles.heroInner)}>
-          <p className={styles.kicker}>Project direction</p>
+          <p className={styles.kicker}>Universal library</p>
           <Heading as="h1" className={styles.title}>
             Roadmap
           </Heading>
           <p className={styles.lead}>
-            What we intend to build next. Order can shift. Nothing here has a
-            ship date. Existing installs keep working while these land.
+            Athenaeum is a library tool, not only a server. Today it is a
+            self-hosted catalog and reader. The work below widens what it holds
+            (papers, ZIM, feeds), how you run it (desktop and mobile apps), and
+            how households share without a cloud middleman. Order can shift.
+            Nothing here has a ship date.
           </p>
           <ul className={styles.meta}>
             <li>No promised release dates</li>
@@ -226,7 +295,91 @@ export default function RoadmapPage(): ReactNode {
 
         <section
           className={clsx(styles.track, styles.trackAlt)}
-          aria-labelledby="platform-heading">
+          aria-labelledby="library-heading">
+          <div className="container">
+            <div className={styles.trackHead}>
+              <div className={styles.trackIcon} aria-hidden="true">
+                <Library size={22} strokeWidth={1.75} />
+              </div>
+              <div>
+                <Heading as="h2" id="library-heading" className={styles.trackTitle}>
+                  Library
+                </Heading>
+                <p className={styles.trackLead}>
+                  Deeper support for the files people already keep beside novels
+                  and comics. You can open paper PDFs today. This track adds
+                  paper-specific metadata, citation workflows, and offline ZIM
+                  archives.
+                </p>
+              </div>
+            </div>
+            <div className={styles.cardGridWide}>
+              {libraryItems.map((item) => (
+                <TrackCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.track} aria-labelledby="apps-heading">
+          <div className="container">
+            <div className={styles.trackHead}>
+              <div className={styles.trackIcon} aria-hidden="true">
+                <MonitorSmartphone size={22} strokeWidth={1.75} />
+              </div>
+              <div>
+                <Heading as="h2" id="apps-heading" className={styles.trackTitle}>
+                  Apps
+                </Heading>
+                <p className={styles.trackLead}>
+                  Athenaeum as a local app you open on a laptop or phone, using{' '}
+                  <a
+                    href="https://v3.wails.io/"
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    Wails v3
+                  </a>
+                  , while the same codebase still runs as a household server.
+                </p>
+              </div>
+            </div>
+            <div className={styles.cardGridWide}>
+              {appsItems.map((item) => (
+                <TrackCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={clsx(styles.track, styles.trackAlt)}
+          aria-labelledby="ai-heading">
+          <div className="container">
+            <div className={styles.trackHead}>
+              <div className={styles.trackIcon} aria-hidden="true">
+                <Bot size={22} strokeWidth={1.75} />
+              </div>
+              <div>
+                <Heading as="h2" id="ai-heading" className={styles.trackTitle}>
+                  AI features
+                </Heading>
+                <p className={styles.trackLead}>
+                  All AI features are opt-in. Defaults prefer local options
+                  (Ollama, LM Studio) before any cloud or OpenAI-compatible
+                  endpoint. See the{' '}
+                  <Link to="/privacy">privacy policy</Link>.
+                </p>
+              </div>
+            </div>
+            <div className={styles.cardGridWide}>
+              {aiItems.map((item) => (
+                <TrackCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.track} aria-labelledby="platform-heading">
           <div className="container">
             <div className={styles.trackHead}>
               <div className={styles.trackIcon} aria-hidden="true">
@@ -252,12 +405,12 @@ export default function RoadmapPage(): ReactNode {
         <section className={styles.cta}>
           <div className="container">
             <Heading as="h2" className={styles.ctaTitle}>
-              Run what ships today
+              What ships today
             </Heading>
             <p className={styles.ctaText}>
-              EPUB, PDF, comics, audiobooks, Kokoro narration, OPDS, and
-              multi-user auth are already in the binary. The roadmap is for what
-              comes after.
+              A self-hosted library tool for EPUB, PDF (including paper PDFs),
+              comics, audiobooks, Kokoro narration, OPDS, and multi-user auth.
+              The roadmap is how it grows into a fuller universal library.
             </p>
             <div className={styles.actions}>
               <Link

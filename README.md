@@ -1,9 +1,11 @@
 # Athenaeum
 
-A fast, self-hosted EPUB, PDF and audiobook library server that ships as a
-single static binary. Point it at a folder of media and it gives you a clean
-web reader with search, collections, optional multi-user auth, OPDS, and
-light/dark theming.
+A universal library tool. Today it is a self-hosted EPUB, PDF, comic, and
+audiobook catalog and reader that ships as a single static binary. Point it at
+a folder of media and you get a web reader with search, collections, optional
+multi-user auth, OPDS, and light/dark theming. Desktop and mobile apps, papers,
+ZIM archives, feeds, and peer sharing are on the docs site roadmap
+(`/roadmap`).
 
 <p align="center">
   <img src="showcase/library-theme-split.png" alt="Library in dark and light themes" width="100%" />
