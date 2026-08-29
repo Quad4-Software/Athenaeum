@@ -262,12 +262,16 @@ detect_os_arch() {
   case "$arch" in
     x86_64|amd64) arch="amd64" ;;
     aarch64|arm64) arch="arm64" ;;
-    armv7l) arch="arm" ;;
+    armv6l) arch="armv6" ;;
+    armv7l) arch="armv7" ;;
+    riscv64) arch="riscv64" ;;
     *) die "unsupported architecture: $arch" ;;
   esac
   case "$os" in
     linux|darwin) ;;
-    *) die "unsupported OS: $os (use docker or build on Linux/macOS)" ;;
+    freebsd|openbsd|netbsd) ;;
+    mingw*|msys*|cygwin*|windows_nt) os="windows" ;;
+    *) die "unsupported OS: $os (use docker or build from source)" ;;
   esac
   printf '%s %s\n' "$os" "$arch"
 }

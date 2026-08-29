@@ -17,9 +17,21 @@ COPY cmd/ cmd/
 COPY internal/ internal/
 COPY --from=web /src/internal/assets/dist ./internal/assets/dist
 ARG VERSION=dev
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -trimpath \
-    -ldflags "-s -w -X athenaeum/internal/version.Version=${VERSION} -X athenaeum/internal/version.WebVersion=${VERSION}" \
-    -o /out/athenaeum ./cmd/athenaeum
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+ARG TARGETVARIANT=
+RUN set -eux; \
+    export CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}"; \
+    case "${TARGETARCH}" in \
+      arm) \
+        case "${TARGETVARIANT}" in \
+          v6) export GOARM=6 ;; \
+          *) export GOARM=7 ;; \
+        esac ;; \
+    esac; \
+    go build -mod=vendor -trimpath \
+      -ldflags "-s -w -X athenaeum/internal/version.Version=${VERSION} -X athenaeum/internal/version.WebVersion=${VERSION}" \
+      -o /out/athenaeum ./cmd/athenaeum
 
 FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
 RUN apk add --no-cache ca-certificates tzdata wget \

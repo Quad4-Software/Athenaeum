@@ -90,6 +90,19 @@ tasks:
       - pnpm install
       - pnpm build
 
+  build:cross:
+    desc: Cross-compile all release targets (Linux/macOS/Windows/BSD/riscv/arm)
+    cmds:
+      - |
+        WEB_VER=$(node -p "require('./web/package.json').version" 2>/dev/null || echo dev)
+        VERSION="${WEB_VER}" OUT_DIR=bin bash scripts/build-release.sh
+
+  self-check:
+    desc: Run athenaeum --self-check (dirs, DB, HTTP health)
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} --self-check
+
   run:
     desc: Build and run the single binary
     deps: [build]

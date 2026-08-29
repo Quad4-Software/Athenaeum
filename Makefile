@@ -47,7 +47,7 @@ MAN1 := man/athenaeum.1 man/athenaeum-users.1
 
 .DEFAULT_GOAL := build
 
-.PHONY: all build build-web build-go build-cross install install-bin install-man \
+.PHONY: all build build-web build-go build-cross self-check install install-bin install-man \
 	uninstall man clean help
 
 all: build
@@ -64,16 +64,14 @@ build-go:
 	$(INSTALL_DIR) $(BINDIR)
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BINPATH) $(CMD)
 
-## build-cross: Cross-compile linux/darwin/windows amd64+arm64 into bin/.
+## build-cross: Cross-compile all release targets into bin/.
 build-cross:
 	$(INSTALL_DIR) $(BINDIR)
-	@for pair in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do \
-		os=$${pair%/*}; arch=$${pair#*/}; \
-		out="$(BINDIR)/$(BIN)-$$os-$$arch"; \
-		if [ "$$os" = windows ]; then out="$$out.exe"; fi; \
-		echo "building $$out"; \
-		CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o "$$out" $(CMD) || exit 1; \
-	done
+	@VERSION="$(VERSION)" OUT_DIR="$(BINDIR)" bash scripts/build-release.sh
+
+## self-check: Build (if needed) and run athenaeum --self-check.
+self-check: build-go
+	./$(BINPATH) --self-check
 
 ## install: Install the binary and man pages under $(PREFIX).
 install: install-bin install-man

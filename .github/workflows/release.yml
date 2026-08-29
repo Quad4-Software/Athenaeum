@@ -29,25 +29,83 @@ env:
 
 jobs:
   build:
-    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
+    name: Build (${{ matrix.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
-          - goos: linux
+          - name: linux-amd64
+            goos: linux
             goarch: amd64
-          - goos: linux
+            goarm: ""
+            suffix: amd64
+          - name: linux-arm64
+            goos: linux
             goarch: arm64
-          - goos: darwin
+            goarm: ""
+            suffix: arm64
+          - name: linux-armv6
+            goos: linux
+            goarch: arm
+            goarm: "6"
+            suffix: armv6
+          - name: linux-armv7
+            goos: linux
+            goarch: arm
+            goarm: "7"
+            suffix: armv7
+          - name: linux-riscv64
+            goos: linux
+            goarch: riscv64
+            goarm: ""
+            suffix: riscv64
+          - name: darwin-amd64
+            goos: darwin
             goarch: amd64
-          - goos: darwin
+            goarm: ""
+            suffix: amd64
+          - name: darwin-arm64
+            goos: darwin
             goarch: arm64
-          - goos: windows
+            goarm: ""
+            suffix: arm64
+          - name: windows-amd64
+            goos: windows
             goarch: amd64
-          - goos: windows
+            goarm: ""
+            suffix: amd64
+          - name: windows-arm64
+            goos: windows
             goarch: arm64
+            goarm: ""
+            suffix: arm64
+          - name: freebsd-amd64
+            goos: freebsd
+            goarch: amd64
+            goarm: ""
+            suffix: amd64
+          - name: freebsd-arm64
+            goos: freebsd
+            goarch: arm64
+            goarm: ""
+            suffix: arm64
+          - name: openbsd-amd64
+            goos: openbsd
+            goarch: amd64
+            goarm: ""
+            suffix: amd64
+          - name: openbsd-arm64
+            goos: openbsd
+            goarch: arm64
+            goarm: ""
+            suffix: arm64
+          - name: netbsd-amd64
+            goos: netbsd
+            goarch: amd64
+            goarm: ""
+            suffix: amd64
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -93,10 +151,12 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
           CGO_ENABLED: "0"
           VERSION: ${{ steps.meta.outputs.version }}
+          SUFFIX: ${{ matrix.suffix }}
         run: |
-          out="athenaeum-${VERSION}-${GOOS}-${GOARCH}"
+          out="athenaeum-${VERSION}-${GOOS}-${SUFFIX}"
           if [[ "${GOOS}" == "windows" ]]; then out="${out}.exe"; fi
           go build -mod=vendor -trimpath \
             -ldflags "-s -w -X athenaeum/internal/version.Version=${VERSION} -X athenaeum/internal/version.WebVersion=${VERSION}" \
@@ -108,7 +168,7 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: athenaeum-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: athenaeum-${{ matrix.name }}
           path: dist/*
           if-no-files-found: error
           retention-days: 14
@@ -120,7 +180,7 @@ jobs:
       inputs.push_image == true ||
       inputs.push_image == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     permissions:
       contents: read
       packages: write
@@ -167,6 +227,9 @@ jobs:
             type=raw,value=latest,enable=${{ startsWith(steps.ver.outputs.tag, 'v') && !contains(steps.ver.outputs.tag, '-') }}
             type=sha,prefix=sha-,format=short
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
@@ -181,7 +244,8 @@ jobs:
             VERSION=${{ steps.ver.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/riscv64
+
   release:
     name: GitHub Release
     needs: [build]
