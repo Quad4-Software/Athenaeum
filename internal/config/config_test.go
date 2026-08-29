@@ -1,8 +1,10 @@
 package config
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -143,5 +145,32 @@ func TestParseWebDirEmptyUsesEmbedded(t *testing.T) {
 	}
 	if cfg.WebDir != "" {
 		t.Fatalf("WebDir=%q want empty", cfg.WebDir)
+	}
+}
+
+func TestUsesPostgresAndLogFileDir(t *testing.T) {
+	for _, driver := range []string{"postgres", "PostgreSQL", "pg", " PG "} {
+		if !(Config{DatabaseDriver: driver}).UsesPostgres() {
+			t.Fatalf("UsesPostgres(%q) = false", driver)
+		}
+	}
+	if (Config{DatabaseDriver: "sqlite"}).UsesPostgres() {
+		t.Fatal("sqlite should not be postgres")
+	}
+	if (Config{}).LogFileDir() != "" {
+		t.Fatal("empty log file dir")
+	}
+	got := (Config{LogFile: "/var/log/athenaeum/app.log"}).LogFileDir()
+	if got != "/var/log/athenaeum" {
+		t.Fatalf("LogFileDir=%q", got)
+	}
+}
+
+func TestPrintHelp(t *testing.T) {
+	var buf bytes.Buffer
+	PrintHelp(&buf)
+	out := buf.String()
+	if !strings.Contains(out, "Usage:") || !strings.Contains(out, "--addr") {
+		t.Fatalf("help missing expected sections: %s", out[:min(200, len(out))])
 	}
 }

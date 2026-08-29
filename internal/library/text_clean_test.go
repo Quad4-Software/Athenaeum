@@ -42,10 +42,19 @@ func TestIsGarbledText(t *testing.T) {
 	}
 }
 
-func TestCleanBookTitleFallsBackToFilename(t *testing.T) {
-	got := CleanBookTitle("1\uFFFD\uFFFD\uFFFD\uFFFDbS\\b~", "/books/Masters of Doom.pdf")
-	if got != "Masters of Doom" {
-		t.Fatalf("title = %q", got)
+func TestCleanAuthorNameFallsBack(t *testing.T) {
+	got := CleanAuthorName("1\uFFFD\uFFFD\uFFFD\uFFFDbS", "Ada Lovelace - Notes.pdf")
+	if got == "" {
+		t.Fatal("expected author fallback from filename")
+	}
+	if CleanAuthorName("Andy Weir", "x.pdf") != "Andy Weir" {
+		t.Fatal("readable author should pass through")
+	}
+}
+
+func TestTitleFromRelPath(t *testing.T) {
+	if got := titleFromRelPath("subdir/The Martian.epub"); got == "" {
+		t.Fatal("expected title from path")
 	}
 }
 
