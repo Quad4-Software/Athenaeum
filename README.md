@@ -59,7 +59,9 @@ macOS, Windows, FreeBSD, OpenBSD, and NetBSD, plus a multi-arch image to GHCR.
 
 ## Documentation
 
-Docs are a Docusaurus site in [docs/](docs/) (content in [docs/docs/](docs/docs/)):
+Docs are a Docusaurus site in [docs/](docs/) (content in [docs/docs/](docs/docs/)).
+Agent writing and coding conventions live in [AGENTS.md](AGENTS.md) and
+[`.agents/`](.agents/).
 
 ```sh
 task docs:dev      # http://localhost:3000
@@ -71,15 +73,16 @@ cd docs && pnpm install && pnpm start    # http://localhost:3000
 cd docs && pnpm install && pnpm build    # docs/build
 ```
 
-- [Features](docs/docs/features.md)
+- [Introduction](docs/docs/intro.md)
 - [Getting started](docs/docs/getting-started.md)
+- [Features](docs/docs/features.md)
+- [Deploying](docs/docs/deploying.md)
 - [Authentication](docs/docs/authentication.md)
 - [CLI users](docs/docs/cli-users.md)
 - [Library and readers](docs/docs/library.md)
 - [OPDS and KOSync](docs/docs/catalogs.md)
 - [Operations](docs/docs/operations.md)
 - [Development](docs/docs/development.md)
-- [Deploying](docs/docs/deploying.md)
 - [Configuration](docs/docs/configuration.md)
 - [HTTP API](docs/docs/http-api.md)
 - [Project layout](docs/docs/project-layout.md)

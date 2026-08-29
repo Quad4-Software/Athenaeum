@@ -46,7 +46,9 @@ Dev Containers: open the repo in a container via `.devcontainer/`.
 - Go: `gofmt`, `golangci-lint` (see `.golangci.yml`)
 - Web: ESLint + Prettier + `svelte-check`
 - No emojis in code or docs
+- Icons from Lucide (`@lucide/svelte` / docs `lucide-react`), not hand-rolled SVG
 - Match existing naming and package layout (`docs/docs/project-layout.md`)
+- Agent conventions: [`AGENTS.md`](AGENTS.md) and `.agents/`
 
 ## Security
 
