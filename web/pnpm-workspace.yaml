@@ -36,3 +36,5 @@ allowBuilds:
   # Browser Kokoro uses onnxruntime-web; node/gpu native builds are unused.
   onnxruntime-node: false
   sharp: false
+  # Transitive via kokoro-js -> onnxruntime-web. postinstall is advisory only.
+  protobufjs: false
