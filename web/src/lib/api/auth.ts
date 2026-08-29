@@ -16,6 +16,7 @@ import type {
   AuthSettings,
   InviteMeta,
 } from "./types";
+import type { EpubDisplayPrefs } from "$lib/reader/epub-reader";
 import { request } from "./core";
 
 export const authApi = {
@@ -224,7 +225,7 @@ export const authApi = {
 
   getReaderPrefs: () => request<ReaderPrefs>("/api/auth/reader-prefs"),
 
-  saveReaderPrefs: (prefs: Record<string, unknown>) =>
+  saveReaderPrefs: (prefs: EpubDisplayPrefs) =>
     request<ReaderPrefs>("/api/auth/reader-prefs", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
