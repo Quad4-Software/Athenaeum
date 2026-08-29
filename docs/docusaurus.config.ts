@@ -99,6 +99,11 @@ const config: Config = {
           target: '_self',
         },
         {
+          to: '/roadmap',
+          label: 'Roadmap',
+          position: 'left',
+        },
+        {
           href: githubUrl,
           label: 'GitHub',
           position: 'right',
@@ -129,6 +134,7 @@ const config: Config = {
         {
           title: 'Project',
           items: [
+            {label: 'Roadmap', to: '/roadmap'},
             {label: 'GitHub', href: githubUrl},
             {label: 'Changelog', href: `${githubUrl}/blob/main/CHANGELOG.md`},
             {label: 'Contributing', href: `${githubUrl}/blob/main/CONTRIBUTING.md`},
