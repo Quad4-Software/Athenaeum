@@ -8,11 +8,11 @@ require (
 	github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/getsentry/sentry-go v0.49.0
-	github.com/jackc/pgx/v5 v5.9.2
+	github.com/jackc/pgx/v5 v5.10.0
 	github.com/landlock-lsm/go-landlock v0.10.0
 	github.com/mattn/go-isatty v0.0.24
 	github.com/minio/minio-go/v7 v7.3.0
-	github.com/nwaples/rardecode/v2 v2.2.0
+	github.com/nwaples/rardecode/v2 v2.4.1
 	github.com/pdfcpu/pdfcpu v0.15.0
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/crypto v0.55.0
