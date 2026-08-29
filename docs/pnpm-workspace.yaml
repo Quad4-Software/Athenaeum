@@ -1,0 +1,27 @@
+# Athenaeum docs workspace (pnpm 11+).
+# Security-sensitive settings live here, not in .npmrc (pnpm 11).
+packages:
+  - "."
+
+# Supply-chain defaults aligned with pnpm 11 (explicit for clarity).
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: false
+blockExoticSubdeps: true
+strictDepBuilds: true
+strictPeerDependencies: true
+trustPolicy: no-downgrade
+verifyDepsBeforeRun: install
+pmOnFail: error
+
+# Packages whose publisher history trips trustPolicy on fresh resolve.
+# Review periodically. Prefer removing once maintainers stabilize ownership.
+trustPolicyExclude:
+  - fastq@1.20.2
+  - semver@6.3.1
+
+# Explicit allowlist for packages that may run install scripts.
+# @swc/core is required by @docusaurus/faster (native bindings).
+# core-js postinstall is unused. Deny explicitly so strictDepBuilds passes.
+allowBuilds:
+  "@swc/core": true
+  core-js: false
