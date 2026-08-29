@@ -27,6 +27,7 @@
   import { api } from "$lib/api/client";
   import { i18n } from "$lib/stores/i18n.svelte";
   import { auth } from "$lib/stores/auth.svelte";
+  import { brand } from "$lib/brand";
 
   interface Props {
     collapsed?: boolean;
@@ -161,12 +162,14 @@
       href="/"
       use:link={"/"}
       onclick={() => goHome()}
-      class="mb-4 flex items-center gap-2 px-2 py-1 text-lg font-semibold text-fg"
+      class="mb-4 flex items-center gap-2.5 px-2 py-1.5 text-fg"
     >
-      <span class="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-fg">
+      <span class="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-fg shadow-sm">
         <BookMarked size={18} />
       </span>
-      {#if !collapsed}<span>{i18n.t("app.title")}</span>{/if}
+      {#if !collapsed}
+        <span class="font-display text-xl font-semibold tracking-tight">{brand.appName}</span>
+      {/if}
     </a>
   </div>
 
@@ -186,8 +189,8 @@
                 type="button"
                 onclick={() => selectLibrary(null)}
                 class="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors
-              {libraryActive(null)
-                  ? 'bg-surface text-fg'
+                  {libraryActive(null)
+                  ? 'bg-surface text-fg ring-1 ring-border/70'
                   : 'text-muted hover:bg-surface-hover hover:text-fg'}"
                 title={i18n.t("nav.allLibraries")}
                 aria-current={libraryActive(null) ? "page" : undefined}

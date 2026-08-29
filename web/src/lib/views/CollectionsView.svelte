@@ -95,7 +95,7 @@
 </script>
 
 <section class="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6">
-  <h1 class="text-2xl font-bold text-fg">{i18n.t("collections.title")}</h1>
+  <h1 class="font-display text-3xl font-semibold tracking-tight text-fg">{i18n.t("collections.title")}</h1>
   <p class="mt-1 text-sm text-muted">{i18n.t("collections.subtitle")}</p>
 
   <form class="mt-6 flex gap-2" onsubmit={create}>
@@ -187,32 +187,39 @@
       </div>
     </EmptyState>
   {:else}
-    <ul
-      class="mt-6 divide-y divide-border overflow-hidden rounded-[var(--radius-card)] border border-border"
-    >
+    <ul class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
       {#each collections.items as c (c.id)}
-        <li
-          class="flex items-center justify-between gap-3 bg-bg-elevated/30 px-4 py-3 transition-colors hover:bg-surface/60"
-        >
-          <button type="button" class="min-w-0 flex-1 text-left" onclick={() => open(c.id)}>
-            <div class="flex items-center gap-2">
-              <p class="font-medium text-fg">{c.name}</p>
+        <li class="group relative">
+          <button
+            type="button"
+            class="flex h-full w-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-bg-elevated/50 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
+            onclick={() => open(c.id)}
+          >
+            <div
+              class="flex aspect-[4/3] items-end bg-gradient-to-br from-surface-hover to-bg p-3"
+            >
               <span
-                class="rounded-full bg-surface px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-subtle ring-1 ring-border"
+                class="rounded-full bg-bg/80 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-subtle ring-1 ring-border"
               >
                 {kindLabel(c.kind)}
               </span>
             </div>
-            <p class="text-xs text-muted">
-              {i18n.t("collections.bookCount", { count: c.bookCount })}
-            </p>
+            <div class="space-y-1 p-3">
+              <p class="font-display truncate text-base font-semibold text-fg">{c.name}</p>
+              <p class="text-xs text-muted">
+                {i18n.t("collections.bookCount", { count: c.bookCount })}
+              </p>
+            </div>
           </button>
           {#if c.kind !== "auto"}
             <button
               type="button"
-              class="btn btn-ghost min-h-10 min-w-10 text-danger"
+              class="btn btn-ghost absolute right-2 top-2 min-h-9 min-w-9 bg-bg/80 text-danger opacity-0 shadow-sm ring-1 ring-border backdrop-blur group-hover:opacity-100 group-focus-within:opacity-100"
               aria-label={i18n.t("collections.deleteAria", { name: c.name })}
-              onclick={() => void removeCollection(c.id, c.name)}
+              onclick={(e) => {
+                e.stopPropagation();
+                void removeCollection(c.id, c.name);
+              }}
             >
               <Trash2 size={16} />
             </button>

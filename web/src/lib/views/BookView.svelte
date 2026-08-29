@@ -33,6 +33,7 @@
   import { toast } from "$lib/stores/toast.svelte";
   import { ui } from "$lib/stores/ui.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
+  import { rememberBook } from "$lib/commands/recent";
   import { can } from "$lib/permissions";
   import { formatBytes, seriesLabel } from "$lib/utils/format";
   import { descriptionLooksLikeHtml } from "$lib/utils/sanitize-html";
@@ -96,6 +97,13 @@
         book = b;
         progress = p;
         ui.pageTitle = b.title;
+        rememberBook({
+          id: b.id,
+          title: b.title,
+          author: b.author,
+          hasCover: b.hasCover,
+          modifiedAt: b.modifiedAt,
+        });
         const intent = bookEditorIntent.consume(bookId);
         if (intent) {
           editorPanel = intent;
@@ -393,16 +401,23 @@
 </script>
 
 <section
-  class="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6"
+  class="relative mx-auto w-full max-w-7xl overflow-hidden px-3 py-5 sm:px-6"
   aria-label="Book details"
   oncontextmenu={openMenu}
 >
   {#if errorCode}
     <ErrorView code={errorCode} message={error ?? undefined} compact />
   {:else if book}
-    <div class="flex flex-col gap-8 sm:flex-row">
-      <div class="mx-auto w-40 shrink-0 sm:mx-0 sm:w-52">
-        <div class="relative overflow-hidden rounded-[var(--radius-card)] ring-1 ring-border">
+    {#if book.hasCover}
+      <div class="book-backdrop" aria-hidden="true">
+        <img src={api.coverUrl(book.id, book.modifiedAt)} alt="" />
+      </div>
+    {/if}
+    <div class="relative flex flex-col gap-8 sm:flex-row sm:gap-10">
+      <div class="mx-auto w-44 shrink-0 sm:mx-0 sm:w-60 lg:w-72">
+        <div
+          class="relative overflow-hidden rounded-[var(--radius-card)] shadow-panel ring-1 ring-border/50"
+        >
           <Cover {book} />
           <BookCoverProgress percent={progressPercent} />
         </div>
@@ -410,14 +425,26 @@
 
       <div class="min-w-0 flex-1">
         <span
-          class="inline-block rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-muted"
+          class="inline-block rounded-full bg-surface/80 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-muted ring-1 ring-border/60"
         >
           {book.format}
         </span>
-        <h1 class="mt-3 text-2xl font-bold text-fg sm:text-3xl">{book.title}</h1>
-        {#if book.author}<p class="mt-1 text-muted">{book.author}</p>{/if}
+        <h1 class="font-display mt-3 text-3xl font-semibold tracking-tight text-fg sm:text-4xl">
+          {book.title}
+        </h1>
+        {#if book.author}<p class="mt-2 text-base text-muted">{book.author}</p>{/if}
         {#if book.series}
-          <p class="mt-1 text-sm text-subtle">{seriesLabel(book.series, book.seriesIndex)}</p>
+          <button
+            type="button"
+            class="mt-2 text-sm text-primary hover:underline"
+            onclick={() => {
+              if (!book?.series) return;
+              library.setSeries(book.series);
+              router.navigate("/");
+            }}
+          >
+            {seriesLabel(book.series, book.seriesIndex)}
+          </button>
         {/if}
         {#if book.duplicateOf}
           <p class="mt-2 text-sm text-muted">
@@ -703,6 +730,29 @@
 />
 
 <style>
+  .book-backdrop {
+    pointer-events: none;
+    position: absolute;
+    inset: -10% -5% auto;
+    height: 18rem;
+    z-index: 0;
+    overflow: hidden;
+    opacity: 0.35;
+    mask-image: linear-gradient(to bottom, black 20%, transparent 90%);
+  }
+
+  .book-backdrop img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(48px) saturate(1.15);
+    transform: scale(1.15);
+  }
+
+  :global([data-theme="light"]) .book-backdrop {
+    opacity: 0.22;
+  }
+
   .book-actions {
     position: sticky;
     bottom: calc(var(--bottom-chrome) + 0.5rem);

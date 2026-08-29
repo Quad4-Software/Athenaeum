@@ -30,8 +30,8 @@ export const brand = {
 
   /** theme-color meta tag for mobile browser chrome (hex) */
   themeColor: {
-    light: "#fafafa",
-    dark: "#0a0a0b",
+    light: "#f7f3eb",
+    dark: "#1c1712",
   },
 } as const;
 
