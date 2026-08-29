@@ -1,0 +1,3 @@
+#!/bin/sh
+# runit finish hook (optional). Exit status is logged by the supervisor.
+exit 0

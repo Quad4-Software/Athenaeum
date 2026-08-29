@@ -1,0 +1,24 @@
+#!/bin/sh
+# s6 supervised service for Athenaeum (POSIX shell, no execline required).
+# Install: copy this directory under a scan dir and link into the tree.
+# Example: ln -s /etc/s6/athenaeum /service/athenaeum
+exec 2>&1
+
+ENV_FILE=/etc/athenaeum/athenaeum.env
+if [ -f "$ENV_FILE" ]; then
+	# shellcheck disable=SC1090
+	set -a
+	. "$ENV_FILE"
+	set +a
+fi
+
+export ATHENAEUM_ADDR="${ATHENAEUM_ADDR:-0.0.0.0:8080}"
+export ATHENAEUM_DATA="${ATHENAEUM_DATA:-/var/lib/athenaeum/data}"
+export ATHENAEUM_LIBRARY="${ATHENAEUM_LIBRARY:-/var/lib/athenaeum/library}"
+
+cd /var/lib/athenaeum || exit 1
+
+if command -v s6-setuidgid >/dev/null 2>&1; then
+	exec s6-setuidgid athenaeum /usr/local/bin/athenaeum
+fi
+exec /usr/local/bin/athenaeum

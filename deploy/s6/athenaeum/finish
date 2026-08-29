@@ -1,0 +1,3 @@
+#!/bin/sh
+# Optional finish script. Args vary by s6 / s6-rc version.
+exit 0

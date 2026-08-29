@@ -1,0 +1,15 @@
+# dinit service description for Athenaeum.
+# Install: copy to /etc/dinit.d/athenaeum
+# Enable:  dinitctl enable athenaeum
+# Start:   dinitctl start athenaeum
+
+type = process
+command = /usr/local/bin/athenaeum
+working-dir = /var/lib/athenaeum
+run-as = athenaeum
+smooth-recovery = true
+restart = true
+depends-on = network.target
+
+# Environment file (KEY=value lines). Comment out if unused.
+env-file = /etc/athenaeum/athenaeum.env

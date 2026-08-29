@@ -1,0 +1,4 @@
+#!/bin/sh
+# Optional runit logger. Requires svlogd.
+mkdir -p /var/log/athenaeum
+exec chpst -u athenaeum:athenaeum svlogd -tt /var/log/athenaeum

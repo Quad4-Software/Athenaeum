@@ -1,0 +1,31 @@
+#!/sbin/openrc-run
+# OpenRC service script for Athenaeum.
+# Install: copy to /etc/init.d/athenaeum and chmod +x
+# Config:  /etc/athenaeum/athenaeum.env (sourced below)
+# Enable:  rc-update add athenaeum default
+
+name="athenaeum"
+description="Athenaeum media library server"
+
+command="/usr/local/bin/athenaeum"
+command_user="athenaeum:athenaeum"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+directory="/var/lib/athenaeum"
+
+depend() {
+	need net
+	after firewall
+}
+
+start_pre() {
+	checkpath -d -o athenaeum:athenaeum -m 0750 /var/lib/athenaeum
+	checkpath -d -o athenaeum:athenaeum -m 0750 /var/lib/athenaeum/data
+	checkpath -d -o athenaeum:athenaeum -m 0750 /var/lib/athenaeum/library
+	if [ -f /etc/athenaeum/athenaeum.env ]; then
+		# shellcheck disable=SC1091
+		set -a
+		. /etc/athenaeum/athenaeum.env
+		set +a
+	fi
+}

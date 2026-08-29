@@ -1,0 +1,20 @@
+#!/bin/sh
+# runit service for Athenaeum.
+# Install: copy this directory to /etc/sv/athenaeum (or /var/service)
+# Enable:  ln -s /etc/sv/athenaeum /var/service/athenaeum
+exec 2>&1
+
+ENV_FILE=/etc/athenaeum/athenaeum.env
+if [ -f "$ENV_FILE" ]; then
+	# shellcheck disable=SC1090
+	set -a
+	. "$ENV_FILE"
+	set +a
+fi
+
+export ATHENAEUM_ADDR="${ATHENAEUM_ADDR:-0.0.0.0:8080}"
+export ATHENAEUM_DATA="${ATHENAEUM_DATA:-/var/lib/athenaeum/data}"
+export ATHENAEUM_LIBRARY="${ATHENAEUM_LIBRARY:-/var/lib/athenaeum/library}"
+
+cd /var/lib/athenaeum || exit 1
+exec chpst -u athenaeum:athenaeum /usr/local/bin/athenaeum
