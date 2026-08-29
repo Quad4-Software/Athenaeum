@@ -12,7 +12,7 @@ require (
 	github.com/landlock-lsm/go-landlock v0.10.0
 	github.com/mattn/go-isatty v0.0.24
 	github.com/minio/minio-go/v7 v7.3.0
-	github.com/nwaples/rardecode/v2 v2.2.0
+	github.com/nwaples/rardecode/v2 v2.4.1
 	github.com/pdfcpu/pdfcpu v0.15.0
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/crypto v0.55.0
