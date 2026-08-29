@@ -9,21 +9,6 @@ light/dark theming.
   <img src="showcase/library-theme-split.png" alt="Library in dark and light themes" width="100%" />
 </p>
 
-<p align="center">
-  <img src="showcase/book-detail-dark.png" alt="Book detail (dark)" width="48%" />
-  <img src="showcase/book-detail-light.png" alt="Book detail (light)" width="48%" />
-</p>
-
-<p align="center">
-  <img src="showcase/settings-dark.png" alt="Settings (dark)" width="48%" />
-  <img src="showcase/settings-light.png" alt="Settings (light)" width="48%" />
-</p>
-
-<p align="center">
-  <img src="showcase/library-mobile-light.png" alt="Mobile library (light)" width="24%" />
-  <img src="showcase/library-mobile-dark.png" alt="Mobile library (dark)" width="24%" />
-</p>
-
 ## Quick start
 
 Requires Go 1.26+, Node 20+, pnpm 11+, and [Task](https://taskfile.dev).
