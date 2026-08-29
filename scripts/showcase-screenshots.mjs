@@ -92,6 +92,63 @@ async function shot(page, name) {
   console.log("wrote", path);
 }
 
+
+async function writeThemeSplit() {
+  const dark = join(outDir, "library-dark.png");
+  const light = join(outDir, "library-light.png");
+  const split = join(outDir, "library-theme-split.png");
+  if (!existsSync(dark) || !existsSync(light)) return;
+
+  const { spawnSync } = await import("node:child_process");
+  const script = join(root, "scripts/showcase-theme-split.py");
+  const result = spawnSync("python3", [script, dark, light, split], { encoding: "utf8" });
+  if (result.status !== 0) {
+    console.warn("theme split failed:", result.stderr || result.stdout);
+    return;
+  }
+  if (result.stdout?.trim()) console.log(result.stdout.trim());
+}
+
+async function syncDerivedAssets() {
+  const { copyFile, mkdir } = await import("node:fs/promises");
+  const { spawnSync } = await import("node:child_process");
+  const magick = existsSync("/usr/bin/magick") ? "magick" : "convert";
+
+  const publicDir = join(root, "web/public/showcase");
+  const docsDir = join(root, "docs/static/img/showcase");
+  const distDir = join(root, "internal/assets/dist/showcase");
+  await mkdir(publicDir, { recursive: true });
+  await mkdir(docsDir, { recursive: true });
+  await mkdir(distDir, { recursive: true });
+
+  for (const theme of ["light", "dark"]) {
+    const src = join(outDir, `library-${theme}.png`);
+    if (!existsSync(src)) continue;
+    const jpg = join(publicDir, `library-${theme}.jpg`);
+    const jpgResult = spawnSync(magick, [src, "-quality", "82", jpg], { encoding: "utf8" });
+    if (jpgResult.status === 0) {
+      console.log("wrote", jpg);
+      await copyFile(jpg, join(distDir, `library-${theme}.jpg`));
+    }
+  }
+
+  const docsShots = [
+    "library-light",
+    "library-dark",
+    "library-mobile-light",
+    "library-mobile-dark",
+    "book-detail-light",
+    "book-detail-dark",
+    "settings-light",
+    "settings-dark",
+  ];
+  for (const name of docsShots) {
+    const src = join(outDir, `${name}.png`);
+    if (!existsSync(src)) continue;
+    await copyFile(src, join(docsDir, `${name}.png`));
+  }
+}
+
 async function openDemo(browser, url, theme, viewport = { width: 1440, height: 900 }) {
   const page = await browser.newPage({ viewport, colorScheme: theme });
   await page.addInitScript((t) => {
@@ -159,6 +216,9 @@ async function main() {
     await copyFile(join(outDir, "settings-light.png"), join(outDir, "settings.png"));
     await copyFile(join(outDir, "library-mobile-light.png"), join(outDir, "library-mobile.png"));
 
+    await writeThemeSplit();
+    await syncDerivedAssets();
+
     await writeFile(
       join(outDir, "README.txt"),
       [
@@ -168,6 +228,8 @@ async function main() {
         "Light: library-light, book-detail-light, settings-light, library-mobile-light",
         "Dark:  library-dark, book-detail-dark, settings-dark, library-mobile-dark",
         "Aliases: library, book-detail, settings, library-mobile (= light)",
+        "Hero: library-theme-split.png (dark/light diagonal or half composite)",
+        "Also syncs web/public/showcase/*.jpg and docs/static/img/showcase/*.png",
         "",
       ].join("\n"),
     );

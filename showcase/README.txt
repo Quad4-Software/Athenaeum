@@ -4,7 +4,5 @@ Regenerate with: task showcase
 Light: library-light, book-detail-light, settings-light, library-mobile-light
 Dark:  library-dark, book-detail-dark, settings-dark, library-mobile-dark
 Aliases: library, book-detail, settings, library-mobile (= light)
-
-library-theme-split.png is a diagonal composite of library-dark (left) and
-library-light (right) for the README hero. Rebuild after regenerating the
-library light/dark shots if those change.
+Hero: library-theme-split.png (dark/light diagonal or half composite)
+Also syncs web/public/showcase/*.jpg and docs/static/img/showcase/*.png
