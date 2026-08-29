@@ -4,15 +4,29 @@ Athenaeum docs are a [Docusaurus](https://docusaurus.io/) site.
 
 ## Local development
 
+Requires Node 22+ and pnpm 11+.
+
+### Manual
+
 ```sh
-task docs:setup
-task docs:dev
+cd docs
+pnpm install
+pnpm start
 ```
 
 Open http://localhost:3000. Markdown lives in [`docs/`](./docs/) (the content
 folder inside this package). Theme and homepage are under [`src/`](./src/).
 
 ```sh
+cd docs && pnpm install && pnpm build   # output -> docs/build
+cd docs && pnpm serve                   # preview production build
+```
+
+### Task (optional)
+
+```sh
+task docs:setup
+task docs:dev
 task docs:build   # output -> docs/build
 task docs:serve   # preview production build
 ```
@@ -22,7 +36,7 @@ task docs:serve   # preview production build
 | Page | Topic |
 | ---- | ----- |
 | intro | Product overview |
-| getting-started | Build, run, demo modes |
+| getting-started | Build and run (Make, manual, Task) |
 | features | Capability list |
 | deploying | Installer, Docker profiles, host services, backup |
 | configuration | Flags and env vars |
@@ -32,13 +46,14 @@ task docs:serve   # preview production build
 | catalogs | OPDS 1.2 / 2 and KOSync |
 | operations | Metrics, maintenance, i18n, PWA, backup |
 | http-api | Full route reference |
-| development | Task recipes and CI |
+| development | Contributor workflow and CI |
 | project-layout | Repository map |
 
 ## GitHub Pages
 
-`.github/workflows/pages.yml` builds this site and embeds the offline SPA demo
-at `/demo`. Enable **Settings -> Pages -> GitHub Actions** on the repository.
+`.github/workflows/pages.yml` builds this site and embeds the offline SPA under
+`/demo` for the live demo link. Enable **Settings -> Pages -> GitHub Actions**
+on the repository.
 
 | Variable | Purpose |
 | -------- | ------- |

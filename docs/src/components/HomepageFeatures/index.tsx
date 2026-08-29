@@ -38,6 +38,33 @@ const FeatureList: FeatureItem[] = [
       </>
     ),
   },
+  {
+    title: 'Formats that matter',
+    description: (
+      <>
+        EPUB, PDF, MOBI/AZW/AZW3 in-browser, KFX download, CBZ/CBR comics, and
+        multi-file audiobook folders merged automatically.
+      </>
+    ),
+  },
+  {
+    title: 'Catalogs and sync',
+    description: (
+      <>
+        OPDS 1.2 and OPDS 2 for e-reader apps, KOSync progress sync, share
+        links, and optional send-to-Kindle over SMTP.
+      </>
+    ),
+  },
+  {
+    title: 'Ops-ready self-hosting',
+    description: (
+      <>
+        Docker and host installers, Prometheus metrics, backup/restore,
+        sandboxing, and release binaries across Linux, macOS, Windows, and BSD.
+      </>
+    ),
+  },
 ];
 
 function Feature({title, description}: FeatureItem) {
@@ -59,11 +86,11 @@ export default function HomepageFeatures(): ReactNode {
       <div className="container">
         <div className={styles.sectionHead}>
           <Heading as="h2" className={styles.sectionTitle}>
-            Designed to disappear into your shelf
+            Everything you need on one shelf
           </Heading>
           <p className={styles.sectionLead}>
-            Fast indexing, a clean reader, and the ops knobs you need when you
-            self-host.
+            Fast indexing, a clean reader, catalogs for e-readers, and the ops
+            knobs you need when you self-host.
           </p>
         </div>
         <div className="row">

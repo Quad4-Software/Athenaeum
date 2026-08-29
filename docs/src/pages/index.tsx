@@ -13,7 +13,7 @@ import styles from './index.module.css';
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
   const demoHref = useBaseUrl('pathname:///demo/');
-  const heroSrc = useBaseUrl('/img/showcase/library-dark.png');
+  const heroSrc = useBaseUrl('/img/showcase/library-theme-split.png');
 
   return (
     <header className={styles.hero}>
@@ -31,7 +31,7 @@ function HomepageHeader() {
               Get started
             </Link>
             <Link
-              className={clsx('button button--secondary button--lg', styles.ghost)}
+              className={clsx('button button--lg', styles.ghost)}
               href={demoHref}
               target="_self">
               Try the demo
@@ -39,15 +39,15 @@ function HomepageHeader() {
           </div>
           <ul className={styles.meta}>
             <li>Single static binary</li>
-            <li>EPUB · PDF · audiobooks</li>
-            <li>OPDS · PWA · multi-user</li>
+            <li>EPUB · PDF · Audiobooks</li>
+            <li>OPDS · PWA · Multi-user</li>
           </ul>
         </div>
         <div className={styles.heroVisual}>
           <div className={styles.frame}>
             <img
               src={heroSrc}
-              alt="Athenaeum library view in dark theme"
+              alt="Athenaeum library in dark and light themes"
               width={1440}
               height={900}
               loading="eager"
@@ -62,7 +62,7 @@ function HomepageHeader() {
 export default function Home(): ReactNode {
   return (
     <Layout
-      title="Docs"
+      title="Home"
       description="Self-hosted EPUB, PDF, and audiobook library server. Single binary, modern reader, OPDS, and optional multi-user auth.">
       <HomepageHeader />
       <main>
@@ -74,8 +74,9 @@ export default function Home(): ReactNode {
               Ready to run your library
             </Heading>
             <p className={styles.ctaText}>
-              Install with Docker, a release binary, or build from source. Point
-              Athenaeum at a folder of media and open the web UI.
+              Install with Docker, a release binary, or build from source with
+              Make or plain Go and pnpm. Point Athenaeum at a folder of media and
+              open the web UI.
             </p>
             <div className={styles.actions}>
               <Link
@@ -84,9 +85,9 @@ export default function Home(): ReactNode {
                 Deploying guide
               </Link>
               <Link
-                className="button button--secondary button--lg"
-                to="/docs/configuration">
-                Configuration reference
+                className={clsx('button button--lg', styles.ghost)}
+                to="/docs/features">
+                Full feature list
               </Link>
             </div>
           </div>

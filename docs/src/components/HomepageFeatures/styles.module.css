@@ -2,6 +2,10 @@
   padding: 4rem 0 3rem;
 }
 
+.features :global(.row) {
+  row-gap: 1.25rem;
+}
+
 .sectionHead {
   max-width: 40rem;
   margin: 0 auto 2.25rem;
@@ -45,6 +49,7 @@
   margin: 0;
   color: var(--athena-muted);
   font-size: 0.98rem;
+  line-height: 1.55;
 }
 
 .cardBody code {

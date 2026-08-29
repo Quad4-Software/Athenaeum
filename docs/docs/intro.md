@@ -23,7 +23,7 @@ theming.
 
 ## Next steps
 
-1. [Getting started](./getting-started) - build, run, and try demo mode
+1. [Getting started](./getting-started) - build and run with Make, manual, or Task
 2. [Features](./features) - full capability list
 3. [Deploying](./deploying) - installer, Docker, and host services
 4. [Authentication](./authentication) - users, TOTP, OIDC, API keys
