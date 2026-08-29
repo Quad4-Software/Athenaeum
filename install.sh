@@ -307,7 +307,8 @@ detect_repo_slug() {
       return 0
     fi
   fi
-  printf '\n'
+  # Fallback for curl | bash and checkouts without a remote.
+  printf 'Quad4-Software/Athenaeum\n'
 }
 
 detect_init() {
@@ -369,6 +370,38 @@ VERSION="${ATHENAEUM_VERSION:-$VERSION}"
 RELEASE_BASE="${ATHENAEUM_RELEASE_BASE:-$RELEASE_BASE}"
 DOCKER_IMAGE="${ATHENAEUM_IMAGE:-$DOCKER_IMAGE}"
 REPO_SLUG="$(detect_repo_slug)"
+
+# When install.sh is run via curl | bash, ROOT is not the repo tree.
+# Clone into a durable directory so docker/source methods and unit templates work.
+ensure_repo_tree() {
+  if [[ -f "$ROOT/go.mod" && -f "$ROOT/docker-compose.yml" ]]; then
+    return 0
+  fi
+  command -v git >/dev/null 2>&1 || die "git is required to fetch Athenaeum when not running from a checkout"
+  local dest="${ATHENAEUM_INSTALL_DIR:-$HOME/athenaeum}"
+  if [[ -f "$dest/go.mod" && -f "$dest/docker-compose.yml" ]]; then
+    info "using existing checkout at $dest"
+  else
+    info "cloning https://github.com/${REPO_SLUG}.git into $dest"
+    if [[ $DRY_RUN -eq 1 ]]; then
+      info "dry-run: git clone https://github.com/${REPO_SLUG}.git $dest"
+    else
+      mkdir -p "$(dirname "$dest")"
+      if [[ -d "$dest/.git" ]]; then
+        git -C "$dest" fetch --depth 1 origin master
+        git -C "$dest" checkout -f FETCH_HEAD
+      else
+        rm -rf "$dest"
+        git clone --depth 1 "https://github.com/${REPO_SLUG}.git" "$dest"
+      fi
+    fi
+  fi
+  ROOT="$dest"
+  DEPLOY_DIR="$ROOT/deploy"
+  COMPOSE_FILE="$ROOT/docker-compose.yml"
+}
+
+ensure_repo_tree
 
 # --- interactive configuration ----------------------------------------------
 

@@ -34,6 +34,19 @@ RUN set -eux; \
       -o /out/athenaeum ./cmd/athenaeum
 
 FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+ARG VERSION=dev
+ARG REVISION=
+ARG CREATED=
+LABEL org.opencontainers.image.title="Athenaeum" \
+      org.opencontainers.image.description="Self-hosted library for EPUB, PDF, comics, and audiobooks" \
+      org.opencontainers.image.url="https://github.com/Quad4-Software/Athenaeum" \
+      org.opencontainers.image.source="https://github.com/Quad4-Software/Athenaeum" \
+      org.opencontainers.image.documentation="https://github.com/Quad4-Software/Athenaeum" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.vendor="Quad4 Software" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${REVISION}" \
+      org.opencontainers.image.created="${CREATED}"
 RUN apk add --no-cache ca-certificates tzdata wget \
     && addgroup -S athenaeum \
     && adduser -S -G athenaeum -h /app -s /sbin/nologin athenaeum \

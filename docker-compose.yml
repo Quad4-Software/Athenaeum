@@ -1,13 +1,16 @@
 # Athenaeum Compose (local and self-hosted).
 #
-# Default (SQLite):
+# Pull published image (default):
+#   docker compose up -d
+#
+# Build locally instead:
 #   docker compose up -d --build
 #
 # Optional sidecars via profiles (combine freely):
-#   docker compose --profile altcha up -d --build
-#   docker compose --profile kokoro up -d --build
-#   docker compose --profile postgres up -d --build
-#   docker compose --profile altcha --profile kokoro --profile postgres up -d --build
+#   docker compose --profile altcha up -d
+#   docker compose --profile kokoro up -d
+#   docker compose --profile postgres up -d
+#   docker compose --profile altcha --profile kokoro --profile postgres up -d
 #
 # Or set COMPOSE_PROFILES=altcha,kokoro,postgres in .env.
 #
@@ -22,11 +25,13 @@
 
 services:
   athenaeum:
+    image: ${ATHENAEUM_IMAGE:-ghcr.io/quad4-software/athenaeum:${ATHENAEUM_VERSION:-latest}}
     build:
       context: .
       args:
-        VERSION: ${ATHENAEUM_VERSION:-0.1.0}
-    image: athenaeum:${ATHENAEUM_VERSION:-local}
+        VERSION: ${ATHENAEUM_VERSION:-latest}
+        REVISION: ${ATHENAEUM_REVISION:-}
+        CREATED: ${ATHENAEUM_CREATED:-}
     container_name: athenaeum
     restart: unless-stopped
     env_file:
