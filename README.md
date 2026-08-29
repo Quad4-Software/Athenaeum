@@ -53,6 +53,10 @@ service units):
 Open http://localhost:8080. On first visit create an admin in the setup wizard,
 or pass --admin-user and --admin-pass on the CLI when no users exist yet.
 
+Verify a build with `./bin/athenaeum --self-check` (dirs, database, HTTP).
+Release tags publish single binaries for Linux (amd64/arm64/armv6/armv7/riscv64),
+macOS, Windows, FreeBSD, OpenBSD, and NetBSD, plus a multi-arch image to GHCR.
+
 ## Documentation
 
 Docs are a Docusaurus site in [docs/](docs/) (content in [docs/docs/](docs/docs/)):
