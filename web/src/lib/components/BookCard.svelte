@@ -6,6 +6,7 @@
   import { api, ApiError } from "$lib/api/client";
   import { favorites } from "$lib/stores/favorites.svelte";
   import { library } from "$lib/stores/library.svelte";
+  import { density } from "$lib/stores/density.svelte";
   import { bookEditorIntent } from "$lib/stores/bookEditor.svelte";
   import { confirmDialog } from "$lib/stores/confirm.svelte";
   import { toast } from "$lib/stores/toast.svelte";
@@ -176,7 +177,7 @@
       class="transition-transform duration-150 group-hover:-translate-y-1 group-focus-visible:-translate-y-1"
     >
       <div
-        class="relative overflow-hidden rounded-[var(--radius-card)] ring-1 ring-border transition group-hover:ring-primary"
+        class="relative overflow-hidden rounded-[var(--radius-card)] shadow-sm ring-1 ring-border/60 transition group-hover:shadow-md group-hover:ring-border-strong"
       >
         <Cover {book} />
         <BookCoverProgress percent={progress} />
@@ -186,7 +187,10 @@
       </div>
     </div>
     <div class="min-w-0 px-0.5">
-      <p class="truncate text-sm font-medium text-fg" title={book.title}>
+      <p
+        class="truncate font-medium text-fg {density.value === 'compact' ? 'text-xs' : 'text-sm'}"
+        title={book.title}
+      >
         {book.title}
         {#if book.duplicateOf}
           <span

@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { PanelLeftClose, PanelLeftOpen } from "@lucide/svelte";
+  import { LayoutGrid, PanelLeftClose, PanelLeftOpen, Rows3 } from "@lucide/svelte";
   import SearchBar from "./SearchBar.svelte";
   import ThemeToggle from "./ThemeToggle.svelte";
   import LanguagePicker from "./LanguagePicker.svelte";
   import SortMenu from "./SortMenu.svelte";
   import Breadcrumbs from "./Breadcrumbs.svelte";
   import { ui } from "$lib/stores/ui.svelte";
+  import { density } from "$lib/stores/density.svelte";
   import { router } from "$lib/router.svelte";
   import { breadcrumbsFor } from "$lib/navigation.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
@@ -17,6 +18,9 @@
   let { bookTitle = "" }: Props = $props();
 
   let crumbs = $derived(breadcrumbsFor(router.current, bookTitle));
+  let showBrowseTools = $derived(
+    router.current.name === "library" || router.current.name === "collection",
+  );
 </script>
 
 <header
@@ -43,7 +47,26 @@
     </div>
 
     <div class="hidden items-center gap-1.5 md:inline-flex sm:gap-2">
-      <SortMenu />
+      {#if showBrowseTools}
+        <SortMenu />
+        <button
+          type="button"
+          class="btn btn-ghost btn-icon"
+          aria-label={density.value === "compact"
+            ? i18n.t("commands.densityComfortable")
+            : i18n.t("commands.densityCompact")}
+          title={density.value === "compact"
+            ? i18n.t("commands.densityComfortable")
+            : i18n.t("commands.densityCompact")}
+          onclick={() => density.toggle()}
+        >
+          {#if density.value === "compact"}
+            <Rows3 size={18} />
+          {:else}
+            <LayoutGrid size={18} />
+          {/if}
+        </button>
+      {/if}
       <LanguagePicker />
       <ThemeToggle />
     </div>

@@ -2,12 +2,15 @@
   import { BookOpen, RefreshCw, Search, Star } from "@lucide/svelte";
   import { SvelteSet } from "svelte/reactivity";
   import BookGrid from "$lib/components/BookGrid.svelte";
+  import BrowseHeader from "$lib/components/BrowseHeader.svelte";
+  import ContinueRail from "$lib/components/ContinueRail.svelte";
   import Button from "$lib/components/Button.svelte";
   import EmptyState from "$lib/components/EmptyState.svelte";
   import FilterChips from "$lib/components/FilterChips.svelte";
   import QuickFilters from "$lib/components/QuickFilters.svelte";
   import { api, ApiError } from "$lib/api/client";
   import { library } from "$lib/stores/library.svelte";
+  import { collections } from "$lib/stores/collections.svelte";
   import { metadataMatch } from "$lib/stores/metadataMatch.svelte";
   import { scan } from "$lib/stores/scan.svelte";
   import { confirmDialog } from "$lib/stores/confirm.svelte";
@@ -32,6 +35,44 @@
     }
     return "";
   });
+
+  let headerTitle = $derived.by(() => {
+    if (library.seriesFilter) return library.seriesFilter;
+    if (library.authorFilter) return library.authorFilter;
+    if (library.favoritesFilter) return i18n.t("nav.favorites");
+    if (library.inProgressFilter) return i18n.t("nav.continueReading");
+    if (library.collectionFilter != null) {
+      const c = collections.items.find((x) => x.id === library.collectionFilter);
+      return c?.name ?? i18n.t("library.filters.collectionFallback");
+    }
+    if (library.formatFilter) {
+      const map: Record<string, string> = {
+        epub: i18n.t("nav.epub"),
+        pdf: i18n.t("nav.pdf"),
+        comic: i18n.t("nav.comics"),
+        kindle: i18n.t("nav.kindle"),
+        audio: i18n.t("nav.audiobooks"),
+      };
+      return map[library.formatFilter] ?? i18n.t("nav.library");
+    }
+    return i18n.t("nav.library");
+  });
+
+  let countLabel = $derived(
+    library.total > 0
+      ? i18n.t("library.bookCount", { count: library.total })
+      : "",
+  );
+
+  let progressLabel = $derived.by(() => {
+    const n = library.stats?.readingInProgress;
+    if (n == null || n <= 0) return "";
+    return i18n.t("library.inProgressCount", { count: n });
+  });
+
+  let showContinueRail = $derived(
+    !library.hasActiveFilters && !library.search && library.books.some((b) => (b.progressPercent ?? 0) > 0),
+  );
 
   function toggleSelectMode() {
     selectMode = !selectMode;
@@ -96,6 +137,12 @@
       <RefreshCw size={14} class="animate-spin text-primary" />
       <span>{jobLabel}</span>
     </div>
+  {/if}
+
+  <BrowseHeader title={headerTitle} {countLabel} {progressLabel} />
+
+  {#if showContinueRail}
+    <ContinueRail books={library.books} />
   {/if}
 
   <QuickFilters />

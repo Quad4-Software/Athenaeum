@@ -2,6 +2,7 @@
   import BookCard from "./BookCard.svelte";
   import BookCardSkeleton from "./BookCardSkeleton.svelte";
   import Skeleton from "./Skeleton.svelte";
+  import { density } from "$lib/stores/density.svelte";
   import type { Book } from "$lib/api/types";
 
   interface Props {
@@ -26,6 +27,12 @@
     onLoadMore,
   }: Props = $props();
 
+  let gridClass = $derived(
+    density.value === "compact"
+      ? "grid grid-cols-3 gap-x-2 gap-y-4 sm:grid-cols-4 sm:gap-x-3 sm:gap-y-5 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8"
+      : "grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
+  );
+
   function sentinel(node: HTMLElement) {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -39,17 +46,13 @@
 </script>
 
 {#if initialLoading}
-  <div
-    class="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
-  >
-    {#each Array(12) as _, i (i)}
+  <div class={gridClass}>
+    {#each Array(density.value === "compact" ? 16 : 12) as _, i (i)}
       <BookCardSkeleton />
     {/each}
   </div>
 {:else}
-  <div
-    class="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
-  >
+  <div class={gridClass} data-density={density.value}>
     {#each books as book (book.id)}
       <BookCard
         {book}
