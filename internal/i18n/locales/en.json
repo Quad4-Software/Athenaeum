@@ -1,0 +1,78 @@
+{
+  "$name": "English",
+  "app": {
+    "title": "Athenaeum",
+    "notFound": "Page not found",
+    "goToLibrary": "Go to library"
+  },
+  "nav": {
+    "primary": "Primary",
+    "libraries": "Libraries",
+    "allLibraries": "All libraries",
+    "browse": "Browse",
+    "allBooks": "All books",
+    "epub": "EPUB",
+    "pdf": "PDF",
+    "audiobooks": "Audiobooks",
+    "favorites": "Favorites",
+    "continueReading": "Continue reading",
+    "readingLists": "Reading lists",
+    "series": "Series",
+    "authors": "Authors",
+    "shelves": "Shelves",
+    "collections": "Collections",
+    "manage": "Manage",
+    "rescan": "Rescan",
+    "scanning": "Scanning...",
+    "settings": "Settings"
+  },
+  "search": {
+    "placeholder": "Search title, author or series...",
+    "clear": "Clear search"
+  },
+  "sort": {
+    "label": "Sort books",
+    "recent": "Recently added",
+    "oldest": "Oldest first",
+    "title": "Title (A-Z)",
+    "author": "Author (A-Z)",
+    "progress": "Last read"
+  },
+  "topbar": {
+    "openNav": "Open navigation",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "closeNav": "Close navigation"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "label": "Language",
+    "select": "Select language"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "username": "Username",
+    "password": "Password",
+    "loginFailed": "Login failed",
+    "signInWithSso": "Sign in with SSO",
+    "orLocal": "or use local account",
+    "signInLocalAndSso": "Sign in with your account or use single sign-on.",
+    "signInSso": "Continue with your identity provider.",
+    "signInLocal": "Enter your credentials to access the library."
+  },
+  "setup": {
+    "welcome": "Welcome to Athenaeum",
+    "description": "Create the first admin account to secure your library. You can add more users later in Settings.",
+    "adminUsername": "Admin username",
+    "passwordWeak": "Password does not meet strength requirements",
+    "setupFailed": "Setup failed",
+    "creating": "Creating account...",
+    "submit": "Create admin and continue"
+  }
+}

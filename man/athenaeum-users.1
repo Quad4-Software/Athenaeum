@@ -1,0 +1,135 @@
+.TH ATHENAEUM-USERS 1 "June 2026" "Athenaeum" "User Commands"
+.SH NAME
+athenaeum-users \- manage local Athenaeum user accounts
+.SH SYNOPSIS
+.B athenaeum users
+.I command
+.RI [ flags "] [" args ]
+.SH DESCRIPTION
+The
+.B users
+subcommand of
+.BR athenaeum (1)
+manages local user accounts directly in the database, without starting the
+server. It opens the SQLite database under the data directory and operates on
+it offline, which is useful for bootstrapping, password recovery and
+scripting.
+.PP
+User arguments may be given as a numeric id or as a username
+(case-insensitive).
+.SH COMMANDS
+.TP
+.B list\fR, \fBls
+List all users with id, username, admin/guest/local flags, permissions and
+creation time.
+.TP
+.BI "add, create " username " " \fR[ flags ]
+Create a local user. Username must be at least 2 characters.
+.TP
+.BI "reset-password " user " " \fR[ flags ]
+Reset a user's password. Aliases:
+.BR passwd ", " password .
+.TP
+.BI "rename " "user new-username"
+Rename a user.
+.TP
+.BI "set-admin " user " " \fR[ flags ]
+Grant or revoke admin privileges. Alias:
+.BR admin .
+.TP
+.BI "set-permissions " user " " \fB\-\-set " list"
+Set non-admin permissions. Alias:
+.BR permissions .
+.TP
+.BI "show, get " user
+Show details for one user.
+.TP
+.BI "delete, rm " user " " \fR[ flags ]
+Delete a user.
+.TP
+.B help
+Show built-in help.
+.SH OPTIONS
+.TP
+.BI \-\-data " dir"
+Data directory containing
+.IR athenaeum.db .
+Applies to every command.
+Environment:
+.BR ATHENAEUM_DATA .
+Default:
+.BR ./data .
+.TP
+.BI \-\-color " mode"
+CLI color mode:
+.BR auto ", " always ", or " never .
+.TP
+.B \-\-no\-color
+Disable ANSI color.
+.TP
+.BI \-\-password " value"
+Password for
+.B add
+and
+.BR reset-password .
+See PASSWORD SOURCES.
+.TP
+.B \-\-admin
+For
+.BR add ", grant admin on creation. For " set-admin ", grant admin."
+.TP
+.B \-\-no\-admin
+For
+.BR set-admin ", revoke admin."
+.TP
+.BI \-\-set " list"
+For
+.BR set-permissions ", a comma-separated permission list. Valid values:"
+.BR read ", " edit_metadata ", " delete_books ", " manage_library ", " manage_users .
+.TP
+.B \-\-revoke\-sessions
+For
+.BR reset-password ", revoke active sessions after the reset. Default: true."
+.TP
+.B \-\-force
+For
+.BR delete ", skip the interactive confirmation prompt."
+.SH PASSWORD SOURCES
+For
+.B add
+and
+.BR reset-password ,
+the password is resolved in this order:
+.IP 1. 4
+The
+.B \-\-password
+flag value.
+.IP 2. 4
+The
+.B ATHENAEUM_PASSWORD
+environment variable.
+.IP 3. 4
+A single line read from standard input when neither of the above is set.
+.SH EXAMPLES
+.TP
+List users from a specific data directory:
+.B athenaeum users list \-\-data ./data
+.TP
+Create a user with an explicit password:
+.B athenaeum users add alice \-\-password 'secretpass'
+.TP
+Reset an admin password:
+.B athenaeum users reset-password admin \-\-password 'newpass'
+.TP
+Revoke admin from a user:
+.B athenaeum users set-admin bob \-\-no\-admin
+.TP
+Grant limited permissions to a non-admin:
+.B athenaeum users set-permissions carol \-\-set read,edit_metadata
+.TP
+Delete a user by id without confirmation:
+.B athenaeum users delete 3 \-\-force
+.SH SEE ALSO
+.BR athenaeum (1)
+.SH LICENSE
+MIT.

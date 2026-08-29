@@ -1,0 +1,146 @@
+# Athenaeum Compose (local and self-hosted).
+#
+# Default (SQLite):
+#   docker compose up -d --build
+#
+# Optional sidecars via profiles (combine freely):
+#   docker compose --profile altcha up -d --build
+#   docker compose --profile kokoro up -d --build
+#   docker compose --profile postgres up -d --build
+#   docker compose --profile altcha --profile kokoro --profile postgres up -d --build
+#
+# Or set COMPOSE_PROFILES=altcha,kokoro,postgres in .env.
+#
+# Postgres: also set in .env
+#   ATHENAEUM_DATABASE_DRIVER=postgres
+#   ATHENAEUM_DATABASE_URL=postgres://athenaeum:athenaeum@postgres:5432/athenaeum?sslmode=disable
+#
+# Kokoro: Admin -> Narration base URL http://kokoro:8880 (same network)
+#   or http://127.0.0.1:8880 from the host.
+#
+# Coolify: use docker-compose.coolify.yml instead.
+
+services:
+  athenaeum:
+    build:
+      context: .
+      args:
+        VERSION: ${ATHENAEUM_VERSION:-0.1.0}
+    image: athenaeum:${ATHENAEUM_VERSION:-local}
+    container_name: athenaeum
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ATHENAEUM_ADDR: :8080
+      ATHENAEUM_DATA: /data
+      ATHENAEUM_LIBRARY: /library
+      ATHENAEUM_UPLOAD_MAX_BYTES: ${ATHENAEUM_UPLOAD_MAX_BYTES:-2147483648}
+      ATHENAEUM_DATABASE_DRIVER: ${ATHENAEUM_DATABASE_DRIVER:-sqlite}
+      ATHENAEUM_DATABASE_URL: ${ATHENAEUM_DATABASE_URL:-}
+      ATHENAEUM_SANDBOX: ${ATHENAEUM_SANDBOX:-try}
+      ATHENAEUM_SANDBOX_LANDLOCK: ${ATHENAEUM_SANDBOX_LANDLOCK:-true}
+      ATHENAEUM_SANDBOX_SECCOMP: ${ATHENAEUM_SANDBOX_SECCOMP:-true}
+    ports:
+      - "${ATHENAEUM_PUBLISH_PORT:-8080}:8080"
+    volumes:
+      - athenaeum-data:/data
+      - ${ATHENAEUM_LIBRARY_HOST_PATH:-./library}:/library
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Optional ALTCHA Sentinel (trial/license). Enable with --profile altcha.
+  # Then set Athenaeum to sentinel mode, for example:
+  #   ATHENAEUM_ALTCHA_ENABLED=true
+  #   ATHENAEUM_ALTCHA_MODE=sentinel
+  #   ATHENAEUM_ALTCHA_CHALLENGE_URL=http://altcha:8080/v1/challenge?apiKey=...
+  #   ATHENAEUM_ALTCHA_VERIFY_URL=http://altcha:8080/v1/verify/signature
+  #   ATHENAEUM_ALTCHA_API_KEY_SECRET=...
+  # Create an API key in the Sentinel UI (default login root/root) and change
+  # the password immediately. License required after the trial period.
+  # See https://altcha.org/docs/v2/sentinel/install/docker/
+  altcha:
+    profiles: ["altcha"]
+    image: ghcr.io/altcha-org/sentinel:${ALTCHA_SENTINEL_VERSION:-latest}
+    container_name: athenaeum-altcha
+    restart: unless-stopped
+    environment:
+      LICENSE_KEY: ${ALTCHA_LICENSE_KEY:-}
+      SECRET_SEED: ${ALTCHA_SECRET_SEED:-}
+    ports:
+      - "${ALTCHA_PUBLISH_PORT:-8081}:8080"
+    volumes:
+      - altcha-data:/data
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/.live"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # Optional Kokoro TTS sidecar. Enable with --profile kokoro.
+  kokoro:
+    profiles: ["kokoro"]
+    build: ./docker/kokoro
+    image: athenaeum-kokoro:local
+    container_name: athenaeum-kokoro
+    restart: unless-stopped
+    environment:
+      KOKORO_LANG: ${KOKORO_LANG:-a}
+      KOKORO_DEFAULT_VOICE: ${KOKORO_DEFAULT_VOICE:-af_heart}
+      KOKORO_API_KEY: ${KOKORO_API_KEY:-}
+    ports:
+      - "${KOKORO_PUBLISH_PORT:-8880}:8880"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8880/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # Optional PostgreSQL. Enable with --profile postgres and set
+  # ATHENAEUM_DATABASE_DRIVER=postgres plus ATHENAEUM_DATABASE_URL in .env.
+  postgres:
+    profiles: ["postgres"]
+    image: postgres:16-alpine
+    container_name: athenaeum-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: athenaeum
+      POSTGRES_PASSWORD: athenaeum
+      POSTGRES_DB: athenaeum
+    volumes:
+      - athenaeum-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U athenaeum -d athenaeum"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  athenaeum-data:
+  altcha-data:
+  athenaeum-postgres:

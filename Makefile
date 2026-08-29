@@ -1,0 +1,106 @@
+# Athenaeum - single-binary EPUB/PDF/audiobook library server.
+#
+# Common targets:
+#   make build         Build the frontend and compile the binary into bin/athenaeum
+#   make install       Install the binary and man pages (PREFIX=/usr/local)
+#   make uninstall     Remove the installed binary and man pages
+#   make man           (no-op; man pages are pre-written under man/)
+#   make clean         Remove build artifacts
+#
+# Honors the standard PREFIX and DESTDIR variables for packaging.
+
+SHELL := /bin/sh
+
+BIN     := athenaeum
+PKG     := ./...
+CMD     := ./cmd/athenaeum
+BINDIR  := bin
+BINPATH := $(BINDIR)/$(BIN)
+
+PREFIX      ?= /usr/local
+DESTDIR     ?=
+EXEC_PREFIX ?= $(PREFIX)
+BINPREFIX   ?= $(EXEC_PREFIX)/bin
+DATAROOTDIR ?= $(PREFIX)/share
+MANDIR      ?= $(DATAROOTDIR)/man
+MAN1DIR     ?= $(MANDIR)/man1
+
+INSTALL         ?= install
+INSTALL_PROGRAM ?= $(INSTALL) -m 0755
+INSTALL_DATA    ?= $(INSTALL) -m 0644
+INSTALL_DIR     ?= $(INSTALL) -d -m 0755
+
+GO ?= go
+
+# Version embedded into the binary, taken from web/package.json so the API and
+# UI report the same release. Falls back to "dev" when it cannot be read.
+VERSION := $(shell sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' web/package.json 2>/dev/null | head -n1)
+ifeq ($(strip $(VERSION)),)
+VERSION := dev
+endif
+
+LDFLAGS := -s -w \
+	-X athenaeum/internal/version.Version=$(VERSION) \
+	-X athenaeum/internal/version.WebVersion=$(VERSION)
+
+MAN1 := man/athenaeum.1 man/athenaeum-users.1
+
+.DEFAULT_GOAL := build
+
+.PHONY: all build build-web build-go build-cross install install-bin install-man \
+	uninstall man clean help
+
+all: build
+
+## build: Build the frontend bundle and compile the single binary.
+build: build-web build-go
+
+## build-web: Build the production frontend embedded into the binary.
+build-web:
+	cd web && pnpm install && pnpm build
+
+## build-go: Compile the Go binary into bin/athenaeum (assumes frontend is built).
+build-go:
+	$(INSTALL_DIR) $(BINDIR)
+	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BINPATH) $(CMD)
+
+## build-cross: Cross-compile linux/darwin/windows amd64+arm64 into bin/.
+build-cross:
+	$(INSTALL_DIR) $(BINDIR)
+	@for pair in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do \
+		os=$${pair%/*}; arch=$${pair#*/}; \
+		out="$(BINDIR)/$(BIN)-$$os-$$arch"; \
+		if [ "$$os" = windows ]; then out="$$out.exe"; fi; \
+		echo "building $$out"; \
+		CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o "$$out" $(CMD) || exit 1; \
+	done
+
+## install: Install the binary and man pages under $(PREFIX).
+install: install-bin install-man
+
+## install-bin: Install the compiled binary to $(DESTDIR)$(BINPREFIX).
+install-bin: build-go
+	$(INSTALL_DIR) "$(DESTDIR)$(BINPREFIX)"
+	$(INSTALL_PROGRAM) $(BINPATH) "$(DESTDIR)$(BINPREFIX)/$(BIN)"
+
+## install-man: Install man pages to $(DESTDIR)$(MAN1DIR).
+install-man:
+	$(INSTALL_DIR) "$(DESTDIR)$(MAN1DIR)"
+	$(INSTALL_DATA) $(MAN1) "$(DESTDIR)$(MAN1DIR)/"
+
+## uninstall: Remove the installed binary and man pages.
+uninstall:
+	rm -f "$(DESTDIR)$(BINPREFIX)/$(BIN)"
+	rm -f "$(DESTDIR)$(MAN1DIR)/athenaeum.1" "$(DESTDIR)$(MAN1DIR)/athenaeum-users.1"
+
+## man: Man pages are maintained by hand under man/; this target is a no-op.
+man:
+	@echo "man pages live in man/ (athenaeum.1, athenaeum-users.1)"
+
+## clean: Remove build artifacts.
+clean:
+	rm -rf $(BINDIR) web/dist
+
+## help: List available targets.
+help:
+	@grep -E '^## ' $(MAKEFILE_LIST) | sed -e 's/^## //' | awk -F': ' '{printf "  %-14s %s\n", $$1, $$2}'

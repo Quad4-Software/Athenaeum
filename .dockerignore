@@ -1,0 +1,13 @@
+.git
+.github
+bin
+data
+library
+web/node_modules
+web/dist
+**/*.test
+**/*_test.go
+.cursor
+terminals
+*.md
+!README.md

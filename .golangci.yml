@@ -1,0 +1,66 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: vendor
+
+linters:
+  default: none
+  enable:
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - unconvert
+    - durationcheck
+    - bidichk
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+        - shadow
+    staticcheck:
+      checks:
+        - all
+        - "-ST1000"
+        - "-ST1003"
+        - "-ST1020"
+        - "-ST1021"
+        - "-ST1022"
+        - "-QF1002"
+        - "-QF1003"
+        - "-QF1012"
+        - "-SA4003"
+        - "-SA6002"
+        - "-S1003"
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - vendor
+      - third_party
+      - builtin
+      - examples
+      - web
+      - tmp
+      - bin
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    paths:
+      - vendor
+      - web
+      - tmp
+      - bin
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

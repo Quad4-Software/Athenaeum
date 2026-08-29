@@ -1,0 +1,395 @@
+version: "3"
+
+vars:
+  BIN: bin/athenaeum
+  PKG: ./...
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  setup:
+    desc: Install all dependencies (Go modules + frontend + docs)
+    cmds:
+      - go mod download
+      - cd web && pnpm install
+      - cd docs && pnpm install
+
+  tools:install:
+    desc: Install optional DX binaries into ./bin (air, golangci-lint, govulncheck, deadcode, lefthook, git-cliff)
+    cmds:
+      - mkdir -p bin
+      - GOBIN="$(pwd)/bin" go install github.com/air-verse/air@latest
+      - GOBIN="$(pwd)/bin" go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+      - GOBIN="$(pwd)/bin" go install golang.org/x/vuln/cmd/govulncheck@latest
+      - GOBIN="$(pwd)/bin" go install golang.org/x/tools/cmd/deadcode@latest
+      - GOBIN="$(pwd)/bin" go install github.com/evilmartians/lefthook@latest
+      - |
+        if [ ! -x bin/git-cliff ]; then
+          ver=2.13.1
+          curl -fsSL "https://github.com/orhun/git-cliff/releases/download/v${ver}/git-cliff-${ver}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C bin --strip-components=1 "git-cliff-${ver}/git-cliff"
+          chmod +x bin/git-cliff
+        fi
+        echo "Add $(pwd)/bin to PATH, then run: task hooks:install"
+
+  doctor:
+    desc: Verify toolchain, optional tools, and free ports
+    cmds:
+      - bash scripts/doctor.sh
+
+  hooks:install:
+    desc: Install lefthook git hooks
+    cmds:
+      - |
+        export PATH="$(pwd)/bin:$PATH"
+        if ! command -v lefthook >/dev/null 2>&1; then
+          echo "lefthook missing; run task tools:install first"
+          exit 1
+        fi
+        lefthook install
+
+  dev:
+    desc: Run backend and frontend dev servers together
+    deps: [dev:web, dev:server]
+
+  dev:web:
+    desc: Run the Vite dev server (frontend)
+    dir: web
+    cmds:
+      - pnpm dev
+
+  dev:server:
+    desc: Run the Go server with live reload (air) or go run fallback
+    cmds:
+      - |
+        export PATH="$(pwd)/bin:$PATH"
+        if command -v air >/dev/null 2>&1; then
+          air -c .air.toml
+        else
+          echo "air not found; using go run (task tools:install for live reload)"
+          go run ./cmd/athenaeum --addr :8080 --library ./library --data ./data
+        fi
+
+  build:
+    desc: Build the frontend and compile the single binary
+    deps: [build:web]
+    cmds:
+      - mkdir -p bin
+      - |
+        WEB_VER=$(node -p "require('./web/package.json').version")
+        go build -trimpath -ldflags "-s -w -X athenaeum/internal/version.Version=${WEB_VER} -X athenaeum/internal/version.WebVersion=${WEB_VER}" -o {{.BIN}} ./cmd/athenaeum
+
+  build:web:
+    desc: Build the production frontend bundle (embedded into the binary)
+    dir: web
+    cmds:
+      - pnpm install
+      - pnpm build
+
+  run:
+    desc: Build and run the single binary
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} --addr :8080 --library ./library --data ./data
+
+  generate:
+    desc: Regenerate OpenAPI JSON and typed frontend API paths
+    cmds:
+      - go run ./cmd/genapi -root .
+
+  generate:check:
+    desc: Fail if generated OpenAPI/client is stale
+    cmds:
+      - go run ./cmd/genapi -root . -check
+
+  i18n:sync:
+    desc: Fill missing locale keys from en.json (and drop extras)
+    cmds:
+      - node scripts/i18n-sync.mjs
+
+  i18n:check:
+    desc: Fail if locale keys drift from en.json
+    cmds:
+      - node scripts/i18n-sync.mjs --check
+
+  changelog:
+    desc: Draft CHANGELOG from commits with git-cliff (prints to stdout)
+    cmds:
+      - |
+        export PATH="$(pwd)/bin:$PATH"
+        if ! command -v git-cliff >/dev/null 2>&1; then
+          echo "git-cliff missing; run task tools:install"
+          exit 1
+        fi
+        git-cliff --unreleased
+
+  reset:data:
+    desc: Wipe ./data directory
+    cmds:
+      - bash scripts/reset-data.sh
+
+  reset:demo:
+    desc: Wipe ./data and start demo-seeded server
+    cmds:
+      - bash scripts/reset-data.sh --demo
+
+  profile:
+    desc: Capture CPU profile from ATHENAEUM_PPROF (default 127.0.0.1:6060)
+    cmds:
+      - bash scripts/profile-cpu.sh
+
+  test:
+    desc: Run all tests (Go + frontend)
+    deps: [test:go, test:web]
+
+  test:go:
+    desc: Run Go tests
+    cmds:
+      - go test {{.PKG}}
+
+  test:web:
+    desc: Run frontend unit tests
+    dir: web
+    cmds:
+      - pnpm test:run
+
+  test:race:
+    desc: Run Go tests with the race detector
+    cmds:
+      - go test -race -count=1 {{.PKG}}
+
+  test:fuzz:
+    desc: Run Go fuzz targets (FUZZTIME=10s, SCOPE=./internal/...)
+    cmds:
+      - bash scripts/fuzz-all.sh
+
+  test:fuzz:long:
+    desc: Run Go fuzz targets for longer (FUZZTIME=1m)
+    cmds:
+      - FUZZTIME=1m bash scripts/fuzz-all.sh
+
+  test:property:
+    desc: Run Go property tests and frontend property suite
+    cmds:
+      - go test -count=1 -run 'Property|property' {{.PKG}}
+      - cd web && pnpm test:run src/lib/utils/property.test.ts
+
+  test:contract:
+    desc: Run OpenAPI/route/i18n/env contract and drift checks
+    cmds:
+      - go test -count=1 -run 'Contract|Drift|EnvExample' ./internal/server/ ./internal/config/
+      - cd web && pnpm test:run src/lib/i18n/locale-drift.test.ts
+      - task generate:check
+      - task i18n:check
+
+  test:e2e:
+    desc: Run Playwright UI/e2e tests (builds binary if needed)
+    deps: [build]
+    cmds:
+      - cd web && pnpm exec playwright install chromium
+      - cd web && pnpm test:e2e
+
+  test:coverage:
+    desc: Generate Go coverage profile and HTML report under ./coverage
+    cmds:
+      - bash scripts/coverage-go.sh
+
+  test:coverage:web:
+    desc: Generate frontend coverage (Vitest) under web/coverage
+    dir: web
+    cmds:
+      - pnpm test:coverage
+
+  test:bench:
+    desc: Run Go benchmarks
+    cmds:
+      - go test -mod=vendor -bench=. -benchmem -run=^$ ./internal/...
+
+  test:mutation:
+    desc: Run Go mutation testing with Gremlins (installs to ./bin if needed)
+    cmds:
+      - bash scripts/mutation-go.sh
+
+  test:mutation:web:
+    desc: Run frontend mutation testing with Stryker
+    dir: web
+    cmds:
+      - pnpm test:mutation
+
+  test:all:
+    desc: Unit, race, property, contract, short fuzz, and coverage
+    cmds:
+      - task test:go
+      - task test:web
+      - task test:race
+      - task test:property
+      - task test:contract
+      - FUZZTIME=5s task test:fuzz
+      - task test:coverage
+      - task test:coverage:web
+
+  test:lighthouse:
+    desc: Run Lighthouse CI against a production build (requires Chromium/Chrome)
+    cmds:
+      - bash scripts/lighthouse-test.sh
+
+  lint:
+    desc: Lint and format-check everything
+    deps: [lint:go, lint:web]
+
+  lint:go:
+    desc: gofmt check, go vet, and golangci-lint
+    cmds:
+      - |
+        unformatted=$(gofmt -l $(find . -name '*.go' -not -path './vendor/*' -not -path './tmp/*'))
+        if [ -n "$unformatted" ]; then
+          echo "gofmt needed on:"
+          echo "$unformatted"
+          exit 1
+        fi
+      - go vet {{.PKG}}
+      - |
+        export PATH="$(pwd)/bin:$PATH"
+        if command -v golangci-lint >/dev/null 2>&1; then
+          golangci-lint run ./...
+        else
+          echo "golangci-lint not installed; go vet only (task tools:install)"
+        fi
+
+  lint:web:
+    desc: eslint, prettier, and svelte-check
+    dir: web
+    cmds:
+      - pnpm lint
+      - pnpm format:check
+      - pnpm check
+
+  deadcode:
+    desc: Report unused Go code
+    cmds:
+      - bash scripts/deadcode.sh
+
+  knip:
+    desc: Report unused frontend dependencies
+    dir: web
+    cmds:
+      - pnpm knip
+
+  security:
+    desc: Run gosec, govulncheck, and pnpm audit
+    cmds:
+      - task security:gosec
+      - task security:vuln
+      - task security:audit
+
+  security:gosec:
+    desc: Run gosec static analysis on Go code
+    cmds:
+      - |
+        export PATH="$(pwd)/bin:$PATH"
+        if command -v gosec >/dev/null 2>&1; then
+          gosec -exclude-dir=web/node_modules -exclude-dir=vendor ./...
+        else
+          echo "gosec not in PATH; CI runs securego/gosec action"
+        fi
+
+  security:vuln:
+    desc: Run govulncheck
+    cmds:
+      - bash scripts/govulncheck.sh
+
+  security:audit:
+    desc: Run pnpm audit (production deps)
+    dir: web
+    cmds:
+      - pnpm audit --prod
+
+  fmt:
+    desc: Format all code
+    cmds:
+      - go fmt {{.PKG}}
+      - cd web && pnpm format
+
+  vendor:
+    desc: Vendor all Go dependencies
+    cmds:
+      - go mod tidy
+      - go mod vendor
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf bin web/dist tmp coverage web/coverage
+
+  fetch-samples:
+    desc: Generate sample books in ./library/samples (set FETCH_REMOTE=1 to try Gutenberg downloads)
+    cmds:
+      - bash scripts/fetch-samples.sh
+
+  demo:
+    desc: Run the server with a generated demo library (--demo)
+    cmds:
+      - go run ./cmd/athenaeum --addr :8080 --library ./library --data ./data --demo
+
+  build:demo:
+    desc: Build the offline web demo SPA into ./site (embedded under docs /demo on Pages)
+    dir: web
+    cmds:
+      - pnpm install
+      - pnpm build:demo
+
+  docs:setup:
+    desc: Install Docusaurus dependencies
+    dir: docs
+    cmds:
+      - pnpm install
+
+  docs:dev:
+    desc: Run the Docusaurus docs site locally
+    dir: docs
+    cmds:
+      - pnpm start
+
+  docs:build:
+    desc: Build the Docusaurus docs site into docs/build
+    dir: docs
+    cmds:
+      - pnpm install
+      - pnpm build
+
+  docs:serve:
+    desc: Serve the built docs site locally
+    dir: docs
+    cmds:
+      - pnpm serve
+
+  showcase:
+    desc: Build offline demo and capture Playwright screenshots into ./showcase
+    cmds:
+      - task build:demo
+      - cd web && pnpm exec playwright install chromium
+      - node scripts/showcase-screenshots.mjs
+
+  docker:build:
+    desc: Build the Docker image (athenaeum:local)
+    cmds:
+      - docker compose build
+
+  docker:up:
+    desc: Build and start Athenaeum in Docker (detached)
+    cmds:
+      - docker compose up -d --build
+
+  docker:down:
+    desc: Stop and remove the Docker container
+    cmds:
+      - docker compose down
+
+  docker:logs:
+    desc: Follow Docker container logs
+    cmds:
+      - docker compose logs -f athenaeum

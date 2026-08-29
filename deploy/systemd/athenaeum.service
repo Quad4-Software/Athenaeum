@@ -1,0 +1,33 @@
+[Unit]
+Description=Athenaeum media library server
+Documentation=https://github.com/search?q=athenaeum
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=athenaeum
+Group=athenaeum
+EnvironmentFile=-/etc/athenaeum/athenaeum.env
+WorkingDirectory=/var/lib/athenaeum
+ExecStart=/usr/local/bin/athenaeum
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/athenaeum
+CapabilityBoundingSet=
+AmbientCapabilities=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

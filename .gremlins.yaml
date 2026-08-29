@@ -1,0 +1,58 @@
+silent: false
+unleash:
+  integration: false
+  dry-run: false
+  workers: 0
+  test-cpu: 0
+  timeout-coefficient: 0
+  threshold:
+    efficacy: 70
+    mutant-coverage: 40
+  exclude-files:
+    - "^vendor/"
+    - "^cmd/"
+    - "^web/"
+    - "^scripts/"
+    - "^internal/assets/"
+    - "^internal/cli/"
+    - "^internal/config/"
+    - "^internal/demo/"
+    - "^internal/i18n/"
+    - "^internal/logging/"
+    - "^internal/models/"
+    - "^internal/opds/"
+    - "^internal/sandbox/"
+    - "^internal/server/"
+    - "^internal/storage/"
+    - "^internal/telemetry/"
+    - "^internal/term/"
+    - "^internal/version/"
+    - "^internal/library/(epub|pdf|audio|comic|scanner|metadata|hash|chapters|sidecar|xmlcompat|bench|maintenance|lookup)"
+    - "_test\\.go$"
+    - "_fuzz_test\\.go$"
+    - "_property_test\\.go$"
+    - "_oracle_test\\.go$"
+
+mutants:
+  arithmetic-base:
+    enabled: true
+  conditionals-boundary:
+    enabled: true
+  conditionals-negation:
+    enabled: true
+  increment-decrement:
+    enabled: true
+  invert-assignments:
+    enabled: false
+  invert-bitwise:
+    enabled: false
+  invert-bwassign:
+    enabled: false
+  invert-negatives:
+    enabled: true
+  invert-logical:
+    enabled: true
+  invert-loopctrl:
+    enabled: false
+  remove-self-assignments:
+    enabled: false

@@ -1,0 +1,119 @@
+# Coolify Docker Compose for Athenaeum.
+# https://coolify.io/docs/knowledge-base/docker/compose
+#
+# Assign a domain to athenaeum as http://your.domain:8080 (container port).
+# App defaults cover most ATHENAEUM_* settings. Add extras in Coolify's
+# Environment Variables UI (same names as .env.example).
+#
+# Optional profiles: altcha, kokoro, postgres (same as docker-compose.yml).
+# For postgres also set ATHENAEUM_DATABASE_DRIVER and ATHENAEUM_DATABASE_URL.
+
+services:
+  athenaeum:
+    build:
+      context: .
+      args:
+        VERSION: ${ATHENAEUM_VERSION:-0.1.0}
+    image: athenaeum:${ATHENAEUM_VERSION:-0.1.0}
+    restart: unless-stopped
+    environment:
+      # Proxy target for Coolify (container listens on 8080).
+      SERVICE_URL_ATHENAEUM_8080:
+      ATHENAEUM_ADDR: ":8080"
+      ATHENAEUM_DATA: /data
+      ATHENAEUM_LIBRARY: /library
+      ATHENAEUM_ADMIN_USER: ${ATHENAEUM_ADMIN_USER:-}
+      ATHENAEUM_ADMIN_PASS: ${ATHENAEUM_ADMIN_PASS:-}
+      ATHENAEUM_DATABASE_DRIVER: ${ATHENAEUM_DATABASE_DRIVER:-sqlite}
+      ATHENAEUM_DATABASE_URL: ${ATHENAEUM_DATABASE_URL:-}
+      ATHENAEUM_SANDBOX: ${ATHENAEUM_SANDBOX:-try}
+      ATHENAEUM_SANDBOX_LANDLOCK: ${ATHENAEUM_SANDBOX_LANDLOCK:-true}
+      ATHENAEUM_SANDBOX_SECCOMP: ${ATHENAEUM_SANDBOX_SECCOMP:-true}
+      ATHENAEUM_ALTCHA_ENABLED: ${ATHENAEUM_ALTCHA_ENABLED:-false}
+      ATHENAEUM_ALTCHA_MODE: ${ATHENAEUM_ALTCHA_MODE:-builtin}
+      ATHENAEUM_SENTRY_DSN: ${ATHENAEUM_SENTRY_DSN:-}
+      ATHENAEUM_SENTRY_ENVIRONMENT: ${ATHENAEUM_SENTRY_ENVIRONMENT:-production}
+    volumes:
+      - athenaeum-data:/data
+      - athenaeum-library:/library
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Optional Sentinel. Enable profile altcha, then set Athenaeum to sentinel
+  # mode and point challenge/verify URLs at http://altcha:8080/...
+  altcha:
+    profiles: ["altcha"]
+    image: ghcr.io/altcha-org/sentinel:${ALTCHA_SENTINEL_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      LICENSE_KEY: ${ALTCHA_LICENSE_KEY:-}
+      SECRET_SEED: ${SERVICE_PASSWORD_ALTCHA}
+    volumes:
+      - altcha-data:/data
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/.live"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  kokoro:
+    profiles: ["kokoro"]
+    build: ./docker/kokoro
+    image: athenaeum-kokoro:${ATHENAEUM_VERSION:-0.1.0}
+    restart: unless-stopped
+    environment:
+      KOKORO_LANG: ${KOKORO_LANG:-a}
+      KOKORO_DEFAULT_VOICE: ${KOKORO_DEFAULT_VOICE:-af_heart}
+      KOKORO_API_KEY: ${KOKORO_API_KEY:-}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8880/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  postgres:
+    profiles: ["postgres"]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: athenaeum
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES:-athenaeum}
+      POSTGRES_DB: athenaeum
+    volumes:
+      - athenaeum-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U athenaeum -d athenaeum"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  athenaeum-data:
+  athenaeum-library:
+  altcha-data:
+  athenaeum-postgres:

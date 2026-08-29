@@ -1,0 +1,29 @@
+:global(.pdf-page) {
+  position: relative;
+}
+:global(.pdf-text-layer) {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  user-select: text;
+  pointer-events: auto;
+}
+:global(.pdf-text-layer span) {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0 0;
+}
+:global(.pdf-text-layer span::selection) {
+  background: color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+:global(.pdf-text-layer mark.pdf-highlight-mark) {
+  background: color-mix(in srgb, #fde047 55%, transparent);
+  color: transparent;
+  border-radius: 2px;
+}

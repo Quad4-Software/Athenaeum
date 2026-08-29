@@ -1,0 +1,187 @@
+.TH ATHENAEUM 1 "June 2026" "Athenaeum" "User Commands"
+.SH NAME
+athenaeum \- single-binary EPUB, PDF and audiobook library server
+.SH SYNOPSIS
+.B athenaeum
+.RI [ flags ]
+.br
+.B athenaeum users
+.I command
+.RI [ flags "] [" args ]
+.SH DESCRIPTION
+.B Athenaeum
+is a fast, self-hosted EPUB, PDF and audiobook library server that ships as a
+single static binary with the web frontend embedded into the executable by
+default. Use
+.B \-\-web\-dir
+to serve a filesystem SPA build instead.
+Point it at a directory of media and it serves a web reader with full-text
+search, collections, optional multi-user authentication, an OPDS catalog feed,
+reading-progress sync and light/dark theming.
+.PP
+On startup
+.B athenaeum
+creates the data and library directories if they do not exist, opens (or
+creates) the SQLite database under the data directory, scans the library and
+serves HTTP on the configured address. On first visit an admin account can be
+created in the browser setup wizard, or bootstrapped with
+.B \-\-admin\-user
+and
+.BR \-\-admin\-pass .
+.SH OPTIONS
+Each flag has a corresponding environment variable; the flag takes precedence
+when both are set.
+.TP
+.BI \-\-addr " address"
+HTTP listen address.
+Environment:
+.BR ATHENAEUM_ADDR .
+Default:
+.BR :8080 .
+.TP
+.BI \-\-library " dir"
+Root directory scanned for books.
+Environment:
+.BR ATHENAEUM_LIBRARY .
+Default:
+.BR ./library .
+.TP
+.BI \-\-data " dir"
+Directory for the SQLite database and cover cache.
+Environment:
+.BR ATHENAEUM_DATA .
+Default:
+.BR ./data .
+.TP
+.BI \-\-web\-dir " dir"
+Serve the frontend from this directory instead of the assets embedded in the
+binary. The directory must contain
+.IR index.html
+(Vite production output). Empty uses the embedded build.
+Environment:
+.BR ATHENAEUM_WEB_DIR .
+.TP
+.BI \-\-admin\-user " name"
+Create an admin user with this username on startup, only when no users exist
+yet.
+Environment:
+.BR ATHENAEUM_ADMIN_USER .
+.TP
+.BI \-\-admin\-pass " password"
+Password for the bootstrap admin user. Requires
+.BR \-\-admin\-user
+and a minimum length of 8 characters.
+Environment:
+.BR ATHENAEUM_ADMIN_PASS .
+.TP
+.BI \-\-upload\-max\-bytes " n"
+Maximum upload size in bytes.
+Environment:
+.BR ATHENAEUM_UPLOAD_MAX_BYTES .
+Default:
+.BR 2147483648 " (2 GB)."
+.TP
+.BI \-\-scan\-workers " n"
+Parallel library index workers.
+Environment:
+.BR ATHENAEUM_SCAN_WORKERS .
+Default:
+.BR 2 .
+.TP
+.BI \-\-log\-level " level"
+Log verbosity:
+.BR debug ", " info ", " warn ", or " error .
+Environment:
+.BR ATHENAEUM_LOG_LEVEL .
+Default:
+.BR info .
+.TP
+.BI \-\-log\-file " path"
+Append logs to this file in addition to stderr.
+Environment:
+.BR ATHENAEUM_LOG_FILE .
+.TP
+.B \-\-debug
+Enable debug logging (shortcut for
+.BR \-\-log\-level=debug ).
+Environment:
+.BR ATHENAEUM_DEBUG .
+.TP
+.BI \-\-color " mode"
+CLI color mode:
+.BR auto ", " always ", or " never .
+Respects
+.B NO_COLOR
+and
+.BR FORCE_COLOR .
+Environment:
+.BR ATHENAEUM_COLOR .
+Default:
+.BR auto .
+.TP
+.B \-\-no\-color
+Disable ANSI color (same as
+.BR \-\-color=never ).
+Environment:
+.BR ATHENAEUM_NO_COLOR .
+.TP
+.BI \-\-sandbox " mode"
+Linux Landlock and seccomp-bpf sandbox:
+.BR off ", " try ", or " strict .
+.B try
+applies when the kernel supports it and continues on failure.
+.B strict
+fails startup if sandboxing cannot be applied.
+Environment:
+.BR ATHENAEUM_SANDBOX .
+Default:
+.BR off .
+.TP
+.B \-\-sandbox\-landlock
+Enable Landlock filesystem restrictions when sandbox is on.
+Environment:
+.BR ATHENAEUM_SANDBOX_LANDLOCK .
+Default:
+.BR true .
+.TP
+.B \-\-sandbox\-seccomp
+Enable seccomp-bpf dangerous-syscall denylist when sandbox is on.
+Environment:
+.BR ATHENAEUM_SANDBOX_SECCOMP .
+Default:
+.BR true .
+.SH SUBCOMMANDS
+.TP
+.B users
+Manage local user accounts in the database without starting the server. See
+.BR athenaeum-users (1).
+.SH FILES
+.TP
+.I {data}/athenaeum.db
+SQLite database (books, search index, users, collections, progress).
+.TP
+.I {data}/covers/
+Cached cover images extracted from library files.
+.TP
+.I {data}/uploads/
+In-progress resumable upload parts, removed once uploads complete.
+.TP
+.I {data}/i18n/
+Custom locale JSON files.
+.SH SUPPORTED FORMATS
+.BR .epub ", " .pdf ", " .mp3 ", " .m4b ", " .m4a ", " .ogg ", " .flac .
+.SH EXAMPLES
+.TP
+Serve a library on all interfaces:
+.B athenaeum \-\-addr :8080 \-\-library /path/to/books \-\-data ./data
+.TP
+Bootstrap an admin account on first run:
+.B athenaeum \-\-admin\-user admin \-\-admin\-pass 'your\-secure\-password'
+.SH SEE ALSO
+.BR athenaeum-users (1)
+.PP
+Project documentation: the bundled README and
+.B GET /api/docs
+(public JSON API reference).
+.SH LICENSE
+MIT.

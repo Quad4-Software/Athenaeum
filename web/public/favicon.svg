@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Athenaeum">
+  <rect width="32" height="32" rx="8" fill="#141418"/>
+  <path
+    fill="#e85d4c"
+    d="M9 8.5A1.5 1.5 0 0 1 10.5 7h11A1.5 1.5 0 0 1 23 8.5v15A1.5 1.5 0 0 1 21.5 25h-11A1.5 1.5 0 0 1 9 23.5v-15Z"
+  />
+  <path
+    fill="#141418"
+    d="M12 10h8v1.75H12V10Zm0 3.5h8V15H12v-1.5Zm0 3.5h5.5V18H12v-1Z"
+  />
+  <path
+    fill="#f5f5f7"
+    d="M10.5 7c-.55 0-1 .45-1 1v15c0 .55.45 1 1 1h11c.55 0 1-.45 1-1v-15c0-.55-.45-1-1-1h-11Zm0-1h11a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2Z"
+  />
+</svg>

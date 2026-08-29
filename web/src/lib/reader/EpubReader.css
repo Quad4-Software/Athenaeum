@@ -1,0 +1,80 @@
+:global(.epub-surface) {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+}
+
+:global(.epub-nav) {
+  position: absolute;
+  top: 0;
+  z-index: 10;
+  display: none;
+  height: 100%;
+  width: 3rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-subtle);
+}
+
+:global(.epub-nav:hover) {
+  background: var(--color-surface-hover);
+  color: var(--color-fg);
+}
+
+:global(.epub-nav--prev) {
+  left: 0;
+}
+
+:global(.epub-nav--next) {
+  right: 0;
+}
+
+@media (min-width: 768px) {
+  :global(.epub-nav) {
+    display: flex;
+    width: 4rem;
+  }
+}
+
+:global(.epub-stage) {
+  margin-left: auto;
+  margin-right: auto;
+  height: 100%;
+  width: 100%;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  :global(.epub-stage) {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+@media (min-width: 768px) {
+  :global(.epub-stage) {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+}
+
+:global(.epub-mount) {
+  height: 100%;
+  width: 100%;
+}
+
+:global(.epub-status) {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+:global(.epub-status--error) {
+  padding: 1.5rem;
+  text-align: center;
+}

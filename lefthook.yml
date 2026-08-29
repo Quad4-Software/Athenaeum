@@ -1,0 +1,42 @@
+# Lefthook: install with `task tools:install` then `lefthook install`.
+# Docs: https://lefthook.dev
+
+pre-commit:
+  parallel: true
+  commands:
+    go-fmt:
+      glob: "*.go"
+      exclude: "vendor/**"
+      run: |
+        unformatted=$(gofmt -l {staged_files})
+        if [ -n "$unformatted" ]; then
+          echo "gofmt needed:"
+          echo "$unformatted"
+          gofmt -w {staged_files}
+          git add {staged_files}
+        fi
+    go-vet:
+      glob: "*.go"
+      exclude: "vendor/**"
+      run: go vet ./...
+    web-lint:
+      root: web
+      glob: "*.{ts,js,svelte}"
+      run: pnpm exec eslint --max-warnings=0 {staged_files}
+    web-prettier:
+      root: web
+      glob: "*.{ts,js,svelte,css,json,md,yml,yaml}"
+      run: |
+        pnpm exec prettier --write {staged_files}
+        git add {staged_files}
+    i18n-check:
+      glob: "web/src/lib/i18n/locales/*.json"
+      run: node scripts/i18n-sync.mjs --check
+
+pre-push:
+  parallel: false
+  commands:
+    contract:
+      run: task test:contract
+    generate-check:
+      run: task generate:check

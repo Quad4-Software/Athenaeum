@@ -1,0 +1,49 @@
+{
+  "name": "Athenaeum Dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22",
+      "pnpmVersion": "latest"
+    },
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.26"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "svelte.svelte-vscode",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "EditorConfig.EditorConfig",
+        "golang.go",
+        "task.vscode-task"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "go.lintTool": "golangci-lint",
+        "go.lintOnSave": "package"
+      }
+    }
+  },
+  "forwardPorts": [8080, 5173, 6060],
+  "portsAttributes": {
+    "8080": { "label": "Athenaeum API", "onAutoForward": "notify" },
+    "5173": { "label": "Vite", "onAutoForward": "notify" },
+    "6060": { "label": "pprof", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "task tools:install && task setup && (command -v lefthook >/dev/null && lefthook install || true)",
+  "remoteUser": "vscode"
+}

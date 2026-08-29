@@ -1,0 +1,200 @@
+/**
+ * Athenaeum docs theme.
+ * Palettes mirror web/src/lib/brand/themes/default.ts (red primary on cool neutrals).
+ */
+
+@import '@fontsource/fraunces/500.css';
+@import '@fontsource/fraunces/600.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+:root {
+  --athena-red: #c43c2e;
+  --athena-red-hover: #a83226;
+  --athena-ink: #1c1c22;
+  --athena-paper: #f7f6f9;
+  --athena-mist: #ebe9f0;
+  --athena-muted: #5c5a66;
+
+  --ifm-color-primary: #c43c2e;
+  --ifm-color-primary-dark: #b03629;
+  --ifm-color-primary-darker: #a63227;
+  --ifm-color-primary-darkest: #892920;
+  --ifm-color-primary-light: #d04a3c;
+  --ifm-color-primary-lighter: #d45548;
+  --ifm-color-primary-lightest: #de6f64;
+
+  --ifm-background-color: var(--athena-paper);
+  --ifm-background-surface-color: #ffffff;
+  --ifm-navbar-background-color: rgba(247, 246, 249, 0.86);
+  --ifm-footer-background-color: #141418;
+  --ifm-hero-background-color: transparent;
+
+  --ifm-font-family-base: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --ifm-font-family-monospace: 'IBM Plex Mono', ui-monospace, monospace;
+  --ifm-heading-font-family: 'Fraunces', Georgia, serif;
+  --ifm-code-font-size: 90%;
+  --ifm-font-size-base: 16.5px;
+  --ifm-line-height-base: 1.65;
+  --ifm-heading-font-weight: 600;
+  --ifm-global-radius: 12px;
+  --ifm-button-border-radius: 10px;
+  --ifm-navbar-height: 4rem;
+  --ifm-navbar-shadow: 0 1px 0 rgb(28 28 34 / 0.06);
+  --ifm-toc-border-color: rgb(28 28 34 / 0.08);
+
+  --docusaurus-highlighted-code-line-bg: rgb(196 60 46 / 0.08);
+  --athena-hero-glow: radial-gradient(
+    90% 70% at 80% 10%,
+    rgb(196 60 46 / 0.16),
+    transparent 55%
+  );
+  --athena-grid: linear-gradient(
+      rgb(28 28 34 / 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgb(28 28 34 / 0.035) 1px, transparent 1px);
+}
+
+[data-theme='dark'] {
+  --athena-red: #e85d4c;
+  --athena-red-hover: #f07465;
+  --athena-ink: #f5f5f7;
+  --athena-paper: #121216;
+  --athena-mist: #1c1c22;
+  --athena-muted: #a8a6b3;
+
+  --ifm-color-primary: #e85d4c;
+  --ifm-color-primary-dark: #e44935;
+  --ifm-color-primary-darker: #e23f2a;
+  --ifm-color-primary-darkest: #c22f1d;
+  --ifm-color-primary-light: #ec7163;
+  --ifm-color-primary-lighter: #ee7b6e;
+  --ifm-color-primary-lightest: #f29a90;
+
+  --ifm-background-color: #121216;
+  --ifm-background-surface-color: #1a1a20;
+  --ifm-navbar-background-color: rgba(18, 18, 22, 0.88);
+  --ifm-footer-background-color: #0c0c10;
+  --ifm-navbar-shadow: 0 1px 0 rgb(255 255 255 / 0.05);
+  --ifm-toc-border-color: rgb(255 255 255 / 0.08);
+
+  --docusaurus-highlighted-code-line-bg: rgb(232 93 76 / 0.15);
+  --athena-hero-glow: radial-gradient(
+    90% 70% at 80% 10%,
+    rgb(232 93 76 / 0.22),
+    transparent 55%
+  );
+  --athena-grid: linear-gradient(
+      rgb(255 255 255 / 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.navbar {
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+.navbar__title {
+  font-family: var(--ifm-heading-font-family);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.navbar__logo {
+  height: 1.75rem;
+  margin-right: 0.55rem;
+}
+
+.footer {
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.footer__title {
+  font-family: var(--ifm-heading-font-family);
+}
+
+.theme-doc-markdown h1,
+.theme-doc-markdown h2,
+.theme-doc-markdown h3 {
+  letter-spacing: -0.02em;
+}
+
+.theme-doc-markdown table {
+  display: table;
+  width: 100%;
+  font-size: 0.92rem;
+}
+
+.theme-doc-markdown table thead tr {
+  background: var(--athena-mist);
+}
+
+.theme-doc-markdown table code {
+  white-space: nowrap;
+}
+
+.button.button--primary {
+  background: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 10px 24px -14px var(--ifm-color-primary);
+}
+
+.button.button--primary:hover {
+  background: var(--ifm-color-primary-dark);
+  border-color: var(--ifm-color-primary-dark);
+  color: #fff;
+}
+
+.button.button--secondary {
+  border-width: 1.5px;
+  font-weight: 600;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  background: color-mix(in srgb, var(--ifm-color-primary) 12%, transparent);
+  border-radius: 8px;
+}
+
+.pagination-nav__link {
+  border-radius: 12px;
+  border-color: var(--ifm-toc-border-color);
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--ifm-color-primary);
+}
+
+.breadcrumbs__link {
+  border-radius: 6px;
+}
+
+code {
+  border-radius: 6px;
+}
+
+.prism-code {
+  border-radius: 12px;
+}
+
+@media (max-width: 996px) {
+  .navbar__title {
+    font-size: 1.05rem;
+  }
+}

@@ -1,0 +1,38 @@
+# Athenaeum frontend workspace (pnpm 11+).
+# Security-sensitive settings live here, not in .npmrc (pnpm 11).
+packages:
+  - "."
+
+# Force patched transitive deps.
+overrides:
+  "@xmldom/xmldom": ">=0.8.13"
+  sharp: ">=0.35.0"
+
+# Supply-chain defaults aligned with pnpm 11 (explicit for clarity).
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: false
+blockExoticSubdeps: true
+strictDepBuilds: true
+strictPeerDependencies: true
+trustPolicy: no-downgrade
+verifyDepsBeforeRun: install
+pmOnFail: error
+
+# Packages whose publisher history trips trustPolicy on fresh resolve.
+# Review periodically. Prefer removing once maintainers stabilize ownership.
+trustPolicyExclude:
+  - chokidar@4.0.3
+  - semver@5.7.2
+  - semver@6.3.1
+  - "@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1"
+
+# Explicit allowlist for packages that may run install scripts.
+allowBuilds:
+  esbuild: true
+  "@sveltejs/vite-plugin-svelte": false
+  svelte-preprocess: false
+  core-js: false
+  es5-ext: false
+  # Browser Kokoro uses onnxruntime-web; node/gpu native builds are unused.
+  onnxruntime-node: false
+  sharp: false

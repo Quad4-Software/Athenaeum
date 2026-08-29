@@ -1,0 +1,67 @@
+# Binaries
+/bin/
+/dist/
+athenaeum
+*.exe
+
+# Runtime data
+/data/
+/backups/
+.env
+*.db
+*.db-shm
+*.db-wal
+deploy/env/athenaeum.env
+
+# Go
+/vendor/modules.txt.bak
+
+# Node / frontend
+web/node_modules/
+web/.svelte-kit/
+web/coverage/
+*.tsbuildinfo
+
+# Built frontend bundle embedded into the Go binary (task build:web).
+# Static icons and robots.txt under dist/ stay tracked as fallbacks.
+internal/assets/dist/assets/
+internal/assets/dist/pdfjs/
+internal/assets/dist/sw.js
+internal/assets/dist/workbox-*.js
+internal/assets/dist/manifest.webmanifest
+internal/assets/dist/**/*.br
+internal/assets/dist/**/*.gz
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+*.log
+
+# Live reload / tooling
+/tmp/
+tmp/
+
+# Test / cache
+.cache/
+/coverage/
+.gremlins/
+testdata/fuzz/
+
+# Playwright / Lighthouse
+web/playwright-report/
+web/test-results/
+web/blob-report/
+web/.lighthouseci/
+web/reports/
+
+# Offline demo SPA build (task build:demo / embedded under docs Pages /demo)
+/site/
+
+# Docusaurus (also ignored via docs/.gitignore)
+/docs/node_modules/
+/docs/build/
+/docs/.docusaurus/
