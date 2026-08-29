@@ -150,7 +150,29 @@ Environment:
 .BR ATHENAEUM_SANDBOX_SECCOMP .
 Default:
 .BR true .
+.TP
+.B \-\-demo
+Seed a generated demo library with books, audiobooks, and covers.
+Environment:
+.BR ATHENAEUM_DEMO .
+.TP
+.B \-\-self\-check
+Verify that the binary can create and read/write the library and data
+directories, open the database, start HTTP, and answer
+.BR /api/health ,
+then exit. Temporary directories are used unless
+.B \-\-data
+/
+.B \-\-library
+are set. Also available as
+.B athenaeum self\-check
+or
+.BR athenaeum doctor .
 .SH SUBCOMMANDS
+.TP
+.B self-check
+Same as
+.BR \-\-self\-check .
 .TP
 .B users
 Manage local user accounts in the database without starting the server. See
@@ -174,6 +196,9 @@ Custom locale JSON files.
 .TP
 Serve a library on all interfaces:
 .B athenaeum \-\-addr :8080 \-\-library /path/to/books \-\-data ./data
+.TP
+Verify the binary can start and use its directories:
+.B athenaeum \-\-self\-check
 .TP
 Bootstrap an admin account on first run:
 .B athenaeum \-\-admin\-user admin \-\-admin\-pass 'your\-secure\-password'

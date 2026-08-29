@@ -94,8 +94,8 @@ func diskUsage(path string) (DiskUsage, bool) {
 	if err := syscall.Statfs(path, &st); err != nil {
 		return DiskUsage{}, false
 	}
-	total := statBlocksBytes(st.Blocks, st.Bsize)
-	avail := statBlocksBytes(st.Bavail, st.Bsize)
+	total := statBlocksBytes(st.Blocks, int64(st.Bsize))
+	avail := statBlocksBytes(st.Bavail, int64(st.Bsize))
 	used := total - avail
 	pct := 0.0
 	if total > 0 {
