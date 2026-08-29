@@ -11,11 +11,35 @@ light/dark theming.
 
 ## Quick start
 
-Requires Go 1.26+, Node 20+, pnpm 11+, and [Task](https://taskfile.dev).
+Requires Go 1.26+, Node 22+, and pnpm 11+. [Task](https://taskfile.dev) is
+optional. Make works for build and install. Raw `go` / `pnpm` commands work
+too.
+
+### Task
 
 ```sh
 task setup
 task build
+./bin/athenaeum --addr :8080 --library /path/to/books --data ./data
+```
+
+### Make
+
+```sh
+cd web && pnpm install && cd ..
+make build
+./bin/athenaeum --addr :8080 --library /path/to/books --data ./data
+```
+
+`make help` lists targets (`build`, `install`, `clean`, and so on).
+
+### Manual
+
+```sh
+go mod download
+cd web && pnpm install && pnpm build && cd ..
+mkdir -p bin
+go build -trimpath -o bin/athenaeum ./cmd/athenaeum
 ./bin/athenaeum --addr :8080 --library /path/to/books --data ./data
 ```
 
@@ -29,12 +53,6 @@ service units):
 Open http://localhost:8080. On first visit create an admin in the setup wizard,
 or pass --admin-user and --admin-pass on the CLI when no users exist yet.
 
-Demo library (no own media needed):
-
-```sh
-task demo
-```
-
 ## Documentation
 
 Docs are a Docusaurus site in [docs/](docs/) (content in [docs/docs/](docs/docs/)):
@@ -42,6 +60,11 @@ Docs are a Docusaurus site in [docs/](docs/) (content in [docs/docs/](docs/docs/
 ```sh
 task docs:dev      # http://localhost:3000
 task docs:build    # docs/build (GitHub Pages artifact)
+```
+
+```sh
+cd docs && pnpm install && pnpm start    # http://localhost:3000
+cd docs && pnpm install && pnpm build    # docs/build
 ```
 
 - [Features](docs/docs/features.md)
@@ -56,10 +79,6 @@ task docs:build    # docs/build (GitHub Pages artifact)
 - [Configuration](docs/docs/configuration.md)
 - [HTTP API](docs/docs/http-api.md)
 - [Project layout](docs/docs/project-layout.md)
-
-GitHub Pages deploys the docs site (offline demo at `/demo`) via
-`.github/workflows/pages.yml`. Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md).
-Security policy: [SECURITY.md](SECURITY.md).
 
 ## Changelog
 
