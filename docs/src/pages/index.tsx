@@ -19,7 +19,7 @@ function HomepageHeader() {
     <header className={styles.hero}>
       <div className={clsx('container', styles.heroInner)}>
         <div className={styles.heroCopy}>
-          <p className={styles.kicker}>Universal library tool</p>
+          <p className={styles.kicker}>Self-hosted library</p>
           <Heading as="h1" className={styles.title}>
             {siteConfig.title}
           </Heading>
@@ -38,7 +38,7 @@ function HomepageHeader() {
             </Link>
           </div>
           <ul className={styles.meta}>
-            <li>Tool and server, one codebase</li>
+            <li>Single binary or Docker</li>
             <li>EPUB, PDF, comics, audiobooks</li>
             <li>OPDS, PWA, optional multi-user</li>
           </ul>
@@ -63,7 +63,7 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title="Home"
-      description="Athenaeum is a universal library tool. Self-hosted catalog and reader today. Desktop and mobile apps on the roadmap.">
+      description="Self-hosted library for EPUB, PDF, comics, and audiobooks.">
       <HomepageHeader />
       <main>
         <HomepageFeatures />

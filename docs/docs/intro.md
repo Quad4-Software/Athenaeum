@@ -1,19 +1,15 @@
 ---
 sidebar_position: 1
 title: Introduction
-description: Athenaeum is a universal library tool with a self-hosted catalog and reader.
+description: Self-hosted library for EPUB, PDF, comics, and audiobooks.
 ---
 
 # Athenaeum
 
-Athenaeum is a universal library tool. Today it ships as a self-hosted catalog
-and reader for EPUB, PDF, comics, and audiobooks: one static binary or Docker
-image, point it at a folder of media, and you get a web reader, search, shelves,
-optional multi-user auth, and OPDS for e-reader apps.
-
-The longer aim is one place for the media people actually keep: books, papers,
-offline knowledge archives, feeds, and listening, runnable as a household server
-or as a local desktop and mobile app. See the [roadmap](/roadmap).
+Self-hosted library for EPUB, PDF, comics, and audiobooks. One binary or
+Docker image. Point it at a media folder for a web reader, search, shelves,
+optional multi-user auth, and OPDS. See the [roadmap](/roadmap) for apps and
+more formats.
 
 ## Good fit if you want
 

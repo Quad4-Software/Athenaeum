@@ -107,9 +107,8 @@ export default function HomepageFeatures(): ReactNode {
             What you get
           </Heading>
           <p className={styles.sectionLead}>
-            One tool for your shelves: browser readers, Kokoro narration, OPDS
-            for e-readers, and the usual self-host knobs. Run it as a household
-            server now. Installable apps are on the roadmap.
+            Browser readers, Kokoro narration, OPDS, and the usual self-host
+            knobs.
           </p>
         </div>
         <div className="row">

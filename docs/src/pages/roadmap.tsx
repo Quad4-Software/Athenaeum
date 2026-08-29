@@ -202,19 +202,15 @@ export default function RoadmapPage(): ReactNode {
   return (
     <Layout
       title="Roadmap"
-      description="Athenaeum roadmap: a universal library tool. Server today. Desktop and mobile apps, papers, ZIM, feeds, peer sharing, and opt-in local-first AI next.">
+      description="Planned Athenaeum work: apps, papers, ZIM, feeds, peer sharing, and opt-in local-first AI.">
       <header className={styles.hero}>
         <div className={clsx('container', styles.heroInner)}>
-          <p className={styles.kicker}>Universal library</p>
+          <p className={styles.kicker}>Project direction</p>
           <Heading as="h1" className={styles.title}>
             Roadmap
           </Heading>
           <p className={styles.lead}>
-            Athenaeum is a library tool, not only a server. Today it is a
-            self-hosted catalog and reader. The work below widens what it holds
-            (papers, ZIM, feeds), how you run it (desktop and mobile apps), and
-            how households share without a cloud middleman. Order can shift.
-            Nothing here has a ship date.
+            What we intend to build next. Order can shift. No ship dates.
           </p>
           <ul className={styles.meta}>
             <li>No promised release dates</li>
@@ -408,9 +404,8 @@ export default function RoadmapPage(): ReactNode {
               What ships today
             </Heading>
             <p className={styles.ctaText}>
-              A self-hosted library tool for EPUB, PDF (including paper PDFs),
-              comics, audiobooks, Kokoro narration, OPDS, and multi-user auth.
-              The roadmap is how it grows into a fuller universal library.
+              EPUB, PDF, comics, audiobooks, Kokoro narration, OPDS, and
+              multi-user auth ship today.
             </p>
             <div className={styles.actions}>
               <Link

@@ -13,6 +13,10 @@ build. It can pick a listen IP from host interfaces, set library and data
 paths, write `/etc/athenaeum/athenaeum.env`, and install a service unit.
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/Quad4-Software/Athenaeum/master/install.sh | bash
+
+curl -fsSL -o install.sh https://raw.githubusercontent.com/Quad4-Software/Athenaeum/master/install.sh
+chmod +x install.sh
 ./install.sh                  # interactive
 ./install.sh --dry-run        # print actions only
 ./install.sh --method docker --port 8080 --library /media/books -y
@@ -53,16 +57,35 @@ Shared environment example: `deploy/env/athenaeum.env.example`.
 ## Docker
 
 Published images are multi-arch on GHCR
-(`ghcr.io/<owner>/athenaeum`): `linux/amd64` and `linux/arm64`. Release binaries
-also cover `armv6`, `armv7`, and `riscv64` (and BSD) outside the container.
+(`ghcr.io/quad4-software/athenaeum`): `linux/amd64` and `linux/arm64`.
+`latest` publishes on every push to `master`. Version tags publish on `v*`
+releases. Release binaries also cover `armv6`, `armv7`, and `riscv64` (and BSD)
+outside the container.
+
+### docker run
+
+```sh
+docker run -d --name athenaeum \
+  -p 8080:8080 \
+  -v athenaeum-data:/data \
+  -v /path/to/books:/library \
+  ghcr.io/quad4-software/athenaeum:latest
+```
+
+### Compose
 
 Copy .env.example to .env and set optional bootstrap credentials. Point
 ATHENAEUM_LIBRARY_HOST_PATH at your media folder (default: ./library).
 
 ```sh
+git clone https://github.com/Quad4-Software/Athenaeum.git
+cd Athenaeum
 cp .env.example .env
-docker compose up -d --build
+docker compose up -d
 ```
+
+`docker compose up -d` pulls GHCR by default. Use `docker compose up -d --build`
+for a local image.
 
 Open http://localhost:8080 (or the host port from ATHENAEUM_PUBLISH_PORT). The
 container always uses /data for the database and /library for the initial scan

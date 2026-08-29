@@ -1,9 +1,5 @@
 # TODO
 
-Vision: Athenaeum is a universal library tool (not only a server). Server and
-catalog today. Desktop/mobile apps, broader formats, feeds, peer sharing, and
-opt-in local-first AI next.
-
 - Podcasts support and transcriptions via Whisper or similar
 - RSS reader and aggregator, and FreshRSS support
 - Audiobookshelf support for podcasts or audiobooks

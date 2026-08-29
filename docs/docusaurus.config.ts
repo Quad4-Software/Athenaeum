@@ -15,8 +15,7 @@ const demoHref = 'pathname:///demo/';
 
 const config: Config = {
   title: 'Athenaeum',
-  tagline:
-    'A universal library tool. Self-hosted catalog and reader for EPUB, PDF, comics, and audiobooks. Server today. Desktop and mobile apps next.',
+  tagline: 'Self-hosted library for EPUB, PDF, comics, and audiobooks.',
   favicon: 'img/favicon.svg',
 
   future: {

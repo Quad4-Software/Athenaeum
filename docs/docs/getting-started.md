@@ -6,24 +6,53 @@ description: Run Athenaeum with Docker, a release binary, the installer, or a so
 
 # Getting started
 
-Pick a run path below. Most self-hosters use Docker or a release binary.
+Pick a run path below. Most self-hosters use Docker or the installer.
 Building from source is for development.
 
-## Docker
-
-Copy `.env.example` to `.env`, set your books folder, then start Compose:
+## Installer
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/Quad4-Software/Athenaeum/master/install.sh | bash
+```
+
+Or download and run it interactively:
+
+```sh
+curl -fsSL -o install.sh https://raw.githubusercontent.com/Quad4-Software/Athenaeum/master/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+Non-interactive examples and flags are in [Deploying](./deploying).
+
+## Docker (GHCR)
+
+```sh
+docker run -d --name athenaeum \
+  -p 8080:8080 \
+  -v athenaeum-data:/data \
+  -v /path/to/books:/library \
+  ghcr.io/quad4-software/athenaeum:latest
+```
+
+`latest` tracks `master`. Pin a release with a `v*` tag.
+
+## Docker Compose
+
+```sh
+git clone https://github.com/Quad4-Software/Athenaeum.git
+cd Athenaeum
 cp .env.example .env
-# set ATHENAEUM_LIBRARY_HOST_PATH to your media folder (default ./library)
-docker compose up -d --build
+# set ATHENAEUM_LIBRARY_HOST_PATH to your media folder
+docker compose up -d
 ```
 
 Open http://localhost:8080 (or the port in `ATHENAEUM_PUBLISH_PORT`).
 
-The container stores data under `/data` and scans `/library` on first boot. Add
-more library mounts in Settings after login. Full Compose options, profiles
-(Postgres, Kokoro, ALTCHA), and Coolify notes are in [Deploying](./deploying).
+`docker compose up -d` pulls `ghcr.io/quad4-software/athenaeum:latest`.
+Use `docker compose up -d --build` to build locally. Full Compose options,
+profiles (Postgres, Kokoro, ALTCHA), and Coolify notes are in
+[Deploying](./deploying).
 
 ## Release binary
 
@@ -36,16 +65,6 @@ chmod +x athenaeum
 
 Linux (amd64/arm64/armv6/armv7/riscv64), macOS, Windows, FreeBSD, OpenBSD, and
 NetBSD builds are published on release tags. Multi-arch images also go to GHCR.
-
-## Installer
-
-Interactive install (binary, Docker, or source, plus optional service units):
-
-```sh
-./install.sh
-```
-
-Non-interactive examples and flags are in [Deploying](./deploying).
 
 ## First login
 
@@ -75,6 +94,11 @@ changes (plus periodic auto-scan). Remote `s3://` mounts are not filesystem-watc
 ## Build from source
 
 Needs Go 1.26+, Node 22+, and pnpm 11+. [Task](https://taskfile.dev) is optional.
+
+```sh
+git clone https://github.com/Quad4-Software/Athenaeum.git
+cd Athenaeum
+```
 
 ### Make
 
