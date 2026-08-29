@@ -299,13 +299,15 @@ describe("persistEpubDisplayPrefs", () => {
 
 describe("loadInitialEpubDisplayPrefs", () => {
   it("returns defaults without storage", () => {
-    expect(loadInitialEpubDisplayPrefs(null, {
-      font: "f",
-      theme: "t",
-      line: "l",
-      margin: "m",
-      spread: "s",
-    })).toEqual({
+    expect(
+      loadInitialEpubDisplayPrefs(null, {
+        font: "f",
+        theme: "t",
+        line: "l",
+        margin: "m",
+        spread: "s",
+      }),
+    ).toEqual({
       fontPct: 100,
       theme: "light",
       lineHeight: 1.6,
@@ -340,12 +342,15 @@ describe("loadInitialEpubDisplayPrefs", () => {
 describe("applyEpubThemeOverrides", () => {
   it("sets color background line-height and margins", () => {
     const override = vi.fn();
-    applyEpubThemeOverrides({ override }, {
-      fg: "#111",
-      bg: "#eee",
-      lineHeight: 1.7,
-      marginPx: 20,
-    });
+    applyEpubThemeOverrides(
+      { override },
+      {
+        fg: "#111",
+        bg: "#eee",
+        lineHeight: 1.7,
+        marginPx: 20,
+      },
+    );
     expect(override).toHaveBeenCalledWith("color", "#111");
     expect(override).toHaveBeenCalledWith("background", "#eee");
     expect(override).toHaveBeenCalledWith("line-height", "1.7");
@@ -555,12 +560,9 @@ describe("loadAndPaintEpubHighlights", () => {
   it("no-ops without annotations and swallows load errors", async () => {
     await expect(loadAndPaintEpubHighlights(undefined, async () => [])).resolves.toBeUndefined();
     await expect(
-      loadAndPaintEpubHighlights(
-        { add: vi.fn() },
-        async () => {
-          throw new Error("fail");
-        },
-      ),
+      loadAndPaintEpubHighlights({ add: vi.fn() }, async () => {
+        throw new Error("fail");
+      }),
     ).resolves.toBeUndefined();
   });
 });

@@ -25,12 +25,7 @@
 </script>
 
 <div class="epub-surface">
-  <button
-    type="button"
-    class="epub-nav epub-nav--prev"
-    aria-label="Previous page"
-    onclick={onPrev}
-  >
+  <button type="button" class="epub-nav epub-nav--prev" aria-label="Previous page" onclick={onPrev}>
     <ChevronLeft size={24} />
   </button>
 
@@ -43,12 +38,7 @@
     ></div>
   </div>
 
-  <button
-    type="button"
-    class="epub-nav epub-nav--next"
-    aria-label="Next page"
-    onclick={onNext}
-  >
+  <button type="button" class="epub-nav epub-nav--next" aria-label="Next page" onclick={onNext}>
     <ChevronRight size={24} />
   </button>
 

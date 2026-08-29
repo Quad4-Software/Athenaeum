@@ -105,7 +105,7 @@ Workflows live under .github/workflows/ (actions pinned to full commit SHAs):
 | -------- | ------- | ------------ |
 | ci.yml | push / PR / manual | Lint (gofmt, golangci-lint, eslint, prettier, svelte-check), Go tests, fuzz, coverage gate, cross-compile (Linux/macOS/Windows/BSD/armv6/armv7/riscv64), `--self-check` on native + QEMU arches, Vitest + coverage, govulncheck, pnpm audit, gosec, CodeQL, multi-arch Docker + container self-check, Lighthouse, Playwright, generate check |
 | codeql.yml | push / PR / weekly / manual | CodeQL for Go and JavaScript/TypeScript |
-| release.yml | v* tags / manual | Multi-arch single binaries + GitHub Release (SBOM + license report), multi-arch image to GHCR (`linux/amd64`, `arm64`, `arm/v7`, `arm/v6`, `riscv64`) |
+| release.yml | v* tags / manual | Multi-arch single binaries + GitHub Release (SBOM + license report), multi-arch image to GHCR (`linux/amd64`, `arm64`) |
 | pages.yml | push (docs/web) / manual | Docs site + offline demo -> GitHub Pages |
 
 Default GITHUB_TOKEN permissions are read-only. Jobs elevate only what they

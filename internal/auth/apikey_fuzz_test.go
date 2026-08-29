@@ -12,6 +12,9 @@ func FuzzHashAPIKey(f *testing.F) {
 	f.Add(strings.Repeat("k", 256))
 
 	f.Fuzz(func(t *testing.T, key string) {
+		if len(key) > 64*1024 {
+			key = key[:64*1024]
+		}
 		h1 := HashAPIKey(key)
 		h2 := HashAPIKey(key)
 		if h1 != h2 {

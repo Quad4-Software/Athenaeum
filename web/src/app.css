@@ -115,7 +115,8 @@
   --font-sans:
     "Source Sans 3 Variable", "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, Helvetica, Arial, sans-serif;
-  --font-display: "Fraunces Variable", Fraunces, "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-display:
+    "Fraunces Variable", Fraunces, "Source Serif 4", Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
   --animate-fade-in: fade-in 200ms ease-out both;

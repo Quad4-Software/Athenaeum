@@ -95,7 +95,9 @@
 </script>
 
 <section class="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6">
-  <h1 class="font-display text-3xl font-semibold tracking-tight text-fg">{i18n.t("collections.title")}</h1>
+  <h1 class="font-display text-3xl font-semibold tracking-tight text-fg">
+    {i18n.t("collections.title")}
+  </h1>
   <p class="mt-1 text-sm text-muted">{i18n.t("collections.subtitle")}</p>
 
   <form class="mt-6 flex gap-2" onsubmit={create}>
@@ -195,9 +197,7 @@
             class="flex h-full w-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-bg-elevated/50 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
             onclick={() => open(c.id)}
           >
-            <div
-              class="flex aspect-[4/3] items-end bg-gradient-to-br from-surface-hover to-bg p-3"
-            >
+            <div class="flex aspect-[4/3] items-end bg-gradient-to-br from-surface-hover to-bg p-3">
               <span
                 class="rounded-full bg-bg/80 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-subtle ring-1 ring-border"
               >

@@ -194,10 +194,7 @@ export function scheduleEpubLocationsGenerate(run: () => void): void {
   }
 }
 
-export function epubLoadErrorMessage(
-  message: string | undefined,
-  fallback: string,
-): string {
+export function epubLoadErrorMessage(message: string | undefined, fallback: string): string {
   return message?.trim() || fallback;
 }
 
@@ -289,14 +286,7 @@ export function paintEpubHighlight(
   id: number,
   color = "yellow",
 ): void {
-  annotations.add(
-    "highlight",
-    cfi,
-    {},
-    () => undefined,
-    `hl-${id}`,
-    epubHighlightStyles(color),
-  );
+  annotations.add("highlight", cfi, {}, () => undefined, `hl-${id}`, epubHighlightStyles(color));
 }
 
 /** Preload adjacent spine sections around the current index. */
@@ -478,10 +468,7 @@ export function errorMessage(e: unknown): string {
 }
 
 /** Resolve select value to a font id, or null when selection is blocked. */
-export function epubFontIdFromSelect(
-  event: Event,
-  hasCustomFont: boolean,
-): string | null {
+export function epubFontIdFromSelect(event: Event, hasCustomFont: boolean): string | null {
   const value = (event.currentTarget as HTMLSelectElement).value;
   if (!canSelectEpubFont(value, hasCustomFont)) return null;
   return value;
@@ -495,9 +482,6 @@ export function epubNarrationParagraphs(
   return paragraphsFrom(gatherEpubNarrateContents(getContents));
 }
 
-export function mergeRemoteEpubPrefs(
-  current: EpubDisplayPrefs,
-  remote: unknown,
-): EpubDisplayPrefs {
+export function mergeRemoteEpubPrefs(current: EpubDisplayPrefs, remote: unknown): EpubDisplayPrefs {
   return mergeEpubReaderPrefs(current, (remote ?? {}) as Record<string, unknown>);
 }

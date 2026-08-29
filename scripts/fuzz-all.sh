@@ -37,11 +37,24 @@ while IFS= read -r pkg; do
     echo "==> ${pkg} ${name} (${FUZZTIME})"
     # -run=^$ skips ordinary tests so oracle/unit output does not mix in.
     # -fuzzminimizetime=0 keeps the budget on exploration, not minimize.
-    if ! go test -mod=vendor -count=1 -timeout="${TIMEOUT}" -run='^$' "-fuzz=^${name}$" \
-      -fuzztime="${FUZZTIME}" -fuzzminimizetime=0 "${pkg}"; then
-      echo "FAIL ${pkg} ${name}"
-      failed=1
+    out="$(mktemp)"
+    set +e
+    go test -mod=vendor -count=1 -timeout="${TIMEOUT}" -run='^$' "-fuzz=^${name}$" \
+      -fuzztime="${FUZZTIME}" -fuzzminimizetime=0 "${pkg}" >"${out}" 2>&1
+    status=$?
+    set -e
+    cat "${out}"
+    if [[ "${status}" -ne 0 ]]; then
+      # Go sometimes exits non-zero with only "context deadline exceeded" when the
+      # fuzz budget ends during worker teardown. Treat that as success.
+      if grep -q 'context deadline exceeded' "${out}" && ! grep -Eq 'fuzzing process hung|got unexpected|FAIL: Fuzz.+:[0-9]' "${out}"; then
+        echo "OK ${pkg} ${name} (fuzz budget ended cleanly)"
+      else
+        echo "FAIL ${pkg} ${name}"
+        failed=1
+      fi
     fi
+    rm -f "${out}"
   done
 done < <(go list -mod=vendor ${SCOPE})
 

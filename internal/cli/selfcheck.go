@@ -198,7 +198,7 @@ func probeDir(dir, label string) error {
 	if err := os.WriteFile(probe, payload, 0o600); err != nil {
 		return fmt.Errorf("%s write: %w", label, err)
 	}
-	got, err := os.ReadFile(probe)
+	got, err := os.ReadFile(probe) // #nosec G304 -- probe is under a directory this function just created
 	if err != nil {
 		return fmt.Errorf("%s read: %w", label, err)
 	}
@@ -215,7 +215,7 @@ func waitHealthy(url string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	var last error
 	for time.Now().Before(deadline) {
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // #nosec G107 -- url is constructed as http://127.0.0.1:<port>/api/health
 		if err == nil {
 			_ = resp.Body.Close()
 			if resp.StatusCode == http.StatusOK {

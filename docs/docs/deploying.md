@@ -53,9 +53,8 @@ Shared environment example: `deploy/env/athenaeum.env.example`.
 ## Docker
 
 Published images are multi-arch on GHCR
-(`ghcr.io/<owner>/athenaeum`): `linux/amd64`, `linux/arm64`, `linux/arm/v7`,
-`linux/arm/v6`, and `linux/riscv64`. Release tags push `latest`, semver, and
-`sha-*` tags.
+(`ghcr.io/<owner>/athenaeum`): `linux/amd64` and `linux/arm64`. Release binaries
+also cover `armv6`, `armv7`, and `riscv64` (and BSD) outside the container.
 
 Copy .env.example to .env and set optional bootstrap credentials. Point
 ATHENAEUM_LIBRARY_HOST_PATH at your media folder (default: ./library).

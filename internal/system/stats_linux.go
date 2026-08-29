@@ -94,8 +94,10 @@ func diskUsage(path string) (DiskUsage, bool) {
 	if err := syscall.Statfs(path, &st); err != nil {
 		return DiskUsage{}, false
 	}
-	total := statBlocksBytes(st.Blocks, int64(st.Bsize))
-	avail := statBlocksBytes(st.Bavail, int64(st.Bsize))
+	// Bsize width differs by GOARCH (int32 on 32-bit, int64 on 64-bit).
+	bsize := int64(st.Bsize) //nolint:unconvert // Statfs_t.Bsize is arch-dependent
+	total := statBlocksBytes(st.Blocks, bsize)
+	avail := statBlocksBytes(st.Bavail, bsize)
 	used := total - avail
 	pct := 0.0
 	if total > 0 {

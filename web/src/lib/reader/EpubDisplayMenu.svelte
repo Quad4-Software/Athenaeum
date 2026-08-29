@@ -2,7 +2,11 @@
   import { Minus, Plus, Type } from "@lucide/svelte";
   import Popover from "$lib/components/Popover.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
-  import { BUILTIN_EPUB_FONTS, type EpubFontId, type StoredCustomFont } from "$lib/reader/epub-fonts";
+  import {
+    BUILTIN_EPUB_FONTS,
+    type EpubFontId,
+    type StoredCustomFont,
+  } from "$lib/reader/epub-fonts";
   import type { ReaderTheme } from "$lib/reader/epub-theme";
   import type { EpubSpreadMode } from "$lib/reader/epub-reader";
 
@@ -138,14 +142,7 @@
         <span>{i18n.t("reader.lineSpacing")}</span>
         <span class="tabular-nums">{lineHeight.toFixed(1)}</span>
       </span>
-      <input
-        type="range"
-        min="1.2"
-        max="2.2"
-        step="0.1"
-        bind:value={lineHeight}
-        class="w-full"
-      />
+      <input type="range" min="1.2" max="2.2" step="0.1" bind:value={lineHeight} class="w-full" />
     </label>
 
     <label class="block">

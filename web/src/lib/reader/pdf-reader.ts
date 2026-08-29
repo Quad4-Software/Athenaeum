@@ -44,8 +44,7 @@ export function pdfNextDisabled(spreadPage: number, total: number): boolean {
 
 /** Toolbar page indicator, e.g. "3–4 / 12" or "1 / ...". */
 export function pdfPageLabel(spreadPage: number, pagesPerView: number, total: number): string {
-  const range =
-    pagesPerView > 1 ? `–${Math.min(spreadPage + pagesPerView - 1, total)}` : "";
+  const range = pagesPerView > 1 ? `–${Math.min(spreadPage + pagesPerView - 1, total)}` : "";
   return `${spreadPage}${range} / ${total || "..."}`;
 }
 
@@ -114,7 +113,10 @@ export function pdfSlotWidth(
   gap = PDF_LAYOUT_GAP,
   minWidth = PDF_MIN_SLOT_WIDTH,
 ): number {
-  return Math.max((viewportWidth - pad - gap * Math.max(slots - 1, 0)) / Math.max(slots, 1), minWidth);
+  return Math.max(
+    (viewportWidth - pad - gap * Math.max(slots - 1, 0)) / Math.max(slots, 1),
+    minWidth,
+  );
 }
 
 /** Unscaled page fit factor before applying the user zoom multiplier. */

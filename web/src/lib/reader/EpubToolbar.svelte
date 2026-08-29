@@ -70,12 +70,7 @@
   class="flex items-center justify-between gap-1 border-b border-border bg-bg/80 px-2 py-1.5 backdrop-blur sm:px-3"
 >
   <div class="flex min-w-0 items-center gap-0.5 sm:gap-1">
-    <ReaderTools
-      {chapters}
-      {onChapterSelect}
-      {onSearch}
-      {onSearchSelect}
-    />
+    <ReaderTools {chapters} {onChapterSelect} {onSearch} {onSearchSelect} />
   </div>
 
   <div class="flex shrink-0 items-center gap-0.5 sm:gap-1">

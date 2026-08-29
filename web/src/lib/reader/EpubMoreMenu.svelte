@@ -48,19 +48,11 @@
     >
       <Highlighter size={16} />
     </button>
-    <button
-      class="btn btn-ghost text-xs"
-      onclick={onToggleAnnotations}
-      aria-label="Annotations"
-    >
+    <button class="btn btn-ghost text-xs" onclick={onToggleAnnotations} aria-label="Annotations">
       <List size={16} />
     </button>
   {/if}
-  <button
-    class="btn btn-ghost text-xs"
-    aria-label="Keyboard shortcuts"
-    onclick={onOpenShortcuts}
-  >
+  <button class="btn btn-ghost text-xs" aria-label="Keyboard shortcuts" onclick={onOpenShortcuts}>
     ?
   </button>
 </div>

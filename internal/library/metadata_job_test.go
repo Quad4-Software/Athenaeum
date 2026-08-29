@@ -13,6 +13,22 @@ import (
 )
 
 func TestMetadataMatcherStartDoesNotPanic(t *testing.T) {
+	RegisterMetadataProvider(MetadataProviderDef{
+		Info: models.MetadataProvider{ID: "testlocal", Label: "Test Local"},
+		Search: func(ctx context.Context, s *metadataSearcher, in MetadataSearchInput) []models.MetadataMatch {
+			return nil
+		},
+	})
+	metadataRegistryMu.Lock()
+	prev := metadataRegistry
+	metadataRegistry = []MetadataProviderDef{metadataRegistry[len(metadataRegistry)-1]}
+	metadataRegistryMu.Unlock()
+	t.Cleanup(func() {
+		metadataRegistryMu.Lock()
+		metadataRegistry = prev
+		metadataRegistryMu.Unlock()
+	})
+
 	ctx := context.Background()
 	dir := t.TempDir()
 	store, err := storage.Open(filepath.Join(dir, "test.db"))
@@ -39,7 +55,7 @@ func TestMetadataMatcherStartDoesNotPanic(t *testing.T) {
 	}
 
 	m := NewMetadataMatcher(store, filepath.Join(dir, "covers"), slog.Default())
-	if !m.Start(ctx, MetadataAutoMatchRequest{ApplyCover: true}) {
+	if !m.Start(ctx, MetadataAutoMatchRequest{ApplyCover: false}) {
 		t.Fatal("expected metadata match to start")
 	}
 

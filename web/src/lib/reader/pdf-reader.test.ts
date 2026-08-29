@@ -131,9 +131,9 @@ describe("highlightsForPdfPage", () => {
 describe("pdfHighlightQuote", () => {
   it("prefers excerpt then embedded quote", () => {
     expect(pdfHighlightQuote({ location: "2", excerpt: " from excerpt " })).toBe("from excerpt");
-    expect(
-      pdfHighlightQuote({ location: JSON.stringify({ page: 2, quote: " embedded " }) }),
-    ).toBe("embedded");
+    expect(pdfHighlightQuote({ location: JSON.stringify({ page: 2, quote: " embedded " }) })).toBe(
+      "embedded",
+    );
     expect(pdfHighlightQuote({ location: "2" })).toBe("");
   });
 });

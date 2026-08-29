@@ -69,11 +69,7 @@
   );
   let playedPct = $derived(seekPlayedPercent(seekTime, audioPlayer.duration));
   let cachePill = $derived(
-    audioCachePill(
-      audioPlayer.usingOffline,
-      audioPlayer.cacheStatus.complete,
-      audioPlayer.online,
-    ),
+    audioCachePill(audioPlayer.usingOffline, audioPlayer.cacheStatus.complete, audioPlayer.online),
   );
   let trackItems = $derived(
     buildTrackMenuItems(audioPlayer.playlist, audioPlayer.trackIndex, (n) =>
@@ -81,11 +77,7 @@
     ),
   );
   let chapterItems = $derived(
-    buildChapterMenuItems(
-      audioPlayer.chapters,
-      audioPlayer.currentChapter?.index,
-      formatAudioTime,
-    ),
+    buildChapterMenuItems(audioPlayer.chapters, audioPlayer.currentChapter?.index, formatAudioTime),
   );
   let speedItems = $derived(buildSpeedMenuItems(AUDIO_SPEEDS, audioPlayer.rate));
 

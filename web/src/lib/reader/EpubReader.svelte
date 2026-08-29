@@ -190,7 +190,8 @@
     if (!bookId || !selectionCfi) return;
     try {
       const hl = await api.createHighlight(bookId, selectionCfi, selectionText);
-      if (rendition) paintEpubHighlight(rendition.annotations, hl.location, hl.id, hl.color || "yellow");
+      if (rendition)
+        paintEpubHighlight(rendition.annotations, hl.location, hl.id, hl.color || "yellow");
       toast.success("Highlight saved");
       selectionCfi = "";
       selectionText = "";
@@ -386,10 +387,18 @@
     applyFont(fontPct);
   });
 
-  function prev() { rendition?.prev(); }
-  function next() { rendition?.next(); }
-  function smallerFont() { fontPct = prevEpubFontPct(fontPct); }
-  function largerFont() { fontPct = nextEpubFontPct(fontPct); }
+  function prev() {
+    rendition?.prev();
+  }
+  function next() {
+    rendition?.next();
+  }
+  function smallerFont() {
+    fontPct = prevEpubFontPct(fontPct);
+  }
+  function largerFont() {
+    fontPct = nextEpubFontPct(fontPct);
+  }
 
   async function startNarration() {
     if (!rendition) return;
@@ -457,8 +466,8 @@
     onSearchSelect={(h: ReaderSearchHit) => jumpTo(h.location)}
     onSmallerFont={smallerFont}
     onLargerFont={largerFont}
-    onFontChange={onFontChange}
-    onFontUpload={onFontUpload}
+    {onFontChange}
+    {onFontUpload}
     onRemoveCustomFont={() => void removeCustomFont()}
     onSpreadMode={setSpreadMode}
     onNarrate={startNarration}

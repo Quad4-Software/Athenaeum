@@ -10,13 +10,19 @@
   }
 
   let { books }: Props = $props();
-  let items = $derived(books.filter((b) => (b.progressPercent ?? 0) > 0 && (b.progressPercent ?? 0) < 100).slice(0, 12));
+  let items = $derived(
+    books
+      .filter((b) => (b.progressPercent ?? 0) > 0 && (b.progressPercent ?? 0) < 100)
+      .slice(0, 12),
+  );
 </script>
 
 {#if items.length > 0}
   <section class="mb-8" aria-label={i18n.t("library.continueReading")}>
     <div class="mb-3 flex items-baseline justify-between gap-3">
-      <h2 class="font-display text-lg font-semibold text-fg">{i18n.t("library.continueReading")}</h2>
+      <h2 class="font-display text-lg font-semibold text-fg">
+        {i18n.t("library.continueReading")}
+      </h2>
     </div>
     <div class="continue-rail -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
       {#each items as book (book.id)}
@@ -26,7 +32,7 @@
           class="group w-[7.5rem] shrink-0 sm:w-36"
         >
           <div
-            class="relative overflow-hidden rounded-[var(--radius-card)] shadow-sm transition duration-150 group-hover:-translate-y-0.5"
+            class="relative aspect-[2/3] overflow-hidden rounded-[var(--radius-card)] shadow-sm transition duration-150 group-hover:-translate-y-0.5"
           >
             <Cover {book} />
             <BookCoverProgress percent={book.progressPercent ?? 0} />

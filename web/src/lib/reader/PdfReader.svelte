@@ -113,7 +113,10 @@
         total = d.numPages;
         autoFit = true;
         scale = 1;
-        page = clampPdfPage(untrack(() => initialPage), d.numPages);
+        page = clampPdfPage(
+          untrack(() => initialPage),
+          d.numPages,
+        );
         spreadPage = page;
         loading = false;
         void loadPdfChapters(d).then((items) => {
@@ -416,13 +419,7 @@
     onToggleAnnotations={() => (annotationsOpen = !annotationsOpen)}
   />
 
-  <PdfReaderSurface
-    {loading}
-    onPrev={prev}
-    onNext={next}
-    bind:viewport
-    bind:pagesRow
-  />
+  <PdfReaderSurface {loading} onPrev={prev} onNext={next} bind:viewport bind:pagesRow />
 
   {#if bookId}
     <ReaderAnnotations

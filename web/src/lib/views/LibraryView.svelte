@@ -59,9 +59,7 @@
   });
 
   let countLabel = $derived(
-    library.total > 0
-      ? i18n.t("library.bookCount", { count: library.total })
-      : "",
+    library.total > 0 ? i18n.t("library.bookCount", { count: library.total }) : "",
   );
 
   let progressLabel = $derived.by(() => {
@@ -71,7 +69,9 @@
   });
 
   let showContinueRail = $derived(
-    !library.hasActiveFilters && !library.search && library.books.some((b) => (b.progressPercent ?? 0) > 0),
+    !library.hasActiveFilters &&
+      !library.search &&
+      library.books.some((b) => (b.progressPercent ?? 0) > 0),
   );
 
   function toggleSelectMode() {

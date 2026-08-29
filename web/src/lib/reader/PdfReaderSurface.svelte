@@ -9,13 +9,7 @@
     pagesRow?: HTMLDivElement;
   }
 
-  let {
-    loading,
-    onPrev,
-    onNext,
-    viewport = $bindable(),
-    pagesRow = $bindable(),
-  }: Props = $props();
+  let { loading, onPrev, onNext, viewport = $bindable(), pagesRow = $bindable() }: Props = $props();
 </script>
 
 <div

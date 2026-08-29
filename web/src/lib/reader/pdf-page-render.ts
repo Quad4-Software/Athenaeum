@@ -30,10 +30,7 @@ export function bindPdfTextLayerEvents(
 }
 
 /** Build a canvas + text-layer page wrapper for rendering. */
-export function createPdfPageWrap(
-  pageNum: number,
-  onCapture: PdfSelectionCapture,
-): HTMLDivElement {
+export function createPdfPageWrap(pageNum: number, onCapture: PdfSelectionCapture): HTMLDivElement {
   const wrap = document.createElement("div");
   wrap.className = "pdf-page relative h-fit shadow-[var(--shadow)]";
   wrap.dataset.page = String(pageNum);
