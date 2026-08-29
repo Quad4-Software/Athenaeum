@@ -80,3 +80,18 @@ func TestEncodeCoverBuffer(t *testing.T) {
 		t.Fatalf("expected PNG header, got %x", b[:4])
 	}
 }
+
+func TestWriteCoverPNG(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "covers", "book.png")
+	if err := demo.WriteCoverPNG(path, "Title", "Author"); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data) < 100 || data[0] != 0x89 {
+		t.Fatalf("bad png: %d bytes", len(data))
+	}
+}

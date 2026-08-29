@@ -173,3 +173,168 @@ func TestReadPasswordFromEnv(t *testing.T) {
 		t.Fatalf("pass=%q err=%v", pass, err)
 	}
 }
+
+func TestRunUsersHelpAndUnknown(t *testing.T) {
+	out := captureStdout(t, func() {
+		if err := RunUsers(nil); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(out, "Manage local user accounts") {
+		t.Fatalf("help missing: %q", out)
+	}
+	if !strings.Contains(out, binaryName()) {
+		t.Fatalf("binary name missing: %q", out)
+	}
+
+	out = captureStdout(t, func() {
+		if err := RunUsers([]string{"help"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(out, "Commands:") {
+		t.Fatalf("help command: %q", out)
+	}
+
+	if err := RunUsers([]string{"nope"}); err == nil {
+		t.Fatal("expected unknown command error")
+	}
+}
+
+func TestRunUsersCRUD(t *testing.T) {
+	_, dir := testCLIStore(t)
+
+	if err := RunUsers([]string{"add", "--data", dir, "--password", "longpassword1", "eve"}); err != nil {
+		t.Fatal(err)
+	}
+	out := captureStdout(t, func() {
+		if err := RunUsers([]string{"ls", "--data", dir}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(out, "eve") {
+		t.Fatalf("list: %q", out)
+	}
+	out = captureStdout(t, func() {
+		if err := RunUsers([]string{"show", "--data", dir, "eve"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(out, "username:    eve") {
+		t.Fatalf("show: %q", out)
+	}
+	if err := RunUsers([]string{"rename", "--data", dir, "eve", "eve2"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := RunUsers([]string{"set-permissions", "--data", dir, "--set", "read,edit_metadata", "eve2"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := RunUsers([]string{"add", "--data", dir, "--password", "longpassword9", "--admin", "boss"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := RunUsers([]string{"set-admin", "--data", dir, "--admin", "eve2"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := RunUsers([]string{"set-admin", "--data", dir, "--no-admin", "eve2"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := RunUsers([]string{"delete", "--data", dir, "--force", "eve2"}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRunUsersResetPasswordPiped(t *testing.T) {
+	_, dir := testCLIStore(t)
+	if err := usersAdd([]string{"--data", dir, "--password", "longpassword1", "piper"}); err != nil {
+		t.Fatal(err)
+	}
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := os.Stdin
+	os.Stdin = r
+	t.Cleanup(func() { os.Stdin = old })
+	if _, err := w.Write([]byte("pipedpassword1\n")); err != nil {
+		t.Fatal(err)
+	}
+	_ = w.Close()
+
+	t.Setenv("ATHENAEUM_PASSWORD", "")
+	if err := RunUsers([]string{"reset-password", "--data", dir, "piper"}); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err := storage.Open(filepath.Join(dir, brand.DBFilename))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	_, hash, err := store.GetUserByUsername(context.Background(), "piper")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !auth.CheckPassword(hash, "pipedpassword1") {
+		t.Fatal("piped password not applied")
+	}
+}
+
+func TestUsersSetPermissionsErrors(t *testing.T) {
+	_, dir := testCLIStore(t)
+	if err := usersAdd([]string{"--data", dir, "--password", "longpassword1", "--admin", "admin1"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := usersAdd([]string{"--data", dir, "--password", "longpassword2", "member1"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := usersSetPermissions([]string{"--data", dir, "member1"}); err == nil {
+		t.Fatal("expected --set required")
+	}
+	if err := usersSetPermissions([]string{"--data", dir, "--set", "nope", "member1"}); err == nil {
+		t.Fatal("expected invalid permissions")
+	}
+	if err := usersSetPermissions([]string{"--data", dir, "--set", "read", "admin1"}); err == nil {
+		t.Fatal("expected admin rejection")
+	}
+}
+
+func TestApplyUsersColorAndHelpers(t *testing.T) {
+	applyUsersColor([]string{"--no-color"})
+	applyUsersColor([]string{"--color", "never"})
+	applyUsersColor([]string{"--color=always"})
+	t.Setenv("ATHENAEUM_NO_COLOR", "1")
+	applyUsersColor([]string{"--color", "always"})
+
+	var buf bytes.Buffer
+	printUsersHelp(&buf)
+	if !strings.Contains(buf.String(), "Usage:") {
+		t.Fatalf("help: %q", buf.String())
+	}
+	buf.Reset()
+	printCmd(&buf, "list", "List users")
+	if !strings.Contains(buf.String(), "list") {
+		t.Fatalf("printCmd: %q", buf.String())
+	}
+
+	got := splitCSV(" a, b ,,c ")
+	if len(got) != 3 || got[0] != "a" || got[2] != "c" {
+		t.Fatalf("splitCSV = %#v", got)
+	}
+	if len(splitCSV("")) != 0 {
+		t.Fatal("empty csv")
+	}
+	if binaryName() != "athenaeum" {
+		t.Fatalf("binaryName = %q", binaryName())
+	}
+
+	t.Setenv("ATHENAEUM_PASSWORD_MIN_LENGTH", "10")
+	t.Setenv("ATHENAEUM_PASSWORD_LONG_LENGTH", "14")
+	t.Setenv("ATHENAEUM_PASSWORD_MIN_KINDS", "2")
+	t.Setenv("ATHENAEUM_PASSWORD_REQUIRE_LOWER", "1")
+	configurePasswordPolicyFromEnv()
+	t.Cleanup(func() { auth.SetPasswordPolicy(auth.DefaultPasswordPolicy()) })
+	if err := auth.ValidatePassword("short"); err == nil {
+		t.Fatal("expected short password rejection after policy")
+	}
+}

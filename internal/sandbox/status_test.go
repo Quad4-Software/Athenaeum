@@ -99,3 +99,30 @@ func TestApplyOff(t *testing.T) {
 		t.Fatalf("want off components: %+v", st)
 	}
 }
+
+func TestStatusAnnounceAndPrintModes(t *testing.T) {
+	term.Apply(term.ModeAlways)
+	defer term.Apply(term.ModeNever)
+
+	st := sandbox.Status{
+		Mode:     sandbox.ModeTry,
+		Landlock: sandbox.Component{State: sandbox.StateDisabled, Detail: "toggle off"},
+		Seccomp:  sandbox.Component{State: sandbox.StateUnsupported, Detail: "platform"},
+	}
+	st.Announce()
+
+	var buf bytes.Buffer
+	st.Print(&buf)
+	if !strings.Contains(buf.String(), "mode=") {
+		t.Fatalf("print: %q", buf.String())
+	}
+
+	st.Mode = sandbox.ModeOff
+	st.Landlock = sandbox.Component{State: sandbox.StateOff}
+	st.Seccomp = sandbox.Component{State: sandbox.StateOff, Err: "n/a"}
+	buf.Reset()
+	st.Print(&buf)
+	if !strings.Contains(buf.String(), "landlock=") {
+		t.Fatalf("off print: %q", buf.String())
+	}
+}

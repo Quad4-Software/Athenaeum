@@ -120,6 +120,19 @@ func TestParseCHAPFrameDirect(t *testing.T) {
 	}
 }
 
+func TestChapterItoa(t *testing.T) {
+	cases := map[int]string{0: "0", 1: "1", 10: "10", 99: "99", 1234: "1234"}
+	for n, want := range cases {
+		if got := chapterItoa(n); got != want {
+			t.Errorf("chapterItoa(%d)=%q want %q", n, got, want)
+		}
+	}
+	marks := toModelChapters([]chapterMark{{title: " ", startMS: 0}, {title: "", startMS: 1000}})
+	if len(marks) != 2 || marks[0].Title != "Chapter 1" || marks[1].Title != "Chapter 2" {
+		t.Fatalf("marks=%+v", marks)
+	}
+}
+
 func TestParseID3Chapters(t *testing.T) {
 	path := writeTestID3WithChapters(t)
 	ch := parseID3Chapters(path)

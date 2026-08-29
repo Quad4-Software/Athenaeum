@@ -146,6 +146,64 @@ func TestPdfUnescapeLiteral(t *testing.T) {
 	}
 }
 
+func TestDecodePDFHexString(t *testing.T) {
+	if decodePDFHexString("ab") != "" {
+		t.Fatal("too short")
+	}
+	// UTF-16BE with BOM: "Hi"
+	bom := "FEFF00480069"
+	if got := decodePDFHexString(bom); got != "Hi" {
+		t.Fatalf("bom=%q", got)
+	}
+	// UTF-16BE without BOM: "Hi" as 00 48 00 69
+	utf16 := "00480069"
+	if got := decodePDFHexString(utf16); got != "Hi" {
+		t.Fatalf("utf16=%q", got)
+	}
+	// Latin1 with spaces/odd length trim
+	if got := decodePDFHexString("48 69 6"); got != "Hi" {
+		t.Fatalf("latin=%q", got)
+	}
+}
+
+func TestPDFHexLooksUTF16(t *testing.T) {
+	if pdfHexLooksUTF16([]byte{0, 'A'}) {
+		t.Fatal("too few pairs")
+	}
+	if !pdfHexLooksUTF16([]byte{0, 'H', 0, 'i'}) {
+		t.Fatal("expected utf16")
+	}
+	if pdfHexLooksUTF16([]byte{'H', 'i', 'J', 'K'}) {
+		t.Fatal("latin should not look utf16")
+	}
+}
+
+func TestDecodeUTF16BE(t *testing.T) {
+	if decodeUTF16BE([]byte{0}) != "" {
+		t.Fatal("short")
+	}
+	if got := decodeUTF16BE([]byte{0, 'A', 0, 'B'}); got != "AB" {
+		t.Fatalf("got=%q", got)
+	}
+}
+
+func TestApplyPDFInfoHex(t *testing.T) {
+	var meta pdfMeta
+	applyPDFInfoHex(&meta, [][][]byte{
+		{[]byte("/Title <00480069>"), []byte("Title"), []byte("00480069")},
+		{[]byte("/Author <0041006E>"), []byte("Author"), []byte("0041006E")},
+		{[]byte("short"), []byte("X")},
+	})
+	if meta.Title != "Hi" || meta.Author != "An" {
+		t.Fatalf("meta=%+v", meta)
+	}
+	pdf := []byte("%PDF-1.4\ntrailer\n3 0 obj<</Title <FEFF004D00610072>/Author <0041006E>>>endobj\n%%EOF")
+	info := pdfInfoFromPDF(pdf)
+	if info.Title == "" && info.Author == "" {
+		t.Fatal("expected hex info from pdfInfoFromPDF")
+	}
+}
+
 func TestExtractPDFCoverPrefersFirstPageOverLargerLaterPage(t *testing.T) {
 	path := "/home/user1/Documents/book/007.pdf"
 	if _, err := os.Stat(path); err != nil {

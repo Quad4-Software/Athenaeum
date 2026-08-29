@@ -3,6 +3,8 @@ package altcha_test
 import (
 	"encoding/base64"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
@@ -122,5 +124,66 @@ func TestPersistsHMACSecret(t *testing.T) {
 	payload := base64.StdEncoding.EncodeToString(raw)
 	if err := svc2.VerifyPayload(t.Context(), "login", payload); err != nil {
 		t.Fatalf("verify with persisted secret: %v", err)
+	}
+}
+
+func TestVerifySentinelHTTPtest(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/verify/signature" {
+			http.NotFound(w, r)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"verified": true})
+	}))
+	defer srv.Close()
+
+	svc, err := altcha.New(config.Config{
+		DataDir:            t.TempDir(),
+		AltchaEnabled:      true,
+		AltchaMode:         "sentinel",
+		AltchaSentinelURL:  srv.URL,
+		AltchaAPIKeySecret: "sentinel-secret",
+		AltchaProtect:      "login",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if svc.Mode() != altcha.ModeSentinel {
+		t.Fatalf("mode=%v", svc.Mode())
+	}
+	if err := svc.VerifyPayload(t.Context(), "login", "payload-token"); err != nil {
+		t.Fatalf("verify: %v", err)
+	}
+
+	fail := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{"verified": false, "reason": "bad"})
+	}))
+	defer fail.Close()
+	svcFail, err := altcha.New(config.Config{
+		DataDir:          t.TempDir(),
+		AltchaEnabled:    true,
+		AltchaMode:       "sentinel",
+		AltchaVerifyURL:  fail.URL,
+		AltchaProtect:    "login",
+		AltchaHMACSecret: "fallback-secret",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svcFail.VerifyPayload(t.Context(), "login", "payload-token"); err != altcha.ErrInvalidPayload {
+		t.Fatalf("err=%v", err)
+	}
+
+	svcMissing, err := altcha.New(config.Config{
+		DataDir:       t.TempDir(),
+		AltchaEnabled: true,
+		AltchaMode:    "sentinel",
+		AltchaProtect: "login",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svcMissing.VerifyPayload(t.Context(), "login", "x"); err == nil {
+		t.Fatal("expected missing verify URL error")
 	}
 }

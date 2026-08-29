@@ -23,6 +23,8 @@ func TestCleanSeriesName(t *testing.T) {
 		{"Cyber-Reports-2019", "Cyber Reports"},
 		{"Badge of Honor", "Badge of Honor"},
 		{"Jack Ryan/John Clark", "Jack Ryan/John Clark"},
+		{"Foo__Bar Series", "Foo Bar Series"},
+		{"Alpha   Beta", "Alpha Beta"},
 	}
 	for _, tc := range tests {
 		if got := CleanSeriesName(tc.in); got != tc.want {

@@ -95,6 +95,34 @@ func TestMountLabel(t *testing.T) {
 	}
 }
 
+func TestLocalFSMkdirAllAndRootLabel(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	fs, err := Open(Config{Backend: BackendLocal, Path: root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fs.RootLabel() == "" {
+		t.Fatal("empty RootLabel")
+	}
+	ctx := context.Background()
+	if err := fs.MkdirAll(ctx, "nested/dir"); err != nil {
+		t.Fatal(err)
+	}
+	info, err := fs.Stat(ctx, "nested/dir")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.IsDir {
+		t.Fatal("expected directory")
+	}
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+	if err := fs.MkdirAll(canceled, "x"); err == nil {
+		t.Fatal("expected canceled context error")
+	}
+}
+
 func TestMaterialize(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
