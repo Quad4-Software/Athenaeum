@@ -4,6 +4,8 @@
   import { library } from "$lib/stores/library.svelte";
   import { ui } from "$lib/stores/ui.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
+  import { runCommand } from "$lib/commands/registry";
+  import type { CommandId } from "$lib/commands/types";
 
   type TabId = "library" | "continue" | "collections" | "browse" | "settings";
 
@@ -46,26 +48,12 @@
     };
   });
 
-  function closeNav() {
-    if (ui.mobileNavOpen) ui.closeMobileNav();
-  }
-
-  function goLibrary() {
-    closeNav();
-    library.clearFilters();
-    router.navigate("/");
-  }
-
-  function goContinue() {
-    closeNav();
-    library.setInProgress(true);
-    router.navigate("/");
-  }
-
-  function goCollections() {
-    closeNav();
-    router.navigate("/collections");
-  }
+  const tabCommands: Partial<Record<TabId, CommandId>> = {
+    library: "nav.library",
+    continue: "nav.continue",
+    collections: "nav.collections",
+    settings: "nav.settings",
+  };
 
   function goBrowse(event: MouseEvent) {
     if (ui.mobileNavOpen) {
@@ -75,17 +63,13 @@
     ui.openMobileNav(event.currentTarget as HTMLElement);
   }
 
-  function goSettings() {
-    closeNav();
-    router.navigate("/settings/library");
-  }
-
   function onTab(id: TabId, event: MouseEvent) {
-    if (id === "library") goLibrary();
-    else if (id === "continue") goContinue();
-    else if (id === "collections") goCollections();
-    else if (id === "browse") goBrowse(event);
-    else goSettings();
+    if (id === "browse") {
+      goBrowse(event);
+      return;
+    }
+    const command = tabCommands[id];
+    if (command) void runCommand(command);
   }
 </script>
 

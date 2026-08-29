@@ -1,60 +1,65 @@
 <script lang="ts">
-  import { Search, X } from "@lucide/svelte";
-  import { library } from "$lib/stores/library.svelte";
+  import { Search } from "@lucide/svelte";
+  import { commandPalette } from "$lib/stores/commandPalette.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
 
-  let inputEl = $state<HTMLInputElement | null>(null);
-  let value = $derived(library.search);
-
-  function update(next: string) {
-    library.setSearch(next);
-  }
-
-  function onWindowKeydown(event: KeyboardEvent) {
-    if (event.defaultPrevented || event.altKey) return;
-    const meta = event.metaKey || event.ctrlKey;
-    if (!meta || event.key.toLowerCase() !== "k") return;
-    event.preventDefault();
-    inputEl?.focus();
-    inputEl?.select();
+  function openPalette() {
+    commandPalette.show();
   }
 </script>
 
-<svelte:window onkeydown={onWindowKeydown} />
-
-<div class="relative w-full max-w-md">
-  <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-subtle">
-    <Search size={16} />
+<button
+  type="button"
+  class="search-trigger"
+  aria-keyshortcuts="Control+K Meta+K"
+  aria-label={i18n.t("commands.paletteTitle")}
+  onclick={openPalette}
+>
+  <Search size={16} class="shrink-0 text-subtle" />
+  <span class="min-w-0 flex-1 truncate text-left text-sm text-subtle">
+    {i18n.t("commands.palettePlaceholder")}
   </span>
-  <input
-    bind:this={inputEl}
-    type="search"
-    placeholder={i18n.t("search.placeholder")}
-    aria-keyshortcuts="Control+K Meta+K"
-    aria-label={i18n.t("search.placeholder")}
-    {value}
-    oninput={(e) => update(e.currentTarget.value)}
-    class="input h-10 w-full pl-9 {value ? 'pr-9' : 'pr-14'}"
-  />
-  {#if value}
-    <button
-      type="button"
-      aria-label={i18n.t("search.clear")}
-      class="absolute inset-y-0 right-2 flex items-center text-subtle hover:text-fg"
-      onclick={() => update("")}
-    >
-      <X size={16} />
-    </button>
-  {:else}
-    <kbd
-      class="pointer-events-none absolute inset-y-0 right-2 hidden items-center sm:flex"
-      aria-hidden="true"
-    >
-      <span
-        class="self-center rounded border border-border bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-subtle"
-      >
-        {i18n.t("search.shortcut")}
-      </span>
-    </kbd>
-  {/if}
-</div>
+  <kbd class="search-kbd" aria-hidden="true">{i18n.t("search.shortcut")}</kbd>
+</button>
+
+<style>
+  .search-trigger {
+    display: flex;
+    width: 100%;
+    max-width: 28rem;
+    align-items: center;
+    gap: 0.6rem;
+    height: 2.5rem;
+    border-radius: 0.55rem;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    padding: 0 0.65rem 0 0.85rem;
+    color: inherit;
+    cursor: pointer;
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease;
+  }
+
+  .search-trigger:hover {
+    border-color: var(--border-strong);
+    background: var(--surface);
+  }
+
+  .search-kbd {
+    display: none;
+    border-radius: 0.3rem;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    padding: 0.12rem 0.4rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--fg-subtle);
+  }
+
+  @media (min-width: 640px) {
+    .search-kbd {
+      display: inline-flex;
+    }
+  }
+</style>

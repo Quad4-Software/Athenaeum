@@ -16,6 +16,8 @@
   import PwaUpdateBanner from "$lib/components/PwaUpdateBanner.svelte";
   import AudioMiniPlayer from "$lib/components/AudioMiniPlayer.svelte";
   import NarratorBar from "$lib/components/NarratorBar.svelte";
+  import CommandPalette from "$lib/components/CommandPalette.svelte";
+  import { handleShellKeydown } from "$lib/commands/dispatch";
   import BottomNav from "$lib/components/BottomNav.svelte";
   import { audioPlayer } from "$lib/stores/audioPlayer.svelte";
   import { narrator } from "$lib/stores/narrator.svelte";
@@ -174,7 +176,12 @@
   });
 </script>
 
-<svelte:window onkeydown={onMobileNavKeydown} />
+<svelte:window
+  onkeydown={(e) => {
+    onMobileNavKeydown(e);
+    handleShellKeydown(e);
+  }}
+/>
 
 <svelte:boundary onerror={onCrash}>
   {#if route.name === "reader"}
@@ -339,6 +346,7 @@
 
   <ConfirmDialogHost />
   <ToastHost />
+  <CommandPalette />
 
   {#snippet failed(_error, reset)}
     <ErrorView

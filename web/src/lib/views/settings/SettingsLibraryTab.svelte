@@ -23,6 +23,7 @@
   import { ApiError } from "$lib/api/client";
   import { formatBytes } from "$lib/utils/format";
   import type { LibraryS3Input, SidebarSectionId } from "$lib/api/types";
+  import KeybindingsSettings from "$lib/components/KeybindingsSettings.svelte";
   import { scan } from "$lib/stores/scan.svelte";
 
   type BackendKind = "local" | "s3";
@@ -708,4 +709,6 @@
       </div>
     {/if}
   </div>
+
+  <KeybindingsSettings />
 </div>
