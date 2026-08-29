@@ -1,76 +1,94 @@
 import type {ReactNode} from 'react';
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
+import {
+  BookOpen,
+  FolderSearch,
+  Package,
+  Shield,
+  Smartphone,
+  Volume2,
+  type LucideIcon,
+} from 'lucide-react';
 
 import styles from './styles.module.css';
 
 type FeatureItem = {
   title: string;
   description: ReactNode;
+  Icon: LucideIcon;
 };
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'One binary',
+    title: 'Easy to run',
+    Icon: Package,
     description: (
       <>
-        Go server plus embedded Svelte UI. No CDN, no Node at runtime. Optional
-        <code> --web-dir</code> if you prefer serving a built SPA from disk.
+        One static binary or a Docker Compose file. Point it at your books
+        folder and open the web UI. No Node at runtime.
       </>
     ),
   },
   {
-    title: 'Readers that feel native',
+    title: 'Read in the browser',
+    Icon: BookOpen,
     description: (
       <>
-        EPUB and PDF in the browser, audiobooks with range streaming, comics
-        with dual-page and RTL modes, plus optional EPUB narration.
+        EPUB, PDF, MOBI/AZW/AZW3, comics (CBZ/CBR), and audiobooks play in the
+        browser. Multi-file audiobook folders merge into one book.
       </>
     ),
   },
   {
-    title: 'Built for real libraries',
+    title: 'Narration with Kokoro',
+    Icon: Volume2,
     description: (
       <>
-        Concurrent scanning, SQLite FTS5 search, shelves, progress, OPDS for
-        e-readers, PWA install, and optional multi-user auth with guests and
-        OIDC.
+        Listen to EPUBs with in-browser Kokoro TTS, or use your browser voice.
+        An optional Kokoro sidecar is available for server-side narration.
       </>
     ),
   },
   {
-    title: 'Formats that matter',
+    title: 'Search and shelves',
+    Icon: FolderSearch,
     description: (
       <>
-        EPUB, PDF, MOBI/AZW/AZW3 in-browser, KFX download, CBZ/CBR comics, and
-        multi-file audiobook folders merged automatically.
+        Full-text search, manual and smart shelves, continue reading, tags, and
+        ratings. Progress stays per user when auth is on.
       </>
     ),
   },
   {
-    title: 'Catalogs and sync',
+    title: 'Works with e-readers',
+    Icon: Smartphone,
     description: (
       <>
-        OPDS 1.2 and OPDS 2 for e-reader apps, KOSync progress sync, share
-        links, and optional send-to-Kindle over SMTP.
+        OPDS catalogs for KOReader and similar apps, KOSync progress sync, share
+        links, and optional send-to-Kindle over email.
       </>
     ),
   },
   {
-    title: 'Ops-ready self-hosting',
+    title: 'Household and ops',
+    Icon: Shield,
     description: (
       <>
-        Docker and host installers, Prometheus metrics, backup/restore,
-        sandboxing, and release binaries across Linux, macOS, Windows, and BSD.
+        Optional multi-user auth, guests, and SSO. Backups, metrics, sandboxing,
+        and release binaries for Linux, macOS, Windows, and BSD.
       </>
     ),
   },
 ];
 
-function Feature({title, description}: FeatureItem) {
+function Feature({title, description, Icon}: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
       <div className={styles.card}>
+        <div className={styles.cardIcon} aria-hidden="true">
+          <Icon size={22} strokeWidth={1.75} />
+        </div>
         <Heading as="h3" className={styles.cardTitle}>
           {title}
         </Heading>
@@ -86,11 +104,11 @@ export default function HomepageFeatures(): ReactNode {
       <div className="container">
         <div className={styles.sectionHead}>
           <Heading as="h2" className={styles.sectionTitle}>
-            Everything you need on one shelf
+            What you get
           </Heading>
           <p className={styles.sectionLead}>
-            Fast indexing, a clean reader, catalogs for e-readers, and the ops
-            knobs you need when you self-host.
+            A private library on your own machine: browser readers, Kokoro
+            narration, OPDS for e-readers, and the usual self-host knobs.
           </p>
         </div>
         <div className="row">

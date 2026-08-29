@@ -94,9 +94,9 @@ docker compose --profile postgres up -d --build
 - **altcha**: ALTCHA Sentinel backend (trial/license). Set Athenaeum to
   `ATHENAEUM_ALTCHA_MODE=sentinel` and point challenge/verify URLs at the
   Sentinel service. See ALTCHA docs.
-- **kokoro**: Optional Kokoro TTS sidecar (EPUB narration defaults to
-  in-browser Kokoro WASM/WebGPU; browser SpeechSynthesis also works). In
-  Settings -> Administration -> Narration (TTS) set base URL to
+- **kokoro**: Optional Kokoro TTS sidecar for server-side EPUB narration.
+  In-browser Kokoro (and browser SpeechSynthesis) work without this profile.
+  In Settings -> Administration -> Narration (TTS) set base URL to
   `http://kokoro:8880` (same Compose network) or `http://127.0.0.1:8880`
   from the host. First start downloads model weights and may take a few minutes.
 - **postgres**: Postgres 16 instead of SQLite. Also set in `.env`:

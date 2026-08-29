@@ -6,28 +6,29 @@ description: Athenaeum is a self-hosted EPUB, PDF, and audiobook library server.
 
 # Athenaeum
 
-A fast, self-hosted EPUB, PDF, and audiobook library that ships as a **single
-static binary**. Point it at a folder of media and you get a clean web reader
-with search, collections, optional multi-user auth, OPDS, and light/dark
-theming.
+Athenaeum is a self-hosted library for EPUB, PDF, comics, and audiobooks. It
+ships as a single static binary (or a Docker image). Point it at a folder of
+media and you get a web reader, search, shelves, optional multi-user auth, and
+OPDS for e-reader apps.
 
-## Why Athenaeum
+## Good fit if you want
 
-- **One process.** Go backend embeds the Svelte UI. No CDN, no Node at runtime.
-- **Real formats.** EPUB, PDF, MOBI/AZW/AZW3 in the browser, KFX download,
-  comics (CBZ/CBR), and audiobooks with multi-file folder merge.
-- **Readers included.** Browser EPUB/PDF/MOBI engines, HTML5 audio with range
-  streaming, comic dual-page/RTL modes, optional EPUB narration.
-- **Ops-friendly.** Prometheus metrics, backup/restore, sandboxing, Docker and
-  host service units, installable PWA.
+- Your own library on a NAS, VPS, or home PC without a cloud subscription
+- Browser reading for common ebook and audiobook formats
+- EPUB narration with Kokoro TTS (in-browser, or an optional sidecar)
+- KOReader-friendly OPDS / KOSync, share links, and optional send-to-Kindle
+- One process to back up, with Docker and host service units when you need them
+
+## Not required
+
+You do not need Node at runtime. Auth, OIDC, Prometheus, S3 library mounts, and
+the Kokoro sidecar are optional. SQLite is the default database.
 
 ## Next steps
 
-1. [Getting started](./getting-started) - build and run with Make, manual, or Task
-2. [Features](./features) - full capability list
-3. [Deploying](./deploying) - installer, Docker, and host services
-4. [Authentication](./authentication) - users, TOTP, OIDC, API keys
-5. [Configuration](./configuration) - flags and environment variables
+1. [Getting started](./getting-started) - Docker, binary, installer, or source
+2. [Features](./features) - what the product does
+3. [Deploying](./deploying) - Compose, services, backups, sidecars
+4. [Configuration](./configuration) - flags and environment variables
 
-Release notes live in [`CHANGELOG.md`](https://github.com/ivan/reader/blob/main/CHANGELOG.md)
-at the repository root.
+Release notes: [`CHANGELOG.md`](https://github.com/ivan/reader/blob/main/CHANGELOG.md)

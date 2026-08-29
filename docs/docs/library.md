@@ -79,17 +79,22 @@ EPUB font, theme, spacing, and spread sync via
 `GET/PUT /api/auth/reader-prefs`. The browser keeps a localStorage cache for
 offline/first paint.
 
-## Narration (TTS)
+## Narration (Kokoro TTS)
 
-EPUB narration uses in-browser Kokoro (ONNX Runtime Web: WebGPU with WASM
-fallback) when WebAssembly is available, or the browser SpeechSynthesis API.
-An optional Kokoro sidecar remains available for advanced/server setups
-(`docker compose --profile kokoro`) under
-Settings -> Administration -> Narration (TTS).
+Open an EPUB and use narration to listen while you read.
 
-APIs: `GET/PUT /api/admin/tts`, `POST /api/admin/tts/test`,
-`GET /api/tts/status`, `GET /api/tts/voices`, `POST /api/tts/synthesize`
-(proxied through Athenaeum). See [Deploying](./deploying).
+- **Default:** in-browser Kokoro TTS when WebAssembly is available (WebGPU with
+  WASM fallback).
+- **Fallback:** the browser SpeechSynthesis API.
+- **Optional sidecar:** run Kokoro next to Athenaeum with
+  `docker compose --profile kokoro`, then set the base URL under
+  Settings -> Administration -> Narration (TTS)
+  (`http://kokoro:8880` on the Compose network, or `http://127.0.0.1:8880`
+  from the host).
+
+Admin/API endpoints: `GET/PUT /api/admin/tts`, `POST /api/admin/tts/test`,
+`GET /api/tts/status`, `GET /api/tts/voices`, `POST /api/tts/synthesize`.
+See [Deploying](./deploying).
 
 ## Sharing
 

@@ -40,6 +40,18 @@
   transform: translateY(-2px);
 }
 
+.cardIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  margin-bottom: 0.75rem;
+  border-radius: 10px;
+  color: var(--ifm-color-primary);
+  background: color-mix(in srgb, var(--ifm-color-primary) 12%, transparent);
+}
+
 .cardTitle {
   margin: 0 0 0.55rem;
   font-size: 1.2rem;

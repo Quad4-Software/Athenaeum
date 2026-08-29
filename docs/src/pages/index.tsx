@@ -38,9 +38,9 @@ function HomepageHeader() {
             </Link>
           </div>
           <ul className={styles.meta}>
-            <li>Single static binary</li>
-            <li>EPUB · PDF · Audiobooks</li>
-            <li>OPDS · PWA · Multi-user</li>
+            <li>Single binary or Docker</li>
+            <li>EPUB, PDF, comics, audiobooks</li>
+            <li>OPDS, PWA, optional multi-user</li>
           </ul>
         </div>
         <div className={styles.heroVisual}>
@@ -71,23 +71,23 @@ export default function Home(): ReactNode {
         <section className={styles.cta}>
           <div className="container">
             <Heading as="h2" className={styles.ctaTitle}>
-              Ready to run your library
+              Install Athenaeum
             </Heading>
             <p className={styles.ctaText}>
-              Install with Docker, a release binary, or build from source with
-              Make or plain Go and pnpm. Point Athenaeum at a folder of media and
-              open the web UI.
+              Use Docker Compose, a release binary, or{' '}
+              <code>./install.sh</code>. Point it at a folder of books and open
+              the web UI. Build from source when you want to hack on it.
             </p>
             <div className={styles.actions}>
               <Link
                 className="button button--primary button--lg"
-                to="/docs/deploying">
-                Deploying guide
+                to="/docs/getting-started">
+                Getting started
               </Link>
               <Link
                 className={clsx('button button--lg', styles.ghost)}
-                to="/docs/features">
-                Full feature list
+                to="/docs/deploying">
+                Deploying
               </Link>
             </div>
           </div>

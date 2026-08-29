@@ -1,20 +1,80 @@
 ---
 sidebar_position: 2
 title: Getting started
-description: Build and run Athenaeum with Make, manual Go/pnpm, or Task.
+description: Run Athenaeum with Docker, a release binary, the installer, or a source build.
 ---
 
 # Getting started
 
-## Requirements
+Pick a run path below. Most self-hosters use Docker or a release binary.
+Building from source is for development.
 
-- Go 1.26+
-- Node 22+ and pnpm 11+
+## Docker
 
-[Task](https://taskfile.dev) is optional. Make covers build and install. Raw
-`go` / `pnpm` commands work too.
+Copy `.env.example` to `.env`, set your books folder, then start Compose:
 
-## Build and run
+```sh
+cp .env.example .env
+# set ATHENAEUM_LIBRARY_HOST_PATH to your media folder (default ./library)
+docker compose up -d --build
+```
+
+Open http://localhost:8080 (or the port in `ATHENAEUM_PUBLISH_PORT`).
+
+The container stores data under `/data` and scans `/library` on first boot. Add
+more library mounts in Settings after login. Full Compose options, profiles
+(Postgres, Kokoro, ALTCHA), and Coolify notes are in [Deploying](./deploying).
+
+## Release binary
+
+Download a release for your OS/arch from GitHub Releases, then:
+
+```sh
+chmod +x athenaeum
+./athenaeum --addr :8080 --library /path/to/books --data ./data
+```
+
+Linux (amd64/arm64/armv6/armv7/riscv64), macOS, Windows, FreeBSD, OpenBSD, and
+NetBSD builds are published on release tags. Multi-arch images also go to GHCR.
+
+## Installer
+
+Interactive install (binary, Docker, or source, plus optional service units):
+
+```sh
+./install.sh
+```
+
+Non-interactive examples and flags are in [Deploying](./deploying).
+
+## First login
+
+Open http://localhost:8080. Create an admin in the setup wizard, or pass
+`--admin-user` / `--admin-pass` (or the matching env vars) when no users exist
+yet. See [Authentication](./authentication).
+
+Check a running install with:
+
+```sh
+./athenaeum --self-check
+```
+
+(or the same flag on your installed binary path).
+
+## What files it indexes
+
+| Kind | Extensions |
+| ---- | ---------- |
+| Ebooks | `.epub`, `.pdf`, `.mobi`, `.azw`, `.azw3` (read in browser), `.kfx` (download) |
+| Comics | `.cbz`, `.cbr` |
+| Audio | `.mp3`, `.m4b`, `.m4a`, `.ogg`, `.flac` |
+
+Multi-file audiobook folders merge into one book. Local mounts are watched for
+changes (plus periodic auto-scan). Remote `s3://` mounts are not filesystem-watched.
+
+## Build from source
+
+Needs Go 1.26+, Node 22+, and pnpm 11+. [Task](https://taskfile.dev) is optional.
 
 ### Make
 
@@ -23,8 +83,6 @@ cd web && pnpm install && cd ..
 make build
 ./bin/athenaeum --addr :8080 --library /path/to/books --data ./data
 ```
-
-`make help` lists targets (`build`, `install`, `clean`, and so on).
 
 ### Manual
 
@@ -36,7 +94,7 @@ go build -trimpath -o bin/athenaeum ./cmd/athenaeum
 ./bin/athenaeum --addr :8080 --library /path/to/books --data ./data
 ```
 
-### Task (optional)
+### Task
 
 ```sh
 task setup
@@ -44,31 +102,10 @@ task build
 ./bin/athenaeum --addr :8080 --library /path/to/books --data ./data
 ```
 
-### Installer
-
-Interactive install (binary, Docker, or source, plus optional service units):
-
-```sh
-./install.sh
-```
-
-Supported library files: `.epub`, `.pdf`, `.mobi`, `.azw`, `.azw3` (in-browser),
-`.kfx` (download only), `.cbz`, `.cbr`, `.mp3`, `.m4b`, `.m4a`, `.ogg`, `.flac`.
-Multi-file audiobook folders are merged automatically. Local library mounts are
-watched for filesystem changes in addition to periodic auto-scan (remote
-`s3://` mounts are not watched).
-
-Open http://localhost:8080. On first visit create an admin in the setup wizard,
-or pass `--admin-user` and `--admin-pass` on the CLI when no users exist yet.
-See [Authentication](./authentication).
-
-Verify a build with `./bin/athenaeum --self-check` (dirs, database, HTTP).
-Release tags publish single binaries for Linux (amd64/arm64/armv6/armv7/riscv64),
-macOS, Windows, FreeBSD, OpenBSD, and NetBSD, plus a multi-arch image to GHCR.
+Contributor workflow: [Development](./development).
 
 ## Next steps
 
-- [Features](./features) - full capability list
-- [Deploying](./deploying) - Docker, installer, and host services
-- [Configuration](./configuration) - flags and environment variables
-- [Development](./development) - contributor workflow and tests
+- [Features](./features)
+- [Deploying](./deploying)
+- [Configuration](./configuration)
