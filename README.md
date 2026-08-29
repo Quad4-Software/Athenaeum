@@ -6,17 +6,20 @@ web reader with search, collections, optional multi-user auth, OPDS, and
 light/dark theming.
 
 <p align="center">
-  <img src="showcase/library-dark.png" alt="Library (dark)" width="48%" />
-  <img src="showcase/book-detail-light.png" alt="Book detail (light)" width="48%" />
+  <img src="showcase/library-theme-split.png" alt="Library in dark and light themes" width="100%" />
 </p>
 
 <p align="center">
   <img src="showcase/book-detail-dark.png" alt="Book detail (dark)" width="48%" />
-  <img src="showcase/settings-light.png" alt="Settings (light)" width="48%" />
+  <img src="showcase/book-detail-light.png" alt="Book detail (light)" width="48%" />
 </p>
 
 <p align="center">
   <img src="showcase/settings-dark.png" alt="Settings (dark)" width="48%" />
+  <img src="showcase/settings-light.png" alt="Settings (light)" width="48%" />
+</p>
+
+<p align="center">
   <img src="showcase/library-mobile-light.png" alt="Mobile library (light)" width="24%" />
   <img src="showcase/library-mobile-dark.png" alt="Mobile library (dark)" width="24%" />
 </p>
@@ -71,10 +74,16 @@ task docs:build    # docs/build (GitHub Pages artifact)
 
 GitHub Pages deploys the docs site (offline demo at `/demo`) via
 `.github/workflows/pages.yml`. Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md).
+Security policy: [SECURITY.md](SECURITY.md).
 
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for supported versions and how to report
+vulnerabilities privately.
 
 ## License
 
