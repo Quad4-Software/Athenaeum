@@ -52,7 +52,10 @@ function slimKokoroPlugin(): Plugin {
         return kokoroWasmSlim;
       }
       if (
-        (id === "./kokoro-wasm" || id === "./kokoro-wasm.ts" || id.endsWith("/kokoro-wasm") || id.endsWith("/kokoro-wasm.ts")) &&
+        (id === "./kokoro-wasm" ||
+          id === "./kokoro-wasm.ts" ||
+          id.endsWith("/kokoro-wasm") ||
+          id.endsWith("/kokoro-wasm.ts")) &&
         importer &&
         normalize(importer).includes(`${normalize(join("src", "lib", "narrator"))}`)
       ) {
