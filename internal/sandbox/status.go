@@ -71,10 +71,59 @@ func (s Status) Print(w io.Writer) {
 	fmt.Fprintf(w, "%s  mode=%s  %s  %s\n", label, mode, ll, sc)
 }
 
-// Announce writes a colored status line to stderr when color is enabled.
+// Announce writes a status line to stderr (always), with color when enabled.
 func (s Status) Announce() {
-	if term.Enabled(os.Stderr) {
-		s.Print(os.Stderr)
+	s.Print(os.Stderr)
+}
+
+// Reason returns a short explanation suitable for operators and the admin UI.
+func (c Component) Reason() string {
+	parts := make([]string, 0, 3)
+	if c.Detail != "" {
+		parts = append(parts, c.Detail)
+	}
+	if c.Err != "" {
+		parts = append(parts, c.Err)
+	}
+	switch c.State {
+	case StateOff:
+		return "sandbox mode is off"
+	case StateDisabled:
+		if len(parts) == 0 {
+			return "component toggle is off"
+		}
+	case StateUnsupported:
+		if len(parts) == 0 {
+			return "not supported on this platform"
+		}
+	case StateSkipped:
+		if len(parts) == 0 {
+			return "could not apply (skipped in try mode)"
+		}
+	case StateApplied:
+		if len(parts) == 0 {
+			return "applied"
+		}
+	}
+	return strings.Join(parts, ": ")
+}
+
+// Public returns a JSON-friendly copy for APIs.
+func (s Status) Public() map[string]any {
+	return map[string]any{
+		"mode": string(s.Mode),
+		"landlock": map[string]any{
+			"state":  string(s.Landlock.State),
+			"detail": s.Landlock.Detail,
+			"error":  s.Landlock.Err,
+			"reason": s.Landlock.Reason(),
+		},
+		"seccomp": map[string]any{
+			"state":  string(s.Seccomp.State),
+			"detail": s.Seccomp.Detail,
+			"error":  s.Seccomp.Err,
+			"reason": s.Seccomp.Reason(),
+		},
 	}
 }
 

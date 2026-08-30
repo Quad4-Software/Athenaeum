@@ -42,7 +42,20 @@ const TAG_ATTRS: Record<string, Set<string>> = {
   img: new Set(["src", "alt", "title", "width", "height"]),
 };
 
-const DROP_TAGS = new Set(["script", "style", "iframe", "object", "embed", "link", "meta", "form", "input", "button", "svg", "math"]);
+const DROP_TAGS = new Set([
+  "script",
+  "style",
+  "iframe",
+  "object",
+  "embed",
+  "link",
+  "meta",
+  "form",
+  "input",
+  "button",
+  "svg",
+  "math",
+]);
 
 function stripHrefNoise(href: string): string {
   let out = "";

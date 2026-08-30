@@ -47,7 +47,9 @@ describe("sanitizeHtml", () => {
 
 describe("sanitizeReaderHtml", () => {
   it("strips script from mobi-like body html", () => {
-    const out = sanitizeReaderHtml('<p>Chapter</p><script>alert(1)</script><img src=x onerror=alert(1)>');
+    const out = sanitizeReaderHtml(
+      "<p>Chapter</p><script>alert(1)</script><img src=x onerror=alert(1)>",
+    );
     expect(out.toLowerCase()).not.toContain("script");
     expect(out.toLowerCase()).not.toContain("onerror");
     expect(out).toContain("Chapter");

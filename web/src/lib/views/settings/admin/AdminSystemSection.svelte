@@ -87,5 +87,44 @@
         </div>
       {/each}
     </div>
+    {#if systemStats.sandbox}
+      {@const sb = systemStats.sandbox}
+      <div class="mt-4 rounded-lg border border-border p-3">
+        <p class="text-xs font-medium uppercase tracking-wide text-subtle">Sandbox</p>
+        <p class="mt-1 text-sm text-fg">
+          Mode <span class="font-medium">{sb.mode}</span>
+        </p>
+        <dl class="mt-3 space-y-2 text-sm">
+          <div>
+            <dt class="text-xs text-muted">Landlock</dt>
+            <dd class="text-fg">
+              <span class="font-medium">{sb.landlock.state}</span>
+              {#if sb.landlock.reason}
+                <span class="text-muted">: {sb.landlock.reason}</span>
+              {/if}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted">Seccomp</dt>
+            <dd class="text-fg">
+              <span class="font-medium">{sb.seccomp.state}</span>
+              {#if sb.seccomp.reason}
+                <span class="text-muted">: {sb.seccomp.reason}</span>
+              {/if}
+            </dd>
+          </div>
+        </dl>
+        {#if sb.mode === "off"}
+          <p class="mt-2 text-xs text-muted">
+            Set ATHENAEUM_SANDBOX=try (or strict) to enable Landlock and seccomp on Linux.
+          </p>
+        {:else if sb.landlock.state === "skipped" || sb.seccomp.state === "skipped" || sb.landlock.state === "unsupported" || sb.seccomp.state === "unsupported"}
+          <p class="mt-2 text-xs text-muted">
+            Skipped components stay off in try mode so the server can start. Use strict to fail
+            startup instead.
+          </p>
+        {/if}
+      </div>
+    {/if}
   {/if}
 </div>

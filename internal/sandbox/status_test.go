@@ -87,6 +87,30 @@ func TestStatusPrintColored(t *testing.T) {
 	}
 }
 
+func TestComponentReason(t *testing.T) {
+	off := sandbox.Component{State: sandbox.StateOff}
+	if got := off.Reason(); got != "sandbox mode is off" {
+		t.Fatalf("off reason=%q", got)
+	}
+	skipped := sandbox.Component{
+		State:  sandbox.StateSkipped,
+		Detail: "denylist=18",
+		Err:    "operation not permitted",
+	}
+	if got := skipped.Reason(); !strings.Contains(got, "denylist") || !strings.Contains(got, "operation not permitted") {
+		t.Fatalf("skipped reason=%q", got)
+	}
+	pub := sandbox.Status{
+		Mode:     sandbox.ModeTry,
+		Landlock: skipped,
+		Seccomp:  sandbox.Component{State: sandbox.StateApplied, Detail: "ok"},
+	}.Public()
+	ll, _ := pub["landlock"].(map[string]any)
+	if ll["reason"] == "" || ll["state"] != "skipped" {
+		t.Fatalf("public landlock=%#v", ll)
+	}
+}
+
 func TestApplyOff(t *testing.T) {
 	st, err := sandbox.Apply(sandbox.Config{Mode: sandbox.ModeOff}, nil)
 	if err != nil {

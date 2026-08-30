@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/landlock-lsm/go-landlock/landlock"
 	llsys "github.com/landlock-lsm/go-landlock/landlock/syscall"
@@ -64,12 +65,28 @@ func applySeccompWithNoNewPrivs() (Component, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	if err := unix.Prctl(unix.PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0); err != nil {
-		return Component{State: StateSkipped, Detail: detail}, fmt.Errorf("prctl(NO_NEW_PRIVS): %w", err)
+		return Component{State: StateSkipped, Detail: detail},
+			fmt.Errorf("prctl(NO_NEW_PRIVS): %w", err)
 	}
 	if err := applySeccomp(); err != nil {
-		return Component{State: StateSkipped, Detail: detail}, err
+		hint := err.Error()
+		if isLikelyContainerSeccompBlock(err) {
+			hint += " (common inside Docker/Podman when an outer seccomp profile is already active)"
+		}
+		return Component{State: StateSkipped, Detail: detail}, fmt.Errorf("%s", hint)
 	}
 	return Component{State: StateApplied, Detail: detail}, nil
+}
+
+func isLikelyContainerSeccompBlock(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "operation not permitted") ||
+		strings.Contains(msg, "permission denied") ||
+		strings.Contains(msg, "eperm") ||
+		strings.Contains(msg, "eacces")
 }
 
 func handle(cfg Config, log *slog.Logger, what string, err error) error {

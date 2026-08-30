@@ -246,7 +246,8 @@
         <main
           id="main-content"
           tabindex="-1"
-          class="min-h-0 flex-1 overflow-y-auto outline-none pb-bottom-chrome"
+          class="min-h-0 flex-1 outline-none pb-bottom-chrome
+            {route.name === 'settings' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'}"
         >
           {#if route.name === "library" || route.name === "collection"}
             <LibraryView />

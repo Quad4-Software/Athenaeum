@@ -66,7 +66,10 @@ function stripHostileNodes(doc: Document): void {
         if (name.startsWith("on") || name === "srcdoc") {
           el.removeAttribute(attr.name);
         }
-        if ((name === "href" || name === "src" || name === "xlink:href") && isUnsafeURL(attr.value)) {
+        if (
+          (name === "href" || name === "src" || name === "xlink:href") &&
+          isUnsafeURL(attr.value)
+        ) {
           el.removeAttribute(attr.name);
         }
       }
@@ -94,7 +97,10 @@ function shouldDropMeta(el: Element): boolean {
 }
 
 function isUnsafeURL(raw: string): boolean {
-  const v = raw.trim().toLowerCase().replace(/[\u0000-\u001f\u007f\s]+/g, "");
+  const v = raw
+    .trim()
+    .toLowerCase()
+    .replace(/[\u0000-\u001f\u007f\s]+/g, "");
   return (
     v.startsWith("javascript:") ||
     v.startsWith("vbscript:") ||

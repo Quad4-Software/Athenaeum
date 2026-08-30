@@ -76,7 +76,7 @@
           <input type="checkbox" bind:checked={serverConfig.metricsEnabled} />
           Enable metrics endpoint
         </label>
-		<label class="flex items-center gap-2 text-sm text-fg">
+        <label class="flex items-center gap-2 text-sm text-fg">
           <input type="checkbox" bind:checked={serverConfig.metricsAuth} />
           Require HTTP Basic Auth
         </label>

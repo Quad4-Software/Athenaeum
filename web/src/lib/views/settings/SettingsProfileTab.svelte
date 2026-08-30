@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { LogOut, Monitor } from "@lucide/svelte";
+  import { LogOut, Monitor, Download } from "@lucide/svelte";
   import Button from "$lib/components/Button.svelte";
   import EmptyState from "$lib/components/EmptyState.svelte";
   import Skeleton from "$lib/components/Skeleton.svelte";
@@ -8,6 +8,7 @@
   import { toast } from "$lib/stores/toast.svelte";
   import { confirmDialog } from "$lib/stores/confirm.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
+  import { pwa } from "$lib/stores/pwa.svelte";
   import { ApiError, api } from "$lib/api/client";
   import { scorePassword } from "$lib/utils/password-strength";
   import { totpQrDataUrl } from "$lib/utils/totp-qr";
@@ -38,9 +39,19 @@
     if (!auth.user) return;
     untrack(() => {
       profileName = auth.user!.username;
+      pwa.initInstall();
       void loadSessions();
     });
   });
+
+  async function installPwa() {
+    const outcome = await pwa.promptInstall();
+    if (outcome === "accepted") {
+      toast.success(i18n.t("settings.pwaInstalledToast"));
+    } else if (outcome === "unavailable") {
+      toast.info(pwa.installUnavailableReason || i18n.t("settings.pwaUnavailable"));
+    }
+  }
 
   async function loadSessions() {
     sessionsLoading = true;
@@ -226,6 +237,25 @@
   </div>
 
   {#if auth.user}
+    <div class="rounded-[var(--radius-card)] border border-border bg-surface p-5">
+      <p class="text-sm font-medium text-fg">{i18n.t("settings.pwaTitle")}</p>
+      <p class="mt-1 text-xs text-muted">{i18n.t("settings.pwaBody")}</p>
+      {#if pwa.installed}
+        <p class="mt-3 text-sm text-success">{i18n.t("settings.pwaInstalled")}</p>
+      {:else if pwa.canInstall}
+        <div class="mt-3">
+          <Button type="button" size="sm" onclick={installPwa}>
+            <Download size={16} />
+            {i18n.t("settings.pwaInstall")}
+          </Button>
+        </div>
+      {:else}
+        <p class="mt-3 text-sm text-muted">
+          {pwa.installUnavailableReason || i18n.t("settings.pwaUnavailable")}
+        </p>
+      {/if}
+    </div>
+
     <div class="rounded-[var(--radius-card)] border border-border bg-surface p-5">
       <form class="space-y-3" onsubmit={saveProfile}>
         <p class="text-sm font-medium text-fg">Profile</p>

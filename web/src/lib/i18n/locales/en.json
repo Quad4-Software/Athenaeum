@@ -399,7 +399,13 @@
     "apiKeysEmptyTitle": "No API keys yet",
     "apiKeysEmptyBody": "Create a key above to authenticate scripts and integrations.",
     "sessionsEmptyTitle": "No active sessions",
-    "sessionsEmptyBody": "Signed-in devices will appear here."
+    "sessionsEmptyBody": "Signed-in devices will appear here.",
+    "pwaTitle": "Install app",
+    "pwaBody": "Install Athenaeum as an app on this device for a fuller-screen experience and offline shell.",
+    "pwaInstall": "Install",
+    "pwaInstalled": "Installed on this device.",
+    "pwaInstalledToast": "App installed",
+    "pwaUnavailable": "Install is not available in this browser right now."
   },
   "sort": {
     "label": "Sort books",

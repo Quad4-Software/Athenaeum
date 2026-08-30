@@ -12,9 +12,9 @@ describe("hardenEpubDocument", () => {
     expect(doc.querySelector('meta[http-equiv="refresh"]')).toBeNull();
     expect(doc.querySelector('link[rel="stylesheet"]')).not.toBeNull();
     expect(doc.querySelector("svg circle")).not.toBeNull();
-    expect(doc.querySelector('meta[http-equiv="Content-Security-Policy"]')?.getAttribute("content")).toBe(
-      EPUB_SECTION_CSP,
-    );
+    expect(
+      doc.querySelector('meta[http-equiv="Content-Security-Policy"]')?.getAttribute("content"),
+    ).toBe(EPUB_SECTION_CSP);
     expect(doc.querySelector('a[href="javascript:alert(1)"]')).toBeNull();
     const external = doc.querySelector('a[href="https://example.com"]');
     expect(external?.getAttribute("rel")).toContain("noopener");

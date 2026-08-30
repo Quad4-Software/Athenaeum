@@ -15,6 +15,7 @@ import (
 	"athenaeum/internal/libfs"
 	"athenaeum/internal/library"
 	"athenaeum/internal/models"
+	"athenaeum/internal/sandbox"
 	"athenaeum/internal/storage"
 	"athenaeum/internal/telemetry"
 )
@@ -45,6 +46,8 @@ type Server struct {
 
 	jobsCtx    context.Context
 	jobsCancel context.CancelFunc
+
+	sandboxStatus sandbox.Status
 }
 
 // New constructs a Server. Background jobs inherit from ctx and stop when it is cancelled.
@@ -80,6 +83,11 @@ func New(ctx context.Context, cfg config.Config, store *storage.Store, scanner *
 		})
 	})
 	return srv, nil
+}
+
+// SetSandboxStatus records the Landlock/seccomp outcome for the admin UI.
+func (s *Server) SetSandboxStatus(st sandbox.Status) {
+	s.sandboxStatus = st
 }
 
 // Handler builds the root http.Handler with all routes registered.

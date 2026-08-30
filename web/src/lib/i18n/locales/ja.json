@@ -381,7 +381,13 @@
     "sessionAuthLocal": "Local",
     "sessionAuthSSO": "SSO",
     "sessionLastActive": "Last active {when}",
-    "sessionExpires": "expires {when}"
+    "sessionExpires": "expires {when}",
+    "pwaTitle": "Install app",
+    "pwaBody": "Install Athenaeum as an app on this device for a fuller-screen experience and offline shell.",
+    "pwaInstall": "Install",
+    "pwaInstalled": "Installed on this device.",
+    "pwaInstalledToast": "App installed",
+    "pwaUnavailable": "Install is not available in this browser right now."
   },
   "sort": {
     "label": "本を並べ替える",

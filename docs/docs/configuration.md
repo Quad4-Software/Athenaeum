@@ -27,7 +27,7 @@ Flags override environment variables. Shell exports override values loaded from
 | --pprof | ATHENAEUM_PPROF | | Loopback pprof listen address (e.g. 127.0.0.1:6060) |
 | --color | ATHENAEUM_COLOR | auto | CLI color: auto, always, never |
 | --no-color | ATHENAEUM_NO_COLOR | false | Disable ANSI color (NO_COLOR also works) |
-| --sandbox | ATHENAEUM_SANDBOX | off | Linux Landlock/seccomp: off, try, strict |
+| --sandbox | ATHENAEUM_SANDBOX | try | Linux Landlock/seccomp: off, try, strict |
 | --sandbox-landlock | ATHENAEUM_SANDBOX_LANDLOCK | true | Toggle Landlock when sandbox is on |
 | --sandbox-seccomp | ATHENAEUM_SANDBOX_SECCOMP | true | Toggle seccomp-bpf when sandbox is on |
 | --demo | ATHENAEUM_DEMO | false | Seed generated demo books, audiobooks, and covers |

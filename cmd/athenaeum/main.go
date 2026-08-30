@@ -254,6 +254,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	srv.SetSandboxStatus(sandboxStatus)
 	if cfg.AltchaEnabled {
 		log.Info("altcha enabled", "mode", cfg.AltchaMode)
 	}

@@ -12,6 +12,8 @@ function onVisibilityChange() {
 }
 
 export function initPwa(offlineReadyMessage: string) {
+  pwa.initInstall();
+
   if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
 
   const updateSW = registerSW({

@@ -11,13 +11,14 @@ type DiskUsage struct {
 
 // Stats is the host resource snapshot returned to the admin UI.
 type Stats struct {
-	Version    string      `json:"version"`
-	WebVersion string      `json:"webVersion"`
-	CPUPercent float64     `json:"cpuPercent"`
-	MemUsed    int64       `json:"memUsed"`
-	MemTotal   int64       `json:"memTotal"`
-	MemPercent float64     `json:"memPercent"`
-	Disks      []DiskUsage `json:"disks"`
+	Version    string         `json:"version"`
+	WebVersion string         `json:"webVersion"`
+	CPUPercent float64        `json:"cpuPercent"`
+	MemUsed    int64          `json:"memUsed"`
+	MemTotal   int64          `json:"memTotal"`
+	MemPercent float64        `json:"memPercent"`
+	Disks      []DiskUsage    `json:"disks"`
+	Sandbox    map[string]any `json:"sandbox,omitempty"`
 }
 
 // ReadStats collects CPU, memory, and disk usage for the given paths.

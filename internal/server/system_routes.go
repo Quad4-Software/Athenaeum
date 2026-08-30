@@ -33,5 +33,6 @@ func (s *Server) handleSystemStats(w http.ResponseWriter, r *http.Request) {
 	stats := system.ReadStats(paths)
 	stats.Version = version.Version
 	stats.WebVersion = version.WebVersion
+	stats.Sandbox = s.sandboxStatus.Public()
 	writeJSON(w, http.StatusOK, stats)
 }

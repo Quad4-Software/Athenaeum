@@ -420,6 +420,19 @@ export interface WebhookDelivery {
   deliveredAt?: string;
 }
 
+export interface SandboxComponentStatus {
+  state: string;
+  detail?: string;
+  error?: string;
+  reason?: string;
+}
+
+export interface SandboxStatus {
+  mode: string;
+  landlock: SandboxComponentStatus;
+  seccomp: SandboxComponentStatus;
+}
+
 export interface SystemStats {
   version: string;
   webVersion: string;
@@ -434,6 +447,7 @@ export interface SystemStats {
     available: number;
     percent: number;
   }[];
+  sandbox?: SandboxStatus;
 }
 
 export interface UserSession {
