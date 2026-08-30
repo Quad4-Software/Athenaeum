@@ -141,14 +141,6 @@ func TestAuthLoginProfileCoverage(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("change password status=%d body=%s", rec.Code, rec.Body.String())
 	}
-	for _, c := range rec.Result().Cookies() {
-		switch c.Name {
-		case auth.SessionCookie:
-			pubSession = c
-		case auth.CSRFCookie:
-			pubCSRF = c
-		}
-	}
 
 	loginCSRF := fetchCSRF(t, handler)
 	rec = do(http.MethodPost, "/api/auth/login", map[string]any{

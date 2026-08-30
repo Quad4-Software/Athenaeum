@@ -4,7 +4,12 @@ const navigate = vi.fn();
 const logout = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("$lib/router.svelte", () => ({
-  router: { navigate },
+  router: {
+    navigate,
+    appPathname: (browserPath?: string) =>
+      browserPath ??
+      (typeof window !== "undefined" ? window.location.pathname : "/"),
+  },
 }));
 
 vi.mock("$lib/api/client", () => ({

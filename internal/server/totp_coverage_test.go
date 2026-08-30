@@ -154,10 +154,6 @@ func TestTOTPCoverageFullFlow(t *testing.T) {
 		t.Fatalf("disable bad password status=%d", rec.Code)
 	}
 
-	disableCode, err = totp.GenerateCode(setup.Secret, time.Now())
-	if err != nil {
-		t.Fatal(err)
-	}
 	rec = do(http.MethodPost, "/api/auth/totp/disable", map[string]any{
 		"password": "longpassword", "code": "000000",
 	}, session, csrf)
