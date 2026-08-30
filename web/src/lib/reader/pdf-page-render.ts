@@ -37,7 +37,7 @@ export function createPdfPageWrap(pageNum: number, onCapture: PdfSelectionCaptur
   const canvas = document.createElement("canvas");
   canvas.className = "block h-full w-full";
   const layer = document.createElement("div");
-  layer.className = "pdf-text-layer";
+  layer.className = "textLayer pdf-text-layer";
   bindPdfTextLayerEvents(layer, pageNum, onCapture);
   wrap.appendChild(canvas);
   wrap.appendChild(layer);
@@ -117,6 +117,9 @@ export async function renderPdfPageInto(
   canvas.style.height = `${Math.floor(vp.height)}px`;
   wrap.style.width = `${Math.floor(vp.width)}px`;
   wrap.style.height = `${Math.floor(vp.height)}px`;
+  wrap.style.setProperty("--scale-factor", String(vp.scale));
+  wrap.style.setProperty("--user-unit", "1");
+  wrap.style.setProperty("--total-scale-factor", String(vp.scale));
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.fillStyle = readerViewportFillColor();
   ctx.fillRect(0, 0, canvas.width / ratio, canvas.height / ratio);
@@ -129,6 +132,11 @@ export async function renderPdfPageInto(
 
   const textContent = await pdfPage.getTextContent();
   if (cancelled()) return;
+
+  layer.replaceChildren();
+  layer.style.setProperty("--scale-factor", String(vp.scale));
+  layer.style.setProperty("--user-unit", "1");
+  layer.style.setProperty("--total-scale-factor", String(vp.scale));
 
   const tl = new pdfjs.TextLayer({
     textContentSource: textContent,

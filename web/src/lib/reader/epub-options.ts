@@ -35,4 +35,4 @@ export function ensureEpubDocumentHead(doc: Document) {
   }
 }
 
-export { hardenEpubDocument, EPUB_SECTION_CSP } from "./epub-harden";
+export { hardenEpubDocument } from "./epub-harden";

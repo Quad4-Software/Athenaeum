@@ -162,13 +162,18 @@
       href="/"
       use:link={"/"}
       onclick={() => goHome()}
-      class="mb-4 flex items-center gap-2.5 px-2 py-1.5 text-fg"
+      class="mb-4 flex items-center gap-2.5 px-2 py-1.5 text-fg
+        {collapsed ? 'justify-center px-0' : ''}"
     >
-      <span class="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-fg shadow-sm">
+      <span
+        class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-fg shadow-sm"
+      >
         <BookMarked size={18} />
       </span>
       {#if !collapsed}
-        <span class="font-display text-xl font-semibold tracking-tight">{brand.appName}</span>
+        <span class="min-w-0 truncate font-display text-xl font-semibold tracking-tight"
+          >{brand.appName}</span
+        >
       {/if}
     </a>
   </div>

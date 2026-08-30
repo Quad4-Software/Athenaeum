@@ -401,19 +401,24 @@
 </script>
 
 <section
-  class="relative mx-auto w-full max-w-7xl overflow-hidden px-3 py-5 sm:px-6"
+  class="book-details relative w-full overflow-hidden"
   aria-label="Book details"
   oncontextmenu={openMenu}
 >
   {#if errorCode}
-    <ErrorView code={errorCode} message={error ?? undefined} compact />
+    <div class="relative mx-auto w-full max-w-7xl px-3 py-5 sm:px-6">
+      <ErrorView code={errorCode} message={error ?? undefined} compact />
+    </div>
   {:else if book}
     {#if book.hasCover}
       <div class="book-backdrop" aria-hidden="true">
         <img src={api.coverUrl(book.id, book.modifiedAt)} alt="" />
+        <div class="book-backdrop-wash"></div>
       </div>
     {/if}
-    <div class="relative flex flex-col gap-8 sm:flex-row sm:gap-10">
+    <div
+      class="relative z-[1] mx-auto flex w-full max-w-7xl flex-col gap-8 px-3 py-5 sm:flex-row sm:gap-10 sm:px-6"
+    >
       <div class="mx-auto w-44 shrink-0 sm:mx-0 sm:w-60 lg:w-72">
         <div
           class="relative overflow-hidden rounded-[var(--radius-card)] shadow-panel ring-1 ring-border/50"
@@ -705,7 +710,9 @@
       </div>
     </div>
   {:else if loading}
-    <div class="flex flex-col gap-8 sm:flex-row">
+    <div
+      class="relative mx-auto flex w-full max-w-7xl flex-col gap-8 px-3 py-5 sm:flex-row sm:px-6"
+    >
       <Skeleton rounded="card" width="14rem" height="21rem" class="mx-auto shrink-0 sm:mx-0" />
       <div class="flex-1 space-y-3">
         <Skeleton width="4rem" height="1.25rem" rounded="full" />
@@ -730,27 +737,69 @@
 />
 
 <style>
+  .book-details {
+    isolation: isolate;
+  }
+
   .book-backdrop {
     pointer-events: none;
     position: absolute;
-    inset: -10% -5% auto;
-    height: 18rem;
+    inset: 0 0 auto;
+    width: 100%;
+    height: min(28rem, 55vh);
     z-index: 0;
     overflow: hidden;
-    opacity: 0.35;
-    mask-image: linear-gradient(to bottom, black 20%, transparent 90%);
   }
 
   .book-backdrop img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: blur(48px) saturate(1.15);
-    transform: scale(1.15);
+    object-position: center top;
+    filter: blur(56px) saturate(1.2);
+    transform: scale(1.2);
+    opacity: 0.55;
   }
 
-  :global([data-theme="light"]) .book-backdrop {
-    opacity: 0.22;
+  .book-backdrop-wash {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--color-bg) 8%, transparent) 0%,
+        color-mix(in oklch, var(--color-bg) 55%, transparent) 45%,
+        var(--color-bg) 100%
+      ),
+      linear-gradient(
+        to right,
+        color-mix(in oklch, var(--color-bg) 35%, transparent),
+        transparent 18%,
+        transparent 82%,
+        color-mix(in oklch, var(--color-bg) 35%, transparent)
+      );
+  }
+
+  :global([data-theme="light"]) .book-backdrop img {
+    opacity: 0.38;
+    filter: blur(64px) saturate(1.05) brightness(1.08);
+  }
+
+  :global([data-theme="light"]) .book-backdrop-wash {
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--color-bg) 20%, transparent) 0%,
+        color-mix(in oklch, var(--color-bg) 70%, transparent) 40%,
+        var(--color-bg) 100%
+      ),
+      linear-gradient(
+        to right,
+        color-mix(in oklch, var(--color-bg) 45%, transparent),
+        transparent 22%,
+        transparent 78%,
+        color-mix(in oklch, var(--color-bg) 45%, transparent)
+      );
   }
 
   .book-actions {

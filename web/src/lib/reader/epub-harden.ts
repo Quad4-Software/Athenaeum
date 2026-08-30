@@ -1,17 +1,11 @@
-/** CSP for EPUB section documents loaded in sandboxed blob iframes. */
-export const EPUB_SECTION_CSP =
-  "default-src 'none'; style-src 'unsafe-inline' blob: data:; img-src blob: data: 'self'; font-src blob: data: 'self'; media-src blob: data: 'self'; connect-src 'none'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+/**
+ * Harden EPUB spine HTML for XSS without breaking epubjs.
+ * Keeps <base> (epubjs link/resource resolution), styles, SVG, and text.
+ * Strips scripts, embeds, event handlers, and dangerous URLs.
+ * Does not inject CSP: script-src/base-uri policies break epubjs blob iframes.
+ */
 
-const DROP_TAGS = new Set([
-  "script",
-  "iframe",
-  "object",
-  "embed",
-  "form",
-  "input",
-  "button",
-  "base",
-]);
+const DROP_TAGS = new Set(["script", "iframe", "object", "embed", "form", "input", "button"]);
 
 /**
  * Harden an EPUB spine document already loaded into an epubjs iframe.
@@ -20,7 +14,6 @@ const DROP_TAGS = new Set([
 export function hardenEpubDocument(doc: Document): void {
   ensureHead(doc);
   stripHostileNodes(doc);
-  injectSectionCSP(doc);
   hardenAnchors(doc);
 }
 
@@ -35,18 +28,6 @@ function ensureHead(doc: Document): void {
   } else {
     root.appendChild(head);
   }
-}
-
-function injectSectionCSP(doc: Document): void {
-  const head = doc.getElementsByTagName("head")[0];
-  if (!head) return;
-  for (const meta of [...head.querySelectorAll('meta[http-equiv="Content-Security-Policy"]')]) {
-    meta.remove();
-  }
-  const meta = doc.createElement("meta");
-  meta.setAttribute("http-equiv", "Content-Security-Policy");
-  meta.setAttribute("content", EPUB_SECTION_CSP);
-  head.insertBefore(meta, head.firstChild);
 }
 
 function stripHostileNodes(doc: Document): void {
@@ -82,7 +63,7 @@ function stripHostileNodes(doc: Document): void {
 function shouldDropLink(el: Element): boolean {
   if (el.tagName.toLowerCase() !== "link") return false;
   const rel = (el.getAttribute("rel") ?? "").toLowerCase();
-  if (rel.includes("stylesheet") || rel.includes("preload")) {
+  if (rel.includes("stylesheet") || rel.includes("preload") || rel.includes("canonical")) {
     const href = el.getAttribute("href") ?? "";
     return isUnsafeURL(href);
   }
