@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { descriptionLooksLikeHtml, sanitizeHtml } from "./sanitize-html";
+import { descriptionLooksLikeHtml, sanitizeHtml, sanitizeReaderHtml } from "./sanitize-html";
 
 describe("sanitizeHtml", () => {
   it("strips script tags", () => {
@@ -37,6 +37,25 @@ describe("sanitizeHtml", () => {
     const out = sanitizeHtml("<p>hi</p><script>alert(1)</script>");
     expect(out.toLowerCase()).not.toContain("<script");
     expect(out).toContain("hi");
+  });
+
+  it("keeps safe http links", () => {
+    const out = sanitizeHtml('<a href="https://example.com">x</a>');
+    expect(out).toContain('href="https://example.com"');
+  });
+});
+
+describe("sanitizeReaderHtml", () => {
+  it("strips script from mobi-like body html", () => {
+    const out = sanitizeReaderHtml('<p>Chapter</p><script>alert(1)</script><img src=x onerror=alert(1)>');
+    expect(out.toLowerCase()).not.toContain("script");
+    expect(out.toLowerCase()).not.toContain("onerror");
+    expect(out).toContain("Chapter");
+  });
+
+  it("blocks javascript img src", () => {
+    const out = sanitizeReaderHtml('<img src="javascript:alert(1)">');
+    expect(out.toLowerCase()).not.toContain("javascript:");
   });
 });
 

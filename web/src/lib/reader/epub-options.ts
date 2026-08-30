@@ -17,7 +17,7 @@ export function epubRenderOptions(spread: "none" | "auto" | "always"): Rendition
     flow: "paginated",
     spread,
     method: "blobUrl",
-    allowScriptedContent: true,
+    allowScriptedContent: false,
   } as RenditionOptions;
 }
 

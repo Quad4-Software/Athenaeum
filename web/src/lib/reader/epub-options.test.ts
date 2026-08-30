@@ -14,7 +14,7 @@ describe("epubRenderOptions", () => {
   it("uses blob URLs and allows scripted content for library EPUBs", () => {
     const opts = epubRenderOptions("auto") as RenditionOptions & { method?: string };
     expect(opts.method).toBe("blobUrl");
-    expect(opts.allowScriptedContent).toBe(true);
+    expect(opts.allowScriptedContent).toBe(false);
     expect(opts.spread).toBe("auto");
   });
 });

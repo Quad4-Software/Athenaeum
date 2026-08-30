@@ -1,4 +1,4 @@
-const ALLOWED_TAGS = new Set([
+const DESCRIPTION_TAGS = new Set([
   "p",
   "br",
   "b",
@@ -15,12 +15,34 @@ const ALLOWED_TAGS = new Set([
   "div",
   "span",
   "blockquote",
+  "a",
+]);
+
+const READER_TAGS = new Set([
+  ...DESCRIPTION_TAGS,
+  "h5",
+  "h6",
+  "table",
+  "thead",
+  "tbody",
+  "tr",
+  "th",
+  "td",
+  "img",
+  "hr",
+  "pre",
+  "code",
+  "sub",
+  "sup",
 ]);
 
 const GLOBAL_ATTRS = new Set(["class", "title"]);
 const TAG_ATTRS: Record<string, Set<string>> = {
   a: new Set(["href", "title"]),
+  img: new Set(["src", "alt", "title", "width", "height"]),
 };
+
+const DROP_TAGS = new Set(["script", "style", "iframe", "object", "embed", "link", "meta", "form", "input", "button", "svg", "math"]);
 
 function stripHrefNoise(href: string): string {
   let out = "";
@@ -37,9 +59,17 @@ function isSafeHref(href: string): boolean {
   return v.startsWith("http://") || v.startsWith("https://") || v.startsWith("mailto:");
 }
 
-const DROP_TAGS = new Set(["script", "style", "iframe", "object", "embed", "link", "meta"]);
+function isSafeImgSrc(src: string): boolean {
+  const v = stripHrefNoise(src);
+  return (
+    v.startsWith("http://") ||
+    v.startsWith("https://") ||
+    v.startsWith("data:image/") ||
+    v.startsWith("/")
+  );
+}
 
-function sanitizeNode(node: Node): void {
+function sanitizeNode(node: Node, allowedTags: Set<string>): void {
   let i = 0;
   while (i < node.childNodes.length) {
     const child = node.childNodes[i];
@@ -54,7 +84,7 @@ function sanitizeNode(node: Node): void {
     }
     const el = child as HTMLElement;
     const tag = el.tagName.toLowerCase();
-    if (DROP_TAGS.has(tag) || !/^[a-z][a-z0-9]*$/.test(tag) || !ALLOWED_TAGS.has(tag)) {
+    if (DROP_TAGS.has(tag) || !/^[a-z][a-z0-9]*$/.test(tag) || !allowedTags.has(tag)) {
       if (DROP_TAGS.has(tag)) {
         el.remove();
         continue;
@@ -69,27 +99,40 @@ function sanitizeNode(node: Node): void {
     const extra = TAG_ATTRS[tag];
     if (extra) for (const a of extra) allowed.add(a);
     for (const attr of [...el.attributes]) {
-      if (!allowed.has(attr.name.toLowerCase())) {
+      const name = attr.name.toLowerCase();
+      if (!allowed.has(name)) {
         el.removeAttribute(attr.name);
         continue;
       }
-      if (attr.name.toLowerCase() === "href" && !isSafeHref(attr.value)) {
+      if (name === "href" && !isSafeHref(attr.value)) {
+        el.removeAttribute(attr.name);
+      }
+      if (name === "src" && !isSafeImgSrc(attr.value)) {
         el.removeAttribute(attr.name);
       }
     }
-    sanitizeNode(el);
+    sanitizeNode(el, allowedTags);
     i++;
   }
 }
 
-/** Strip unsafe markup; allow basic formatting tags for book descriptions. */
-export function sanitizeHtml(input: string): string {
+function runSanitize(input: string, allowedTags: Set<string>): string {
   const raw = input.trim();
   if (!raw) return "";
   if (typeof DOMParser === "undefined") return raw.replace(/<[^>]+>/g, "");
   const doc = new DOMParser().parseFromString(raw, "text/html");
-  sanitizeNode(doc.body);
+  sanitizeNode(doc.body, allowedTags);
   return doc.body.innerHTML.trim();
+}
+
+/** Strip unsafe markup; allow basic formatting tags for book descriptions. */
+export function sanitizeHtml(input: string): string {
+  return runSanitize(input, DESCRIPTION_TAGS);
+}
+
+/** Sanitize HTML from book body content (MOBI sections) before {@html}. */
+export function sanitizeReaderHtml(input: string): string {
+  return runSanitize(input, READER_TAGS);
 }
 
 export function descriptionLooksLikeHtml(input: string): boolean {

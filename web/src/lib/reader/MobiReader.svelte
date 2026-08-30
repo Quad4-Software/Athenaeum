@@ -6,6 +6,7 @@
   import { readerGestures } from "$lib/reader/reader-touch";
   import { i18n } from "$lib/stores/i18n.svelte";
   import { toast } from "$lib/stores/toast.svelte";
+  import { sanitizeReaderHtml } from "$lib/utils/sanitize-html";
 
   interface Props {
     bookId: number;
@@ -21,6 +22,8 @@
   let error = $state<string | null>(null);
   let annotationsOpen = $state(false);
   let annotationsRevision = $state(0);
+
+  const safeHtml = $derived(sections[index] ? sanitizeReaderHtml(sections[index].html) : "");
 
   $effect(() => {
     const id = bookId;
@@ -141,7 +144,7 @@
           <h1 class="mb-4 text-lg font-semibold">{sections[index].title}</h1>
         {/if}
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {@html sections[index].html}
+        {@html safeHtml}
       </article>
     {/if}
   </div>

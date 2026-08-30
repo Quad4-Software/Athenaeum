@@ -10,6 +10,7 @@
   import { i18n } from "$lib/stores/i18n.svelte";
   import { ApiError, api } from "$lib/api/client";
   import { scorePassword } from "$lib/utils/password-strength";
+  import { totpQrDataUrl } from "$lib/utils/totp-qr";
   import type { UserSession } from "$lib/api/types";
   import { untrack } from "svelte";
 
@@ -24,6 +25,7 @@
 
   let totpSecret = $state("");
   let totpUrl = $state("");
+  let totpQr = $state("");
   let totpCode = $state("");
   let totpPass = $state("");
   let totpMsg = $state<string | null>(null);
@@ -133,6 +135,7 @@
       const res = await api.totpSetup();
       totpSecret = res.secret;
       totpUrl = res.otpauthUrl;
+      totpQr = res.otpauthUrl ? await totpQrDataUrl(res.otpauthUrl) : "";
       totpCode = "";
     } catch (e) {
       totpMsg = e instanceof ApiError ? e.message : "Failed to start 2FA setup";
@@ -149,6 +152,7 @@
       await api.totpEnable(totpCode);
       totpSecret = "";
       totpUrl = "";
+      totpQr = "";
       totpCode = "";
       if (auth.user) auth.user = { ...auth.user, totpEnabled: true };
       toast.success("Two-factor authentication enabled");
@@ -292,6 +296,16 @@
         </form>
       {:else if totpSecret}
         <form class="mt-3 space-y-3" onsubmit={enableTotp}>
+          {#if totpQr}
+            <img
+              src={totpQr}
+              alt="Authenticator QR code"
+              width="192"
+              height="192"
+              class="rounded-[var(--radius-control)] border border-border bg-white p-2"
+            />
+          {/if}
+          <p class="text-xs text-muted">Scan with your authenticator app, or enter the secret manually.</p>
           <p class="break-all text-xs text-muted">Secret: {totpSecret}</p>
           {#if totpUrl}
             <a class="block break-all text-xs text-primary underline" href={totpUrl}>{totpUrl}</a>
