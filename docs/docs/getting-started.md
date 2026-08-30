@@ -64,7 +64,10 @@ chmod +x athenaeum
 ```
 
 Linux (amd64/arm64/armv6/armv7/riscv64), macOS, Windows, FreeBSD, OpenBSD, and
-NetBSD builds are published on release tags. Multi-arch images also go to GHCR.
+NetBSD builds are published on release tags. Each release also ships a **slim**
+binary (`athenaeum-slim-*`) that omits in-browser Kokoro WASM (about 20+ MiB
+smaller). Slim still supports browser speech and the optional Kokoro sidecar.
+Multi-arch images also go to GHCR.
 
 ## First login
 
@@ -105,6 +108,7 @@ cd Athenaeum
 ```sh
 cd web && pnpm install && cd ..
 make build
+# or: make build-slim
 ./bin/athenaeum --addr :8080 --library /path/to/books --data ./data
 ```
 
@@ -123,6 +127,7 @@ go build -trimpath -o bin/athenaeum ./cmd/athenaeum
 ```sh
 task setup
 task build
+# or: task build:slim   # smaller binary, no in-browser Kokoro WASM
 ./bin/athenaeum --addr :8080 --library /path/to/books --data ./data
 ```
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Cross-compile Athenaeum for every supported release target.
-# Env: VERSION (default: dev), OUT_DIR (default: dist), optional LDFLAGS extras.
+# Env: VERSION (default: dev), OUT_DIR (default: dist), SLIM=1 for athenaeum-slim-*
+# names (frontend must already be built with VITE_SLIM=1), optional LDFLAGS extras.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

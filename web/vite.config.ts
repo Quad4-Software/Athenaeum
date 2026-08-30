@@ -13,7 +13,13 @@ const isDemoBuild =
   process.env.VITE_DEMO === "1" ||
   process.env.VITE_DEMO === "true" ||
   process.env.VITE_DEMO === "yes";
+const isSlimBuild =
+  process.env.VITE_SLIM === "1" ||
+  process.env.VITE_SLIM === "true" ||
+  process.env.VITE_SLIM === "yes";
 const pdfJsRoot = resolve(rootDir, "node_modules/pdfjs-dist");
+const kokoroWasmEntry = resolve(rootDir, "src/lib/narrator/kokoro-wasm.ts");
+const kokoroWasmSlim = resolve(rootDir, "src/lib/narrator/kokoro-wasm-slim.ts");
 const pdfJsDirs = ["wasm", "cmaps", "standard_fonts", "iccs"] as const;
 
 const pdfMimeTypes: Record<string, string> = {
@@ -33,6 +39,28 @@ function copyPdfJsAssets(destRoot: string) {
     if (!existsSync(src)) continue;
     cpSync(src, join(pdfDest, dir), { recursive: true });
   }
+}
+
+/** Swap kokoro-wasm for the slim stub so kokoro-js stays out of the graph. */
+function slimKokoroPlugin(): Plugin {
+  return {
+    name: "slim-kokoro",
+    enforce: "pre",
+    resolveId(id, importer) {
+      if (!isSlimBuild) return null;
+      if (id === kokoroWasmEntry || id === kokoroWasmSlim) {
+        return kokoroWasmSlim;
+      }
+      if (
+        (id === "./kokoro-wasm" || id === "./kokoro-wasm.ts" || id.endsWith("/kokoro-wasm") || id.endsWith("/kokoro-wasm.ts")) &&
+        importer &&
+        normalize(importer).includes(`${normalize(join("src", "lib", "narrator"))}`)
+      ) {
+        return kokoroWasmSlim;
+      }
+      return null;
+    },
+  };
 }
 
 function pdfJsAssetsPlugin(): Plugin {
@@ -71,6 +99,7 @@ export default defineConfig({
   plugins: [
     svelte(),
     tailwindcss(),
+    slimKokoroPlugin(),
     pdfJsAssetsPlugin(),
     VitePWA({
       registerType: "prompt",
@@ -192,6 +221,7 @@ export default defineConfig({
   resolve: {
     alias: {
       $lib: resolve(rootDir, "src/lib"),
+      ...(isSlimBuild ? { [kokoroWasmEntry]: kokoroWasmSlim } : {}),
     },
     // Svelte 5 exports map "browser" to the client runtime; without it Vite picks
     // the SSR stub and mount() throws lifecycle_function_unavailable in dev.
@@ -211,9 +241,10 @@ export default defineConfig({
           if (id.includes("pdfjs-dist")) return "pdf";
           if (id.includes("epubjs")) return "epub";
           if (
-            id.includes("kokoro-js") ||
-            id.includes("@huggingface/transformers") ||
-            id.includes("onnxruntime")
+            !isSlimBuild &&
+            (id.includes("kokoro-js") ||
+              id.includes("@huggingface/transformers") ||
+              id.includes("onnxruntime"))
           ) {
             return "kokoro";
           }
@@ -231,6 +262,7 @@ export default defineConfig({
   },
   define: {
     "import.meta.env.VITE_DEMO": JSON.stringify(isDemoBuild ? "true" : ""),
+    "import.meta.env.VITE_SLIM": JSON.stringify(isSlimBuild ? "true" : ""),
   },
   server: {
     proxy: isDemoBuild

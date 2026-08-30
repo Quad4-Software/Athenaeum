@@ -83,6 +83,15 @@ tasks:
         WEB_VER=$(node -p "require('./web/package.json').version")
         go build -trimpath -ldflags "-s -w -X athenaeum/internal/version.Version=${WEB_VER} -X athenaeum/internal/version.WebVersion=${WEB_VER}" -o {{.BIN}} ./cmd/athenaeum
 
+  build:slim:
+    desc: Build without in-browser Kokoro WASM -> bin/athenaeum-slim
+    deps: [build:web:slim]
+    cmds:
+      - mkdir -p bin
+      - |
+        WEB_VER=$(node -p "require('./web/package.json').version")
+        go build -trimpath -ldflags "-s -w -X athenaeum/internal/version.Version=${WEB_VER} -X athenaeum/internal/version.WebVersion=${WEB_VER}" -o bin/athenaeum-slim ./cmd/athenaeum
+
   build:web:
     desc: Build the production frontend bundle (embedded into the binary)
     dir: web
@@ -91,9 +100,33 @@ tasks:
       # Cap Node old-space so svelte-check + Vite stay bounded on CI runners.
       - NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=3072}" pnpm build
 
+  build:web:slim:
+    desc: Build frontend without Kokoro WASM (smaller embed)
+    dir: web
+    cmds:
+      - pnpm install
+      - NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=3072}" pnpm build:slim
+
   build:cross:
     desc: Cross-compile all release targets (Linux/macOS/Windows/BSD/riscv/arm)
     cmds:
+      - |
+        WEB_VER=$(node -p "require('./web/package.json').version" 2>/dev/null || echo dev)
+        VERSION="${WEB_VER}" OUT_DIR=bin bash scripts/build-release.sh
+
+  build:cross:slim:
+    desc: Cross-compile slim binaries (no Kokoro WASM) for all release targets
+    deps: [build:web:slim]
+    cmds:
+      - |
+        WEB_VER=$(node -p "require('./web/package.json').version" 2>/dev/null || echo dev)
+        SLIM=1 VERSION="${WEB_VER}" OUT_DIR=bin bash scripts/build-release.sh
+
+  build:cross:all:
+    desc: Cross-compile full and slim binaries for all release targets
+    cmds:
+      - task build:cross:slim
+      - task build:web
       - |
         WEB_VER=$(node -p "require('./web/package.json').version" 2>/dev/null || echo dev)
         VERSION="${WEB_VER}" OUT_DIR=bin bash scripts/build-release.sh

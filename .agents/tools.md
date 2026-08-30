@@ -17,6 +17,7 @@ task doctor             # toolchain and ports
 task dev                # Vite :5173 + Go (air) :8080
 task demo               # seeded demo library
 task build              # web + Go binary -> ./bin/athenaeum
+task build:slim         # without Kokoro WASM -> ./bin/athenaeum-slim
 task generate           # OpenAPI + typed API paths
 ```
 

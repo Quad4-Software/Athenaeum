@@ -47,27 +47,48 @@ MAN1 := man/athenaeum.1 man/athenaeum-users.1
 
 .DEFAULT_GOAL := build
 
-.PHONY: all build build-web build-go build-cross self-check install install-bin install-man \
-	uninstall man clean help
+.PHONY: all build build-slim build-web build-web-slim build-go build-go-slim \
+	build-cross build-cross-slim build-cross-all self-check install install-bin \
+	install-man uninstall man clean help
 
 all: build
 
 ## build: Build the frontend bundle and compile the single binary.
 build: build-web build-go
 
+## build-slim: Build without in-browser Kokoro WASM into bin/athenaeum-slim.
+build-slim: build-web-slim build-go-slim
+
 ## build-web: Build the production frontend embedded into the binary.
 build-web:
 	cd web && pnpm install && pnpm build
+
+## build-web-slim: Build frontend without Kokoro WASM (smaller embed).
+build-web-slim:
+	cd web && pnpm install && pnpm build:slim
 
 ## build-go: Compile the Go binary into bin/athenaeum (assumes frontend is built).
 build-go:
 	$(INSTALL_DIR) $(BINDIR)
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BINPATH) $(CMD)
 
+## build-go-slim: Compile bin/athenaeum-slim (assumes slim frontend is built).
+build-go-slim:
+	$(INSTALL_DIR) $(BINDIR)
+	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BINDIR)/$(BIN)-slim $(CMD)
+
 ## build-cross: Cross-compile all release targets into bin/.
 build-cross:
 	$(INSTALL_DIR) $(BINDIR)
 	@VERSION="$(VERSION)" OUT_DIR="$(BINDIR)" bash scripts/build-release.sh
+
+## build-cross-slim: Cross-compile slim binaries (no Kokoro WASM) into bin/.
+build-cross-slim: build-web-slim
+	$(INSTALL_DIR) $(BINDIR)
+	@SLIM=1 VERSION="$(VERSION)" OUT_DIR="$(BINDIR)" bash scripts/build-release.sh
+
+## build-cross-all: Cross-compile full and slim binaries into bin/.
+build-cross-all: build-cross-slim build-web build-cross
 
 ## self-check: Build (if needed) and run athenaeum --self-check.
 self-check: build-go

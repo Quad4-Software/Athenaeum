@@ -21,11 +21,12 @@ description: Readers, narration, library tools, auth, OPDS, and operations.
 ## Narration with Kokoro
 
 - Listen to EPUBs with **in-browser Kokoro TTS** (ONNX Runtime Web: WebGPU with
-  WASM fallback) when WebAssembly is available.
+  WASM fallback) when WebAssembly is available. The full release binary embeds
+  that runtime; the **slim** binary (`athenaeum-slim-*`) leaves it out.
 - Fall back to the browser **SpeechSynthesis** voice if needed.
 - Optional **Kokoro sidecar** for server-side TTS
-  (`docker compose --profile kokoro`). Configure under
-  Settings -> Administration -> Narration (TTS).
+  (`docker compose --profile kokoro`). Works with full and slim binaries.
+  Configure under Settings -> Administration -> Narration (TTS).
 
 Details: [Library and readers](./library) and [Deploying](./deploying).
 
@@ -65,6 +66,7 @@ See [Authentication](./authentication).
 ## Operations
 
 - Single binary with embedded Svelte UI (optional `--web-dir` for a disk SPA).
+  Releases also publish a slim binary without in-browser Kokoro WASM.
 - Docker Compose, `./install.sh`, and host units (systemd, OpenRC, runit, dinit, s6).
 - Prometheus `/metrics` (admin toggle, optional Basic Auth), extended health.
 - Admin backup/restore zip, JSON config export/import.

@@ -174,13 +174,37 @@ jobs:
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
 
-      - name: Build frontend
+      - name: Install frontend deps
         working-directory: web
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm build:fast
+        run: pnpm install --frozen-lockfile
 
-      - name: Cross-compile
+      - name: Build slim frontend
+        working-directory: web
+        run: pnpm build:slim
+
+      - name: Cross-compile slim
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+          CGO_ENABLED: "0"
+          VERSION: ${{ needs.prepare.outputs.version }}
+          SUFFIX: ${{ matrix.suffix }}
+        run: |
+          out="athenaeum-slim-${VERSION}-${GOOS}-${SUFFIX}"
+          if [[ "${GOOS}" == "windows" ]]; then out="${out}.exe"; fi
+          go build -mod=vendor -trimpath \
+            -ldflags "-s -w -X athenaeum/internal/version.Version=${VERSION} -X athenaeum/internal/version.WebVersion=${VERSION}" \
+            -o "${out}" ./cmd/athenaeum
+          mkdir -p dist
+          mv "${out}" dist/
+          (cd dist && sha256sum "$(basename "${out}")" > "$(basename "${out}").sha256")
+
+      - name: Build full frontend
+        working-directory: web
+        run: pnpm build:fast
+
+      - name: Cross-compile full
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}

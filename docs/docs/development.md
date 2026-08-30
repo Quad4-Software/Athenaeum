@@ -13,6 +13,7 @@ task hooks:install    # lefthook pre-commit / pre-push (or: lefthook install)
 task doctor           # toolchain, optional tools, ports
 task dev              # Vite :5173 + Go live reload (air) on :8080
 task build            # frontend + single binary -> ./bin/athenaeum
+task build:slim       # same without in-browser Kokoro WASM -> ./bin/athenaeum-slim
 task run              # build then run local server
 task demo             # Go server with --demo seeded library
 task reset:data       # wipe ./data
