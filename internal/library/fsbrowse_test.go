@@ -6,6 +6,14 @@ import (
 	"testing"
 )
 
+func TestPathAllowedDotfileNotTraversal(t *testing.T) {
+	// Filenames that contain ".." as a prefix of the name (not a parent segment)
+	// must stay allowed under the root.
+	if !pathAllowed("/lib/ety/..rarc", []string{"/lib"}) {
+		t.Fatal("expected /lib/ety/..rarc under /lib")
+	}
+}
+
 func TestBrowseDirsRoots(t *testing.T) {
 	root := t.TempDir()
 	sub := filepath.Join(root, "books")

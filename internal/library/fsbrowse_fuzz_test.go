@@ -13,6 +13,7 @@ func FuzzPathAllowed(f *testing.F) {
 	f.Add("/library", "/tmp/secret")
 	f.Add("/library", "/library/../etc")
 	f.Add("/data/books", "/data/books/a/b")
+	f.Add("/lib", "/lib/ety/..rarc")
 
 	f.Fuzz(func(t *testing.T, root, path string) {
 		root = strings.TrimSpace(root)
@@ -31,9 +32,34 @@ func FuzzPathAllowed(f *testing.F) {
 		}
 
 		got := pathAllowed(p, []string{r})
-		under := p == r || strings.HasPrefix(p, r+string(filepath.Separator))
-		if under != got {
-			t.Fatalf("pathAllowed(%q, [%q]) = %v, under=%v", p, r, got, under)
+		lexUnder := p == r || strings.HasPrefix(p, r+string(filepath.Separator))
+		_, pathErr := filepath.EvalSymlinks(p)
+
+		// Missing paths that are lexically under the configured root must be allowed
+		// even when the root itself is a symlink (for example /lib -> /usr/lib).
+		if lexUnder && pathErr != nil && !got {
+			t.Fatalf("pathAllowed(%q, [%q]) = false, unresolved lexical child", p, r)
+		}
+
+		if !got {
+			return
+		}
+
+		// Allowed paths must sit under the root lexically or after symlink resolution.
+		if lexUnder {
+			return
+		}
+		rp, err := filepath.EvalSymlinks(p)
+		if err != nil {
+			t.Fatalf("pathAllowed(%q, [%q]) = true but path does not resolve", p, r)
+		}
+		rr := r
+		if resolved, err := filepath.EvalSymlinks(r); err == nil {
+			rr = filepath.Clean(resolved)
+		}
+		rp = filepath.Clean(rp)
+		if rp != rr && !strings.HasPrefix(rp, rr+string(filepath.Separator)) {
+			t.Fatalf("pathAllowed(%q, [%q]) = true for escape resolved=%q root=%q", p, r, rp, rr)
 		}
 	})
 }

@@ -138,7 +138,10 @@ func parseArgon2id(encoded string) (parsedArgon2id, error) {
 		case "t":
 			out.time = uint32(n)
 		case "p":
-			out.threads = uint8(n)
+			if n == 0 || n > 255 {
+				return parsedArgon2id{}, fmt.Errorf("invalid argon2id parallelism")
+			}
+			out.threads = uint8(n) // #nosec G115 -- bounded to 1..255 above
 		default:
 			return parsedArgon2id{}, fmt.Errorf("unknown argon2id param %q", kv[0])
 		}
@@ -168,13 +171,17 @@ func checkArgon2id(encoded, password string) bool {
 	if parsed.version != argon2Version {
 		return false
 	}
+	keyLen := len(parsed.sum)
+	if keyLen == 0 || keyLen > 1024 {
+		return false
+	}
 	sum := argon2.IDKey(
 		[]byte(password),
 		parsed.salt,
 		parsed.time,
 		parsed.memory,
 		parsed.threads,
-		uint32(len(parsed.sum)),
+		uint32(keyLen), // #nosec G115 -- bounded to 1..1024 above
 	)
 	return subtle.ConstantTimeCompare(sum, parsed.sum) == 1
 }

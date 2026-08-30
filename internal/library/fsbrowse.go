@@ -97,23 +97,38 @@ func normalizeRoots(roots []string) []string {
 }
 
 func pathAllowed(path string, roots []string) bool {
-	path = filepath.Clean(path)
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		path = filepath.Clean(resolved)
+	cleanPath := filepath.Clean(path)
+	resolvedPath, pathErr := filepath.EvalSymlinks(cleanPath)
+	if pathErr == nil {
+		resolvedPath = filepath.Clean(resolvedPath)
 	}
+
 	for _, root := range roots {
-		root = filepath.Clean(root)
-		if resolved, err := filepath.EvalSymlinks(root); err == nil {
-			root = filepath.Clean(resolved)
+		cleanRoot := filepath.Clean(root)
+		resolvedRoot := cleanRoot
+		if resolved, err := filepath.EvalSymlinks(cleanRoot); err == nil {
+			resolvedRoot = filepath.Clean(resolved)
 		}
-		if path == root {
-			return true
+
+		if pathErr == nil {
+			// Resolved paths must sit under a resolved root (blocks symlink escapes).
+			if pathUnderRoot(resolvedPath, resolvedRoot) {
+				return true
+			}
+			continue
 		}
-		if strings.HasPrefix(path, root+string(filepath.Separator)) {
+
+		// Unresolved paths (missing leaf): allow lexical match on the configured
+		// root or its resolved form so roots like /lib -> /usr/lib still work.
+		if pathUnderRoot(cleanPath, cleanRoot) || pathUnderRoot(cleanPath, resolvedRoot) {
 			return true
 		}
 	}
 	return false
+}
+
+func pathUnderRoot(path, root string) bool {
+	return path == root || strings.HasPrefix(path, root+string(filepath.Separator))
 }
 
 func listSubdirs(dir string) ([]FSDirEntry, error) {
