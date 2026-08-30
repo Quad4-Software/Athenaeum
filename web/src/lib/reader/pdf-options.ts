@@ -11,7 +11,6 @@ export function pdfOpenOptions(url: string): DocumentInitParameters {
     standardFontDataUrl: `${pdfAssetBase}standard_fonts/`,
     cMapUrl: `${pdfAssetBase}cmaps/`,
     iccUrl: `${pdfAssetBase}iccs/`,
-    isEvalSupported: false,
     enableXfa: false,
   };
 }
