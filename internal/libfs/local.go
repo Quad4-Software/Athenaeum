@@ -31,6 +31,10 @@ func newLocalFS(path string) (*localFS, error) {
 func (f *localFS) Backend() string   { return BackendLocal }
 func (f *localFS) RootLabel() string { return f.root }
 
+func (f *localFS) LocalAbsPath(relPath string) (string, error) {
+	return f.resolve(relPath)
+}
+
 func (f *localFS) resolve(relPath string) (string, error) {
 	relPath = NormalizeRelPath(relPath)
 	if relPath == "" {
@@ -47,7 +51,38 @@ func (f *localFS) resolve(relPath string) (string, error) {
 	if err != nil || strings.HasPrefix(rel, "..") {
 		return "", errors.New("path escapes mount")
 	}
+	if err := f.ensureResolvedUnderRoot(full); err != nil {
+		return "", err
+	}
 	return full, nil
+}
+
+func (f *localFS) ensureResolvedUnderRoot(full string) error {
+	root, err := filepath.EvalSymlinks(f.root)
+	if err != nil {
+		root = f.root
+	}
+	root = filepath.Clean(root)
+
+	check := full
+	if _, err := os.Lstat(full); err != nil {
+		check = filepath.Dir(full)
+	}
+	for {
+		resolved, err := filepath.EvalSymlinks(check)
+		if err == nil {
+			resolved = filepath.Clean(resolved)
+			if resolved != root && !strings.HasPrefix(resolved, root+string(filepath.Separator)) {
+				return errors.New("path escapes mount")
+			}
+			return nil
+		}
+		parent := filepath.Dir(check)
+		if parent == check {
+			return errors.New("path escapes mount")
+		}
+		check = parent
+	}
 }
 
 func (f *localFS) Stat(ctx context.Context, relPath string) (FileInfo, error) {
@@ -116,8 +151,12 @@ func (f *localFS) Walk(ctx context.Context, fn func(FileInfo) error) error {
 		if err != nil {
 			return nil
 		}
+		rel = filepath.ToSlash(rel)
+		if rel == ".." || strings.HasPrefix(rel, "../") {
+			return nil
+		}
 		return fn(FileInfo{
-			RelPath: filepath.ToSlash(rel),
+			RelPath: rel,
 			Size:    info.Size(),
 			ModTime: info.ModTime(),
 			IsDir:   false,

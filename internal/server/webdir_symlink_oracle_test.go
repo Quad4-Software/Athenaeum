@@ -12,7 +12,7 @@ import (
 )
 
 // PROVED_WEBDIR_SYMLINK_JAIL
-// Guarantee claimed: spaHandler(webDir) must not serve symlink targets
+// Guarantee: spaHandler(webDir) must not serve symlink targets
 // outside the configured web directory.
 
 func TestWebDirSymlinkEscapeOracle(t *testing.T) {
@@ -45,8 +45,7 @@ func TestWebDirSymlinkEscapeOracle(t *testing.T) {
 	h.ServeHTTP(rec, req)
 	body, _ := io.ReadAll(rec.Body)
 	if rec.Code == http.StatusOK && strings.Contains(string(body), "TOPSECRET") {
-		fmt.Println("PROVED_WEBDIR_SYMLINK_JAIL: served outside webDir via symlink")
-		return
+		t.Fatalf("served outside webDir via symlink status=%d", rec.Code)
 	}
-	t.Fatalf("not vulnerable: status=%d body=%q", rec.Code, body)
+	fmt.Println("PROVED_WEBDIR_SYMLINK_JAIL: symlink escape denied status=", rec.Code)
 }

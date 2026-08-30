@@ -1,7 +1,9 @@
 package library
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 
 	"athenaeum/internal/models"
 )
@@ -34,7 +36,43 @@ func ExtractCoverFromFile(absPath, format string) []byte {
 	return nil
 }
 
-// ResolveBookAbsPath returns the on-disk path for a catalog book.
+// ResolveBookAbsPath returns a path under mount for relPath, or empty if
+// the relative path would escape the mount.
 func ResolveBookAbsPath(mount, relPath string) string {
-	return filepath.Join(mount, relPath)
+	mount = filepath.Clean(mount)
+	relPath = filepath.ToSlash(strings.TrimPrefix(filepath.Clean(filepath.FromSlash(relPath)), string(filepath.Separator)))
+	if relPath == "." || relPath == "" {
+		return mount
+	}
+	if relPath == ".." || strings.HasPrefix(relPath, "../") {
+		return ""
+	}
+	full := filepath.Join(mount, filepath.FromSlash(relPath))
+	rel, err := filepath.Rel(mount, full)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return ""
+	}
+	root := mount
+	if resolved, err := filepath.EvalSymlinks(mount); err == nil {
+		root = filepath.Clean(resolved)
+	}
+	check := full
+	if _, err := os.Lstat(full); err != nil {
+		check = filepath.Dir(full)
+	}
+	for {
+		resolved, err := filepath.EvalSymlinks(check)
+		if err == nil {
+			resolved = filepath.Clean(resolved)
+			if resolved != root && !strings.HasPrefix(resolved, root+string(filepath.Separator)) {
+				return ""
+			}
+			return full
+		}
+		parent := filepath.Dir(check)
+		if parent == check {
+			return ""
+		}
+		check = parent
+	}
 }

@@ -38,6 +38,9 @@ type LibraryFS interface {
 	Write(ctx context.Context, relPath string, r io.Reader, size int64) error
 	Remove(ctx context.Context, relPath string) error
 	MkdirAll(ctx context.Context, relPath string) error
+	// LocalAbsPath returns a jailed absolute path for local mounts.
+	// Non-local backends return an error.
+	LocalAbsPath(relPath string) (string, error)
 }
 
 // Config selects and configures a library backend.

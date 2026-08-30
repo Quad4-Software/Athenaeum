@@ -387,11 +387,16 @@ func (m *Maintenance) regenerateOneCover(ctx context.Context, book models.Book, 
 	var path string
 	var cleanup func()
 	if fs.Backend() == libfs.BackendLocal {
-		path = filepath.Join(fs.RootLabel(), filepath.FromSlash(book.RelPath))
-		if _, err := os.Stat(path); err != nil {
+		full, err := fs.LocalAbsPath(book.RelPath)
+		if err != nil {
 			m.progress.skipped.Add(1)
 			return
 		}
+		if _, err := os.Stat(full); err != nil {
+			m.progress.skipped.Add(1)
+			return
+		}
+		path = full
 		cleanup = func() {}
 	} else {
 		tmpDir := filepath.Join(m.coverDir, "..", "tmp")

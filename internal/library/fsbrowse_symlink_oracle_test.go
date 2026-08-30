@@ -8,9 +8,9 @@ import (
 )
 
 // PROVED_FSBROWSE_SYMLINK_JAIL
-// Guarantee claimed: BrowseDirs must not accept paths that are only inside
-// roots via a symlink whose target is outside those roots.
-// Oracle: expected deny. Actual: accepts and returns the symlink path.
+// Guarantee: BrowseDirs must not accept paths that only appear inside roots
+// via a symlink whose resolved target is outside those roots.
+// Expected: deny. Actual before fix: accepted the symlink path.
 
 func TestBrowseDirsSymlinkEscapeOracle(t *testing.T) {
 	base := t.TempDir()
@@ -30,12 +30,9 @@ func TestBrowseDirsSymlinkEscapeOracle(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := BrowseDirs([]string{root}, link)
-	if err != nil {
-		t.Fatalf("not vulnerable (symlink denied): %v", err)
+	_, err := BrowseDirs([]string{root}, link)
+	if err == nil {
+		t.Fatal("BrowseDirs accepted symlink escape")
 	}
-	if res.Path != link {
-		t.Fatalf("unexpected path %q", res.Path)
-	}
-	fmt.Println("PROVED_FSBROWSE_SYMLINK_JAIL: BrowseDirs followed symlink out of jail path=", res.Path)
+	fmt.Println("PROVED_FSBROWSE_SYMLINK_JAIL: symlink escape denied err=", err)
 }

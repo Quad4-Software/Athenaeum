@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"time"
 
 	"athenaeum/internal/libfs"
@@ -88,7 +87,10 @@ func (s *Server) materializeBookFile(ctx context.Context, libraryID int64, relPa
 	}
 	noop := func() {}
 	if fs.Backend() == libfs.BackendLocal {
-		full := filepath.Join(fs.RootLabel(), filepath.FromSlash(relPath))
+		full, err := fs.LocalAbsPath(relPath)
+		if err != nil {
+			return "", nil, err
+		}
 		if _, err := os.Stat(full); err != nil {
 			return "", nil, err
 		}

@@ -36,11 +36,13 @@ type Store struct {
 	driver Driver
 
 	// authRequired caches whether any user row exists (invalidated on create/delete).
-	authRequired atomic.Pointer[authRequiredState]
+	authRequired    atomic.Pointer[authRequiredState]
+	authRequiredGen atomic.Uint64
 }
 
 type authRequiredState struct {
 	required bool
+	gen      uint64
 }
 
 // Open opens and migrates a SQLite database at path. Prefer OpenWith when

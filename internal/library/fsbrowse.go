@@ -98,8 +98,14 @@ func normalizeRoots(roots []string) []string {
 
 func pathAllowed(path string, roots []string) bool {
 	path = filepath.Clean(path)
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		path = filepath.Clean(resolved)
+	}
 	for _, root := range roots {
 		root = filepath.Clean(root)
+		if resolved, err := filepath.EvalSymlinks(root); err == nil {
+			root = filepath.Clean(resolved)
+		}
 		if path == root {
 			return true
 		}

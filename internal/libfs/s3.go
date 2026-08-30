@@ -113,6 +113,10 @@ func TestS3(ctx context.Context, cfg S3Config) error {
 func (f *s3FS) Backend() string   { return BackendS3 }
 func (f *s3FS) RootLabel() string { return f.label }
 
+func (f *s3FS) LocalAbsPath(relPath string) (string, error) {
+	return "", errors.New("s3 backend has no local path")
+}
+
 func (f *s3FS) objectKey(relPath string) (string, error) {
 	relPath = NormalizeRelPath(relPath)
 	if relPath == "" {
@@ -180,7 +184,7 @@ func (f *s3FS) Walk(ctx context.Context, fn func(FileInfo) error) error {
 		}
 		rel := strings.TrimPrefix(obj.Key, f.prefix)
 		rel = NormalizeRelPath(rel)
-		if rel == "" {
+		if rel == "" || strings.Contains(rel, "..") {
 			continue
 		}
 		base := rel

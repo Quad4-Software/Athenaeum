@@ -242,7 +242,11 @@ func (s *Scanner) scanRoot(ctx context.Context, lib models.Library, fs libfs.Lib
 			}
 			abs := info.RelPath
 			if fs.Backend() == libfs.BackendLocal {
-				abs = filepath.Join(fs.RootLabel(), filepath.FromSlash(info.RelPath))
+				full, err := fs.LocalAbsPath(info.RelPath)
+				if err != nil {
+					return nil
+				}
+				abs = full
 			}
 			jobs <- job{
 				libraryID: lib.ID,

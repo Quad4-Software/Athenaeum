@@ -53,8 +53,8 @@ func (s *Server) handleCreateWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	url := strings.TrimSpace(req.URL)
-	if url == "" || !strings.HasPrefix(url, "http") {
-		writeError(w, http.StatusBadRequest, errors.New("url must be an http(s) endpoint"))
+	if err := validateWebhookURL(url); err != nil {
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 	events := sanitizeWebhookEvents(req.Events)
@@ -123,6 +123,10 @@ func (s *Server) handleUpdateWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if url := strings.TrimSpace(req.URL); url != "" {
+		if err := validateWebhookURL(url); err != nil {
+			writeError(w, http.StatusBadRequest, err)
+			return
+		}
 		existing.URL = url
 	}
 	if req.Secret != "" {

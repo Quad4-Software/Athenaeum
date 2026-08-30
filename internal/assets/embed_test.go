@@ -31,10 +31,3 @@ func TestDistFSKeepsTrackedIcons(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}

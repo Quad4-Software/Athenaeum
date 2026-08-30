@@ -70,7 +70,38 @@ func spaRoot(webDir string) (fs.FS, error) {
 	if _, err := os.Stat(filepath.Join(webDir, "index.html")); err != nil {
 		return nil, fmt.Errorf("web-dir %q: missing index.html", webDir)
 	}
-	return os.DirFS(webDir), nil
+	abs, err := filepath.Abs(webDir)
+	if err != nil {
+		return nil, err
+	}
+	return jailedDirFS{root: abs}, nil
+}
+
+// jailedDirFS is like os.DirFS but rejects paths whose resolved target
+// escapes the configured root (symlink jail).
+type jailedDirFS struct {
+	root string
+}
+
+func (d jailedDirFS) Open(name string) (fs.File, error) {
+	if !fs.ValidPath(name) {
+		return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrInvalid}
+	}
+	full := filepath.Join(d.root, filepath.FromSlash(name))
+	root, err := filepath.EvalSymlinks(d.root)
+	if err != nil {
+		root = d.root
+	}
+	root = filepath.Clean(root)
+	resolved, err := filepath.EvalSymlinks(full)
+	if err != nil {
+		return nil, &fs.PathError{Op: "open", Path: name, Err: err}
+	}
+	resolved = filepath.Clean(resolved)
+	if resolved != root && !strings.HasPrefix(resolved, root+string(filepath.Separator)) {
+		return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrNotExist}
+	}
+	return os.Open(resolved) // #nosec G304 -- path jails via EvalSymlinks under root
 }
 
 func serveCompressed(w http.ResponseWriter, r *http.Request, sub fs.FS, name string) bool {

@@ -3,7 +3,6 @@ package library
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"sync/atomic"
 
 	"athenaeum/internal/libfs"
@@ -24,7 +23,11 @@ func (s *Scanner) IndexFile(ctx context.Context, libraryID int64, relPath string
 	}
 	var abs string
 	if fs.Backend() == libfs.BackendLocal {
-		abs = filepath.Join(fs.RootLabel(), filepath.FromSlash(relPath))
+		full, err := fs.LocalAbsPath(relPath)
+		if err != nil {
+			return 0, err
+		}
+		abs = full
 	} else {
 		abs = stringsTrimJoin(fs.RootLabel(), relPath)
 	}

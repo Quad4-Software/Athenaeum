@@ -10,8 +10,8 @@ import (
 )
 
 // PROVED_SMTP_READFILE_PATH_JAIL
-// Guarantee claimed: library RelPath with .. must not let smtp/content-index
-// ReadFile/Open escape the mount (incomplete OpenRoot sibling).
+// Guarantee: library RelPath with .. must not let smtp/content-index
+// resolve a path outside the mount.
 
 func TestSMTPPathJoinEscapesMountOracle(t *testing.T) {
 	base := t.TempDir()
@@ -26,12 +26,8 @@ func TestSMTPPathJoinEscapesMountOracle(t *testing.T) {
 
 	rel := "../secret.epub"
 	joined := library.ResolveBookAbsPath(mount, rel)
-	data, err := os.ReadFile(joined)
-	if err != nil {
-		t.Fatalf("read failed: %v", err)
+	if joined != "" {
+		t.Fatalf("escape path returned: %q", joined)
 	}
-	if string(data) != "SECRET-BYTES" {
-		t.Fatalf("unexpected data %q", data)
-	}
-	fmt.Println("PROVED_SMTP_READFILE_PATH_JAIL: ReadFile via Join read outside mount")
+	fmt.Println("PROVED_SMTP_READFILE_PATH_JAIL: ResolveBookAbsPath denied traversal")
 }

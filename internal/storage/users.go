@@ -11,7 +11,8 @@ import (
 
 // AuthRequired reports whether at least one user account exists.
 func (s *Store) AuthRequired(ctx context.Context) (bool, error) {
-	if cached := s.authRequired.Load(); cached != nil {
+	gen := s.authRequiredGen.Load()
+	if cached := s.authRequired.Load(); cached != nil && cached.gen == gen {
 		return cached.required, nil
 	}
 	var n int
@@ -20,11 +21,15 @@ func (s *Store) AuthRequired(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	required := n > 0
-	s.authRequired.Store(&authRequiredState{required: required})
+	s.authRequired.Store(&authRequiredState{required: required, gen: gen})
+	if s.authRequiredGen.Load() != gen {
+		s.authRequired.Store(nil)
+	}
 	return required, nil
 }
 
 func (s *Store) invalidateAuthRequired() {
+	s.authRequiredGen.Add(1)
 	s.authRequired.Store(nil)
 }
 
