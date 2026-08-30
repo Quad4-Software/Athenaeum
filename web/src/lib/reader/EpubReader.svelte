@@ -4,6 +4,7 @@
     epubOpenOptions,
     epubRenderOptions,
     ensureEpubDocumentHead,
+    hardenEpubDocument,
   } from "$lib/reader/epub-options";
   import { theme } from "$lib/stores/theme.svelte";
   import { api } from "$lib/api/client";
@@ -285,6 +286,7 @@
     const book = ePub(url, epubOpenOptions());
     book.spine.hooks.content.register((doc: Document) => {
       ensureEpubDocumentHead(doc);
+      hardenEpubDocument(doc);
     });
     epubBook = book;
     const r = book.renderTo(node, epubRenderOptions(spread));
@@ -294,6 +296,7 @@
     });
 
     r.hooks.content.register((contents: { document: Document }) => {
+      hardenEpubDocument(contents.document);
       injectEpubContentBackground(contents.document, palette[resolvedTheme()].bg);
       bindDocumentGestures(contents.document, {
         onSwipeLeft: next,

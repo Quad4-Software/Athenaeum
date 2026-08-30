@@ -241,6 +241,7 @@ func (s *Server) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
 	var claims struct {
 		Sub               string `json:"sub"`
 		Email             string `json:"email"`
+		EmailVerified     *bool  `json:"email_verified"`
 		PreferredUsername string `json:"preferred_username"`
 		Name              string `json:"name"`
 	}
@@ -256,11 +257,13 @@ func (s *Server) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
 	groups := s.oidcGroups(r.Context(), idToken, oauth2Token, oauthCfg, cfg)
 	isAdminGroup := oidcGroupMatchesAdmin(groups, cfg.AdminGroups)
 
-	u, err := s.resolveOIDCUser(r.Context(), cfg, claims.Sub, claims.Email, claims.PreferredUsername, claims.Name, isAdminGroup)
+	emailVerified := claims.EmailVerified == nil || *claims.EmailVerified
+	u, err := s.resolveOIDCUser(r.Context(), cfg, claims.Sub, claims.Email, claims.PreferredUsername, claims.Name, isAdminGroup, emailVerified)
 	if err != nil {
 		s.oidcErrorRedirect(w, r, err.Error())
 		return
 	}
+	s.completePendingInvite(w, r, u, claims.Email, emailVerified)
 	if err := s.issueAuthTokens(w, r, u.ID, "oidc"); err != nil {
 		s.oidcErrorRedirect(w, r, "session error")
 		return
@@ -269,7 +272,7 @@ func (s *Server) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/?oidc=1", http.StatusFound)
 }
 
-func (s *Server) resolveOIDCUser(ctx context.Context, cfg models.OIDCConfig, sub, email, preferredUsername, name string, isAdminGroup bool) (models.User, error) {
+func (s *Server) resolveOIDCUser(ctx context.Context, cfg models.OIDCConfig, sub, email, preferredUsername, name string, isAdminGroup, emailVerified bool) (models.User, error) {
 	if u, err := s.store.FindUserByOIDCSub(ctx, sub); err == nil {
 		if isAdminGroup && !u.IsAdmin {
 			if err := s.store.SetUserAdmin(ctx, u.ID, true); err != nil {
@@ -286,10 +289,12 @@ func (s *Server) resolveOIDCUser(ctx context.Context, cfg models.OIDCConfig, sub
 	var matchErr error
 	switch cfg.MatchBy {
 	case models.OIDCMatchEmail:
-		if email != "" {
-			matched, matchErr = s.store.FindUserByEmail(ctx, email)
-		} else {
+		if email == "" {
 			matchErr = storage.ErrNotFound
+		} else if !emailVerified {
+			return models.User{}, errors.New("email claim is not verified")
+		} else {
+			matched, matchErr = s.store.FindUserByEmail(ctx, email)
 		}
 	case models.OIDCMatchSub:
 		matchErr = storage.ErrNotFound
@@ -309,6 +314,9 @@ func (s *Server) resolveOIDCUser(ctx context.Context, cfg models.OIDCConfig, sub
 	}
 	if matchErr == nil {
 		if err := s.store.LinkOIDCSub(ctx, matched.ID, sub, email); err != nil {
+			if errors.Is(err, storage.ErrConflict) {
+				return models.User{}, errors.New("account is already linked to another identity")
+			}
 			return models.User{}, err
 		}
 		if isAdminGroup && !matched.IsAdmin {
@@ -530,4 +538,66 @@ func (s *Server) clearOIDCStateCookie(r *http.Request) *http.Cookie {
 		Secure:   s.requestSecure(r),
 		MaxAge:   -1,
 	}
+}
+
+func (s *Server) invitePendingCookie(r *http.Request, token string) *http.Cookie {
+	// #nosec G124 -- Secure follows requestSecure() so local HTTP works and HTTPS sets Secure.
+	return &http.Cookie{
+		Name:     brand.InvitePendingCookie,
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   s.requestSecure(r),
+		MaxAge:   600,
+	}
+}
+
+func (s *Server) clearInvitePendingCookie(r *http.Request) *http.Cookie {
+	// #nosec G124 -- Secure follows requestSecure() so local HTTP works and HTTPS sets Secure.
+	return &http.Cookie{
+		Name:     brand.InvitePendingCookie,
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   s.requestSecure(r),
+		MaxAge:   -1,
+	}
+}
+
+func (s *Server) completePendingInvite(w http.ResponseWriter, r *http.Request, u models.User, email string, emailVerified bool) {
+	c, err := r.Cookie(brand.InvitePendingCookie)
+	http.SetCookie(w, s.clearInvitePendingCookie(r))
+	if err != nil || c.Value == "" {
+		return
+	}
+	inv, err := s.store.GetInviteByToken(r.Context(), c.Value)
+	if err != nil {
+		return
+	}
+	if inv.AcceptedAt != nil || inv.RevokedAt != nil {
+		return
+	}
+	if inv.ExpiresAt != nil && time.Now().After(*inv.ExpiresAt) {
+		return
+	}
+	if inv.Email != "" {
+		if !emailVerified {
+			return
+		}
+		if !strings.EqualFold(strings.TrimSpace(inv.Email), strings.TrimSpace(email)) {
+			return
+		}
+	}
+	if err := s.store.AcceptInvite(r.Context(), inv.ID, u.ID); err != nil {
+		return
+	}
+	s.logAudit(r, u.ID, u.Username, 0, "", "invite.accepted", "oidc")
+	s.emitWebhook(models.WebhookEventInviteAccepted, map[string]any{
+		"inviteId": inv.ID,
+		"kind":     inv.Kind,
+		"via":      "oidc",
+		"userId":   u.ID,
+	})
 }

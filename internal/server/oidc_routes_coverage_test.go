@@ -212,14 +212,14 @@ func TestOIDCResolveUserPaths(t *testing.T) {
 
 	cfg := models.OIDCConfig{MatchBy: models.OIDCMatchEmail, AutoRegister: true, AdminGroups: "admins"}
 
-	u, err := srv.resolveOIDCUser(ctx, cfg, "sub-new-1", "new1@example.com", "newuser1", "New User", false)
+	u, err := srv.resolveOIDCUser(ctx, cfg, "sub-new-1", "new1@example.com", "newuser1", "New User", false, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if u.Username == "" || u.ID == 0 {
 		t.Fatalf("created user=%+v", u)
 	}
-	again, err := srv.resolveOIDCUser(ctx, cfg, "sub-new-1", "new1@example.com", "newuser1", "New User", true)
+	again, err := srv.resolveOIDCUser(ctx, cfg, "sub-new-1", "new1@example.com", "newuser1", "New User", true, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -231,7 +231,7 @@ func TestOIDCResolveUserPaths(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	linked, err := srv.resolveOIDCUser(ctx, cfg, "sub-link-email", "link@example.com", "", "", true)
+	linked, err := srv.resolveOIDCUser(ctx, cfg, "sub-link-email", "link@example.com", "", "", true, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -247,7 +247,7 @@ func TestOIDCResolveUserPaths(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	byName, err := srv.resolveOIDCUser(ctx, models.OIDCConfig{MatchBy: models.OIDCMatchUsername, AutoRegister: false}, "sub-name", "", "matchname", "", false)
+	byName, err := srv.resolveOIDCUser(ctx, models.OIDCConfig{MatchBy: models.OIDCMatchUsername, AutoRegister: false}, "sub-name", "", "matchname", "", false, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -255,12 +255,12 @@ func TestOIDCResolveUserPaths(t *testing.T) {
 		t.Fatalf("username match=%+v want %d", byName, uid)
 	}
 
-	_, err = srv.resolveOIDCUser(ctx, models.OIDCConfig{MatchBy: models.OIDCMatchSub, AutoRegister: false}, "sub-nomatch", "x@y.z", "x", "x", false)
+	_, err = srv.resolveOIDCUser(ctx, models.OIDCConfig{MatchBy: models.OIDCMatchSub, AutoRegister: false}, "sub-nomatch", "x@y.z", "x", "x", false, true)
 	if err == nil || !strings.Contains(err.Error(), "no matching account") {
 		t.Fatalf("auto register off err=%v", err)
 	}
 
-	created, err := srv.resolveOIDCUser(ctx, models.OIDCConfig{MatchBy: models.OIDCMatchSub, AutoRegister: true}, "sub-auto-2", "", "", "", false)
+	created, err := srv.resolveOIDCUser(ctx, models.OIDCConfig{MatchBy: models.OIDCMatchSub, AutoRegister: true}, "sub-auto-2", "", "", "", false, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -268,7 +268,7 @@ func TestOIDCResolveUserPaths(t *testing.T) {
 		t.Fatalf("fallback username=%q", created.Username)
 	}
 
-	fromEmailLocal, err := srv.resolveOIDCUser(ctx, models.OIDCConfig{MatchBy: models.OIDCMatchUsername, AutoRegister: true}, "sub-auto-3", "prefixuser@example.com", "", "", false)
+	fromEmailLocal, err := srv.resolveOIDCUser(ctx, models.OIDCConfig{MatchBy: models.OIDCMatchUsername, AutoRegister: true}, "sub-auto-3", "prefixuser@example.com", "", "", false, true)
 	if err != nil {
 		t.Fatal(err)
 	}

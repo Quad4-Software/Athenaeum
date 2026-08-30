@@ -126,7 +126,14 @@ func (s *Store) SessionUser(ctx context.Context, token string) (models.User, err
 		_ = s.DeleteSession(ctx, token)
 		return models.User{}, ErrNotFound
 	}
-	return s.GetUser(ctx, userID)
+	u, err := s.GetUser(ctx, userID)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			_ = s.DeleteSession(ctx, token)
+		}
+		return models.User{}, err
+	}
+	return u, nil
 }
 
 // PurgeExpiredSessions deletes sessions past their expiry.

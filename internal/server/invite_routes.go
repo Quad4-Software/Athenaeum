@@ -106,6 +106,14 @@ func (s *Server) handleCreateInvite(w http.ResponseWriter, r *http.Request) {
 
 	created, err := s.store.CreateInvite(r.Context(), inv)
 	if err != nil {
+		if inv.PocketIDUserID != "" {
+			if cfg, cfgErr := s.store.GetPocketIDSettings(r.Context()); cfgErr == nil && cfg.Enabled {
+				client := pocketid.NewClient(cfg.BaseURL, cfg.APIKey)
+				if delErr := client.DeleteUser(r.Context(), inv.PocketIDUserID); delErr != nil {
+					s.log.Warn("pocket id orphan cleanup failed", "userId", inv.PocketIDUserID, "err", delErr)
+				}
+			}
+		}
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -306,18 +314,10 @@ func (s *Server) handleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if inv.Kind == models.InviteKindPermanent && inv.PocketIDUserID != "" {
-		if err := s.store.AcceptInviteSSO(r.Context(), inv.ID); err != nil {
-			writeError(w, http.StatusConflict, errors.New("invite already accepted"))
-			return
-		}
-		s.logAudit(r, 0, inv.Email, 0, "", "invite.accepted", "pocketid")
-		s.emitWebhook(models.WebhookEventInviteAccepted, map[string]any{
-			"inviteId": inv.ID,
-			"kind":     inv.Kind,
-			"via":      "pocketid",
-		})
+		http.SetCookie(w, s.invitePendingCookie(r, inv.Token))
+		s.logAudit(r, 0, inv.Email, 0, "", "invite.sso_start", "pocketid")
 		writeJSON(w, http.StatusOK, map[string]string{
-			"ok":       "accepted",
+			"ok":       "continue",
 			"redirect": "/auth/oidc/login",
 		})
 		return
@@ -367,6 +367,7 @@ func (s *Server) handleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := s.store.AcceptInvite(r.Context(), inv.ID, id); err != nil {
+			_ = s.store.DeleteUser(r.Context(), id)
 			writeError(w, http.StatusConflict, errors.New("invite already accepted"))
 			return
 		}
@@ -412,6 +413,7 @@ func (s *Server) handleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.AcceptInvite(r.Context(), inv.ID, id); err != nil {
+		_ = s.store.DeleteUser(r.Context(), id)
 		writeError(w, http.StatusConflict, errors.New("invite already accepted"))
 		return
 	}

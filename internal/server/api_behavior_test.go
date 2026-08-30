@@ -407,6 +407,8 @@ func TestNonAdminDeniedAdminRoutes(t *testing.T) {
 
 func TestWebhookTestDeliversSignedPayload(t *testing.T) {
 	_, c := newAdminClient(t)
+	webhookAllowLocal = true
+	t.Cleanup(func() { webhookAllowLocal = false })
 	var gotBody []byte
 	var gotSig string
 	hook := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

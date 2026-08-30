@@ -499,8 +499,8 @@ func TestTouchSessionEmailAndOIDCLink(t *testing.T) {
 	if err != nil || bySub.ID != uid {
 		t.Fatalf("oidc=%+v err=%v", bySub, err)
 	}
-	if err := s.LinkOIDCSub(ctx, 99999, "x", "y"); err != ErrNotFound {
-		t.Fatalf("link missing=%v", err)
+	if err := s.LinkOIDCSub(ctx, 99999, "x", "y"); err != ErrConflict {
+		t.Fatalf("link missing user=%v want conflict", err)
 	}
 }
 

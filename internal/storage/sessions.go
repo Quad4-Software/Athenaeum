@@ -281,10 +281,12 @@ VALUES (?,?,?,?,?,?) RETURNING id`,
 }
 
 // LinkOIDCSub associates an OIDC subject with an existing account.
+// Refuses to overwrite a different existing oidc_sub.
 func (s *Store) LinkOIDCSub(ctx context.Context, userID int64, oidcSub, email string) error {
-	res, err := s.execContext(ctx,
-		`UPDATE users SET oidc_sub=?, email=CASE WHEN email='' THEN ? ELSE email END WHERE id=?`,
-		oidcSub, email, userID)
+	res, err := s.execContext(ctx, `
+UPDATE users SET oidc_sub=?, email=CASE WHEN email='' THEN ? ELSE email END
+WHERE id=? AND (oidc_sub='' OR oidc_sub=?)`,
+		oidcSub, email, userID, oidcSub)
 	if err != nil {
 		return err
 	}
@@ -293,7 +295,7 @@ func (s *Store) LinkOIDCSub(ctx context.Context, userID int64, oidcSub, email st
 		return err
 	}
 	if n == 0 {
-		return ErrNotFound
+		return ErrConflict
 	}
 	return nil
 }

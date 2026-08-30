@@ -34,3 +34,6 @@ export function ensureEpubDocumentHead(doc: Document) {
     root.appendChild(head);
   }
 }
+
+export { hardenEpubDocument, EPUB_SECTION_CSP } from "./epub-harden";
+

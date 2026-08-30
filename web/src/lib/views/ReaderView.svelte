@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { ArrowLeft, Monitor, BookOpen } from "@lucide/svelte";
-  import NativePdfReader from "$lib/reader/NativePdfReader.svelte";
+  import { ArrowLeft } from "@lucide/svelte";
   import ErrorView from "$lib/views/ErrorView.svelte";
   import { api, ApiError } from "$lib/api/client";
   import { router } from "$lib/router.svelte";
   import { toast } from "$lib/stores/toast.svelte";
-  import { pdfReaderMode, setPdfReaderMode } from "$lib/navigation.svelte";
   import { audioPlayer } from "$lib/stores/audioPlayer.svelte";
   import { narrator } from "$lib/stores/narrator.svelte";
   import { bookOfflineCache } from "$lib/offline/book-cache";
@@ -34,7 +32,6 @@
   let error = $state<string | null>(null);
   let errorCode = $state<number | null>(null);
   let percent = $state(0);
-  let pdfMode = $state<"canvas" | "native">(pdfReaderMode());
   let fileUrl = $state("");
 
   let EpubReader = $state<EpubComponent | null>(null);
@@ -128,12 +125,6 @@
     }, 800);
   }
 
-  function togglePdfMode() {
-    pdfMode = pdfMode === "canvas" ? "native" : "canvas";
-    setPdfReaderMode(pdfMode);
-    toast.info(pdfMode === "native" ? "Using browser PDF viewer" : "Using built-in reader");
-  }
-
   function onEpubProgress(location: string, pct: number) {
     persist(location, pct);
   }
@@ -175,22 +166,6 @@
     <div class="min-w-0 flex-1">
       <p class="truncate text-sm font-medium text-fg">{book?.title ?? "Loading..."}</p>
     </div>
-    {#if book?.format === "pdf"}
-      <button
-        type="button"
-        class="btn btn-ghost shrink-0 text-xs"
-        aria-label={pdfMode === "native" ? "Switch to built-in reader" : "Switch to native viewer"}
-        onclick={togglePdfMode}
-      >
-        {#if pdfMode === "native"}
-          <BookOpen size={14} />
-          <span class="hidden sm:inline">Built-in</span>
-        {:else}
-          <Monitor size={14} />
-          <span class="hidden sm:inline">Native</span>
-        {/if}
-      </button>
-    {/if}
     <span class="text-xs tabular-nums text-muted">{Math.round(percent * 100)}%</span>
   </header>
 
@@ -217,12 +192,6 @@
         title={book.title}
         initialLocation={progress.location}
         onProgress={onEpubProgress}
-      />
-    {:else if book && progress && book.format === "pdf" && pdfMode === "native"}
-      <NativePdfReader
-        url={fileUrl || api.fileUrl(book.id)}
-        initialPage={progress.location ? Number(progress.location) || 1 : 1}
-        onProgress={onPdfProgress}
       />
     {:else if book && progress && book.format === "pdf" && PdfReader}
       {@const Reader = PdfReader}

@@ -45,14 +45,3 @@ export function breadcrumbsFor(route: Route, bookTitle?: string): Crumb[] {
 
   return items;
 }
-
-import { legacyStorageKey } from "$lib/brand/storage";
-
-export function pdfReaderMode(): "canvas" | "native" {
-  if (typeof localStorage === "undefined") return "canvas";
-  return localStorage.getItem(legacyStorageKey("pdf_mode")) === "native" ? "native" : "canvas";
-}
-
-export function setPdfReaderMode(mode: "canvas" | "native") {
-  localStorage.setItem(legacyStorageKey("pdf_mode"), mode);
-}

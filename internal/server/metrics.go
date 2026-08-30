@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"runtime"
 	"strings"
@@ -35,6 +36,10 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
+	} else if !metricsClientIsLoopback(r) {
+		// Unauthenticated metrics stay on loopback only (scrape via SSH tunnel or sidecar).
+		http.Error(w, "metrics without auth are loopback-only", http.StatusForbidden)
+		return
 	}
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 
@@ -78,6 +83,15 @@ func (s *Server) metricsAuthorized(r *http.Request, username, passwordHash strin
 		return false
 	}
 	return auth.CheckPassword(passwordHash, p)
+}
+
+func metricsClientIsLoopback(r *http.Request) bool {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 func (s *Server) metricCounts(r *http.Request) (books, users int64) {

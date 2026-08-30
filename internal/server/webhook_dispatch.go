@@ -64,7 +64,15 @@ func (s *Server) deliverWebhook(ctx context.Context, wh models.Webhook, event st
 	var statusCode int
 	success := false
 	attempts := 0
-	client := &http.Client{Timeout: webhookHTTPTimeout}
+	if err := validateWebhookURL(wh.URL); err != nil {
+		now := time.Now()
+		_, _ = s.store.InsertWebhookDelivery(ctx, models.WebhookDelivery{
+			WebhookID: wh.ID, Event: event, Payload: string(payload),
+			Success: false, Attempts: 0, LastError: err.Error(), CreatedAt: now,
+		})
+		return
+	}
+	client := webhookHTTPClient()
 	for attempt := 1; attempt <= webhookMaxAttempts; attempt++ {
 		attempts = attempt
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, wh.URL, bytes.NewReader(payload))

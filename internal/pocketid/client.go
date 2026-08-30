@@ -79,6 +79,14 @@ func (c *Client) CreateUser(ctx context.Context, u UserCreate) (User, error) {
 	return out, nil
 }
 
+// DeleteUser removes a user via DELETE /api/users/{id}.
+func (c *Client) DeleteUser(ctx context.Context, userID string) error {
+	if strings.TrimSpace(userID) == "" {
+		return fmt.Errorf("pocket-id: user id is required")
+	}
+	return c.doJSON(ctx, http.MethodDelete, "/api/users/"+url.PathEscape(userID), nil, nil)
+}
+
 // UpdateUserGroups sets group membership for a user.
 func (c *Client) UpdateUserGroups(ctx context.Context, userID string, groupIDs []string) error {
 	body := map[string]any{"userGroupIds": groupIDs}
