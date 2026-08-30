@@ -57,6 +57,8 @@ type comicPageCacheEntry struct {
 const (
 	maxComicMetaEntries = 64
 	maxComicPageEntries = 48
+	// Cap retained page blobs so large CBZ/CBR pages cannot pin hundreds of MiB.
+	maxComicPageBytes = 64 << 20
 )
 
 var (
@@ -294,12 +296,28 @@ func putComicPageCached(key comicPageCacheKey, data []byte, mime string) {
 				e := comicPageCache[i]
 				comicPageCache = append(append(comicPageCache[:i], comicPageCache[i+1:]...), e)
 			}
+			evictComicPagesLocked()
 			return
 		}
 	}
 	comicPageCache = append(comicPageCache, comicPageCacheEntry{key: key, data: data, mime: mime})
-	if len(comicPageCache) > maxComicPageEntries {
-		comicPageCache = comicPageCache[len(comicPageCache)-maxComicPageEntries:]
+	evictComicPagesLocked()
+}
+
+func comicPageCacheBytesLocked() int {
+	n := 0
+	for _, entry := range comicPageCache {
+		n += len(entry.data)
+	}
+	return n
+}
+
+func evictComicPagesLocked() {
+	for len(comicPageCache) > maxComicPageEntries || comicPageCacheBytesLocked() > maxComicPageBytes {
+		if len(comicPageCache) == 0 {
+			return
+		}
+		comicPageCache = comicPageCache[1:]
 	}
 }
 

@@ -87,7 +87,7 @@ func TestParseMobiRecordsAndCache(t *testing.T) {
 	if err := os.MkdirAll(extraDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < maxMobiCacheEntries+2; i++ {
+	for i := range maxMobiCacheEntries + 2 {
 		p := filepath.Join(extraDir, "book-"+string(rune('a'+i))+".mobi")
 		if err := os.WriteFile(p, buildMinimalPalmDB("cache body"), 0o644); err != nil {
 			t.Fatal(err)

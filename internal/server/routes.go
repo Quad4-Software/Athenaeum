@@ -1,11 +1,13 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"athenaeum/internal/models"
@@ -14,6 +16,12 @@ import (
 	"athenaeum/internal/telemetry"
 	"athenaeum/internal/version"
 )
+
+var jsonEncodeBufPool = sync.Pool{
+	New: func() any {
+		return new(bytes.Buffer)
+	},
+}
 
 // registerAPI registers all JSON and file endpoints under /api.
 func (s *Server) registerAPI(mux *http.ServeMux) {
@@ -415,9 +423,19 @@ func atoiDefault(s string, def int) int {
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
+	buf := jsonEncodeBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	encErr := json.NewEncoder(buf).Encode(v)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if encErr != nil {
+		jsonEncodeBufPool.Put(buf)
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"error":"encode failed"}`))
+		return
+	}
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
+	_, _ = w.Write(buf.Bytes())
+	jsonEncodeBufPool.Put(buf)
 }
 
 func writeError(w http.ResponseWriter, status int, err error) {

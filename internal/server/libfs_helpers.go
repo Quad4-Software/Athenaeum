@@ -13,7 +13,32 @@ import (
 )
 
 func (s *Server) openLibraryFS(ctx context.Context, libraryID int64) (libfs.LibraryFS, error) {
-	return s.store.OpenLibraryFS(ctx, libraryID)
+	s.libFSMu.Lock()
+	if fs, ok := s.libFS[libraryID]; ok {
+		s.libFSMu.Unlock()
+		return fs, nil
+	}
+	s.libFSMu.Unlock()
+
+	fs, err := s.store.OpenLibraryFS(ctx, libraryID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.libFSMu.Lock()
+	if existing, ok := s.libFS[libraryID]; ok {
+		s.libFSMu.Unlock()
+		return existing, nil
+	}
+	s.libFS[libraryID] = fs
+	s.libFSMu.Unlock()
+	return fs, nil
+}
+
+func (s *Server) invalidateLibraryFS(libraryID int64) {
+	s.libFSMu.Lock()
+	delete(s.libFS, libraryID)
+	s.libFSMu.Unlock()
 }
 
 func (s *Server) serveLibraryFile(w http.ResponseWriter, r *http.Request, libraryID int64, relPath, filename, ctype string, attachment bool) {

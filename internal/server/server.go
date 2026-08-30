@@ -12,6 +12,7 @@ import (
 
 	"athenaeum/internal/altcha"
 	"athenaeum/internal/config"
+	"athenaeum/internal/libfs"
 	"athenaeum/internal/library"
 	"athenaeum/internal/models"
 	"athenaeum/internal/storage"
@@ -39,6 +40,9 @@ type Server struct {
 	totpMu      sync.Mutex
 	totpPending map[string]pendingTOTP
 
+	libFSMu sync.Mutex
+	libFS   map[int64]libfs.LibraryFS
+
 	jobsCtx    context.Context
 	jobsCancel context.CancelFunc
 }
@@ -63,6 +67,7 @@ func New(ctx context.Context, cfg config.Config, store *storage.Store, scanner *
 		altcha:          altchaSvc,
 		log:             log,
 		totpPending:     make(map[string]pendingTOTP),
+		libFS:           make(map[int64]libfs.LibraryFS),
 		jobsCtx:         jobsCtx,
 		jobsCancel:      jobsCancel,
 	}

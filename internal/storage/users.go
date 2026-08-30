@@ -11,9 +11,21 @@ import (
 
 // AuthRequired reports whether at least one user account exists.
 func (s *Store) AuthRequired(ctx context.Context) (bool, error) {
+	if cached := s.authRequired.Load(); cached != nil {
+		return cached.required, nil
+	}
 	var n int
 	err := s.queryRowContext(ctx, `SELECT COUNT(*) FROM users`).Scan(&n)
-	return n > 0, err
+	if err != nil {
+		return false, err
+	}
+	required := n > 0
+	s.authRequired.Store(&authRequiredState{required: required})
+	return required, nil
+}
+
+func (s *Store) invalidateAuthRequired() {
+	s.authRequired.Store(nil)
 }
 
 // CreateUser inserts a new account and returns its id.
@@ -22,10 +34,15 @@ func (s *Store) CreateUser(ctx context.Context, username, passwordHash string, a
 	if admin {
 		perms = models.AllPermissions
 	}
-	return s.insertID(ctx, `
+	id, err := s.insertID(ctx, `
 INSERT INTO users (username, password_hash, is_admin, permissions, created_at)
 VALUES (?,?,?,?,?) RETURNING id`,
 		username, passwordHash, boolToInt(admin), perms, time.Now().Unix())
+	if err != nil {
+		return 0, err
+	}
+	s.invalidateAuthRequired()
+	return id, nil
 }
 
 // GetUserByUsername loads a user and password hash by username.
@@ -259,6 +276,7 @@ func (s *Store) DeleteUser(ctx context.Context, userID int64) error {
 	if n == 0 {
 		return ErrNotFound
 	}
+	s.invalidateAuthRequired()
 	return nil
 }
 

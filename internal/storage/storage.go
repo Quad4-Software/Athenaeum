@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "modernc.org/sqlite"
@@ -33,6 +34,13 @@ type OpenOptions struct {
 type Store struct {
 	db     *sql.DB
 	driver Driver
+
+	// authRequired caches whether any user row exists (invalidated on create/delete).
+	authRequired atomic.Pointer[authRequiredState]
+}
+
+type authRequiredState struct {
+	required bool
 }
 
 // Open opens and migrates a SQLite database at path. Prefer OpenWith when
@@ -57,7 +65,7 @@ func OpenWith(opts OpenOptions) (*Store, error) {
 			return nil, errors.New("sqlite database path is required")
 		}
 		dsn := fmt.Sprintf(
-			"file:%s?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(ON)",
+			"file:%s?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(ON)&_pragma=cache_size(-65536)&_pragma=temp_store(MEMORY)",
 			opts.Path,
 		)
 		db, err = sql.Open("sqlite", dsn)

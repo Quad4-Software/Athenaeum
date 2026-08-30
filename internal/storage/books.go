@@ -117,7 +117,7 @@ const selectColumns = `SELECT id, library_id, title, author, series, series_inde
 	content_hash, duplicate_of, hidden, audiobook_set_id FROM books`
 
 const listSelectColumns = `SELECT books.id, books.library_id, books.title, books.author, books.series, books.series_index, books.format, books.rel_path,
-	books.abs_path, books.file_size, books.has_cover, books.language, '' AS description, books.added_at, books.modified_at, books.meta_edited, books.cover_edited,
+	'' AS abs_path, books.file_size, books.has_cover, books.language, '' AS description, books.added_at, books.modified_at, books.meta_edited, books.cover_edited,
 	books.content_hash, books.duplicate_of, COALESCE(progress.percent, 0) FROM books`
 
 // GetBookByPath returns a book by library and relative path.

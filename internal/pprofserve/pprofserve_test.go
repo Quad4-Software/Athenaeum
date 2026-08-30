@@ -35,8 +35,7 @@ func TestStartEmptyAndLoopback(t *testing.T) {
 	}
 	stop()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	stop, err = Start(ctx, "127.0.0.1:0", log)
 	if err != nil {

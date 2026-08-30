@@ -142,6 +142,7 @@ func (s *Server) handleUpdateLibrary(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
+	s.invalidateLibraryFS(id)
 	writeJSON(w, http.StatusOK, lib)
 }
 
@@ -186,6 +187,7 @@ func (s *Server) handleDeleteLibrary(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
+	s.invalidateLibraryFS(id)
 	w.WriteHeader(http.StatusNoContent)
 }
 
