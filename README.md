@@ -1,6 +1,9 @@
 # Athenaeum
 
-Self-hosted library for EPUB, PDF, comics, and audiobooks. One binary.
+> [!WARNING]
+> This project is still alpha level software and being actively developed.
+
+Self-hosted library for EPUB, PDF, comics, audiobooks and much more. Single static portable binary.
 
 <p align="center">
   <img src="showcase/library-theme-split.png" alt="Library in dark and light themes" width="100%" />
