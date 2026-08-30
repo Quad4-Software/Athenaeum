@@ -3,8 +3,14 @@
 # Supports dry-run, rollback on failure, and service unit installation.
 set -euo pipefail
 
-SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || realpath "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
-ROOT="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+# curl | bash leaves BASH_SOURCE unset (and set -u would abort on [0]).
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || realpath "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+  ROOT="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+else
+  SCRIPT_PATH=""
+  ROOT="$(pwd)"
+fi
 DEPLOY_DIR="$ROOT/deploy"
 
 VERSION="latest"
@@ -106,8 +112,8 @@ banner() {
   printf '%s\n\n' "$(dim "binary · docker · source · services · rollback")"
 }
 
-info()  { printf '%s %s\n' "$(cyan "info")" "$*"; }
-ok()    { printf '%s %s\n' "$(green "ok")" "$*"; }
+info()  { printf '%s %s\n' "$(cyan "info")" "$*" >&2; }
+ok()    { printf '%s %s\n' "$(green "ok")" "$*" >&2; }
 warn()  { printf '%s %s\n' "$(yellow "warn")" "$*" >&2; }
 err()   { printf '%s %s\n' "$(red "error")" "$*" >&2; }
 die()   { err "$*"; exit 1; }
@@ -405,12 +411,36 @@ ensure_repo_tree
 
 # --- interactive configuration ----------------------------------------------
 
+apply_nonroot_defaults() {
+  have_root && return 0
+
+  if [[ $CREATE_USER -eq 1 ]]; then
+    warn "not root: skipping system user creation (re-run with sudo for a dedicated user)"
+    CREATE_USER=0
+    INSTALL_USER="$(id -un)"
+  fi
+
+  # Piped / non-interactive installs must not default to systemd without root.
+  if [[ $INSTALL_SERVICE -eq 1 && -z "$SERVICE_KIND" ]] && ! need_tty; then
+    warn "not root: skipping service unit installation"
+    INSTALL_SERVICE=0
+    SERVICE_KIND="none"
+  fi
+
+  if [[ "$PREFIX" == "/usr/local" ]] && [[ ! -w /usr/local/bin && ! -w /usr/local ]]; then
+    PREFIX="${XDG_BIN_HOME:-$HOME/.local}"
+    warn "not root: install prefix set to $PREFIX"
+  fi
+}
+
 configure() {
   banner
 
   if [[ $DRY_RUN -eq 1 ]]; then
     warn "dry-run mode: no files will be changed"
   fi
+
+  apply_nonroot_defaults
 
   if [[ -z "$METHOD" ]]; then
     METHOD="$(choose "Install method" "binary" "docker" "source")"
@@ -461,7 +491,13 @@ configure() {
   if [[ $INSTALL_SERVICE -eq 1 && -z "$SERVICE_KIND" ]]; then
     local detected
     detected="$(detect_init)"
-    SERVICE_KIND="$(choose "Service manager (detected: $detected)" "systemd" "openrc" "runit" "dinit" "s6" "none")"
+    if ! have_root; then
+      SERVICE_KIND="none"
+      INSTALL_SERVICE=0
+      warn "not root: skipping service unit installation"
+    else
+      SERVICE_KIND="$(choose "Service manager (detected: $detected)" "systemd" "openrc" "runit" "dinit" "s6" "none")"
+    fi
   fi
   SERVICE_KIND="${SERVICE_KIND:-none}"
 
@@ -502,7 +538,13 @@ create_system_user() {
     ok "user $INSTALL_USER already exists"
     return 0
   fi
-  have_root || die "root required to create user $INSTALL_USER (or pass --no-user)"
+  if ! have_root; then
+    if [[ $DRY_RUN -eq 1 ]]; then
+      info "dry-run: would create user $INSTALL_USER"
+      return 0
+    fi
+    die "root required to create user $INSTALL_USER (or pass --no-user)"
+  fi
   info "creating system user $INSTALL_USER"
   if command -v useradd >/dev/null 2>&1; then
     do_cmd useradd --system --home-dir /var/lib/athenaeum --shell /usr/sbin/nologin --user-group "$INSTALL_USER"
@@ -644,7 +686,7 @@ download_binary() {
     return 0
   fi
   if ! curl -fL --retry 3 --retry-delay 2 "$url" -o "$INSTALL_STATE_DIR/$asset"; then
-    die "download failed. Build from source (--method source) or set --release-base"
+    return 1
   fi
   if curl -fsSL "${url}.sha256" -o "$INSTALL_STATE_DIR/${asset}.sha256" 2>/dev/null; then
     info "verifying checksum"
@@ -656,20 +698,69 @@ download_binary() {
   printf '%s\n' "$INSTALL_STATE_DIR/$asset"
 }
 
+github_release_available() {
+  [[ -n "$RELEASE_BASE" ]] && return 0
+  [[ -n "$REPO_SLUG" ]] || return 1
+  local api="https://api.github.com/repos/${REPO_SLUG}/releases/latest"
+  curl -fsSL "$api" >/dev/null 2>&1
+}
+
 install_binary_method() {
   local bin=""
   if [[ -x "$ROOT/bin/athenaeum" ]] && need_tty \
     && confirm "Use existing ./bin/athenaeum instead of downloading?"; then
     bin="$ROOT/bin/athenaeum"
-  else
-    bin="$(download_binary)"
+    install_binary_to_prefix "$bin"
+    return 0
   fi
-  install_binary_to_prefix "$bin"
+
+  if ! github_release_available && [[ -z "$RELEASE_BASE" ]]; then
+    if [[ -x "$ROOT/bin/athenaeum" ]]; then
+      info "no GitHub release found; using existing $ROOT/bin/athenaeum"
+      install_binary_to_prefix "$ROOT/bin/athenaeum"
+      return 0
+    fi
+    warn "no GitHub release found; building from source"
+    if [[ $DRY_RUN -eq 1 ]]; then
+      info "dry-run: would build from source in $ROOT"
+      return 0
+    fi
+    install_source_method
+    return 0
+  fi
+
+  if bin="$(download_binary)"; then
+    install_binary_to_prefix "$bin"
+    return 0
+  fi
+
+  if [[ -x "$ROOT/bin/athenaeum" ]]; then
+    warn "download failed; using existing $ROOT/bin/athenaeum"
+    install_binary_to_prefix "$ROOT/bin/athenaeum"
+    return 0
+  fi
+  warn "download failed; building from source"
+  if [[ $DRY_RUN -eq 1 ]]; then
+    info "dry-run: would build from source in $ROOT"
+    return 0
+  fi
+  install_source_method
 }
 
 install_source_method() {
   ensure_cmd go
   ensure_cmd node
+  if command -v corepack >/dev/null 2>&1; then
+    info "activating packageManager via corepack"
+    do_cmd corepack enable
+    if [[ -f "$ROOT/web/package.json" ]]; then
+      local pm
+      pm="$(sed -n 's/.*"packageManager"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$ROOT/web/package.json" | head -n1)"
+      if [[ -n "$pm" ]]; then
+        do_cmd corepack prepare "$pm" --activate
+      fi
+    fi
+  fi
   ensure_cmd pnpm
   info "building from source in $ROOT"
   if command -v task >/dev/null 2>&1; then
