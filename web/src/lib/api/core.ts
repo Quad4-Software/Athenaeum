@@ -31,19 +31,14 @@ function readCSRFCookie(): string {
 }
 
 let csrfReady: Promise<string> | null = null;
-let cachedCsrf = "";
 
 export async function ensureCsrf(): Promise<string> {
   if (isDemoMode()) return "demo-csrf";
 
-  // Cookie is the source of truth. Never reuse an in-memory token when the
-  // cookie is gone (failed refresh used to clear it and left login broken).
+  // Cookie is the source of truth. Never keep a parallel in-memory token
+  // (failed refresh used to clear the cookie and leave login broken).
   const cookie = readCSRFCookie();
-  if (cookie) {
-    cachedCsrf = cookie;
-    return cookie;
-  }
-  cachedCsrf = "";
+  if (cookie) return cookie;
   if (!csrfReady) {
     csrfReady = fetch("/api/auth/csrf", { credentials: "same-origin" })
       .then(async (res) => {
@@ -58,7 +53,6 @@ export async function ensureCsrf(): Promise<string> {
         const cookieToken = readCSRFCookie();
         const token = cookieToken || bodyToken;
         if (!token) throw new ApiError(500, "csrf token missing from response");
-        cachedCsrf = token;
         return token;
       })
       .finally(() => {
@@ -68,9 +62,9 @@ export async function ensureCsrf(): Promise<string> {
   return csrfReady;
 }
 
-/** Drop cached CSRF after login/logout rotates the cookie. */
+/** Kept for call sites after login/logout. Cookie is the CSRF source of truth. */
 export function clearCsrfCache(): void {
-  cachedCsrf = "";
+  csrfReady = null;
 }
 
 let refreshPromise: Promise<boolean> | null = null;

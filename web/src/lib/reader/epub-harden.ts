@@ -79,11 +79,18 @@ function shouldDropMeta(el: Element): boolean {
   return httpEquiv === "refresh" || httpEquiv === "set-cookie";
 }
 
+function stripURLNoise(raw: string): string {
+  let out = "";
+  for (const ch of raw.trim().toLowerCase()) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (code < 32 || code === 127 || /\s/.test(ch)) continue;
+    out += ch;
+  }
+  return out;
+}
+
 function isUnsafeURL(raw: string): boolean {
-  const v = raw
-    .trim()
-    .toLowerCase()
-    .replace(/[\u0000-\u001f\u007f\s]+/g, "");
+  const v = stripURLNoise(raw);
   return (
     v.startsWith("javascript:") ||
     v.startsWith("vbscript:") ||

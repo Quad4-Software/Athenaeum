@@ -978,6 +978,45 @@
       }
     },
     "/api/auth/sessions": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Revoke other sessions (all=true for every session)",
+        "description": "Auth: required",
+        "operationId": "DELETE__api_auth_sessions",
+        "parameters": [
+          {
+            "name": "all",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
       "get": {
         "tags": [
           "Admin"
@@ -1342,6 +1381,48 @@
         "summary": "Reset password",
         "description": "Auth: admin",
         "operationId": "PUT__api_auth_users__id__password",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/users/{id}/sessions": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List sessions for a user",
+        "description": "Auth: admin",
+        "operationId": "GET__api_auth_users__id__sessions",
         "parameters": [
           {
             "name": "id",
@@ -3618,7 +3699,7 @@
           "Admin"
         ],
         "summary": "Whether Kokoro TTS is enabled",
-        "description": "Auth: optional",
+        "description": "Auth: required",
         "operationId": "GET__api_tts_status",
         "responses": {
           "200": {
@@ -3650,7 +3731,7 @@
           "Admin"
         ],
         "summary": "Synthesize speech via Kokoro sidecar",
-        "description": "Auth: optional",
+        "description": "Auth: required",
         "operationId": "POST__api_tts_synthesize",
         "responses": {
           "200": {
@@ -3682,7 +3763,7 @@
           "Admin"
         ],
         "summary": "List Kokoro voices",
-        "description": "Auth: optional",
+        "description": "Auth: required",
         "operationId": "GET__api_tts_voices",
         "responses": {
           "200": {

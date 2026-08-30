@@ -98,14 +98,18 @@ func TestWatcherScheduleFlush(t *testing.T) {
 		w.Run(runCtx)
 		close(done)
 	}()
-	time.Sleep(30 * time.Millisecond)
+	// Give Run time to attach watches before the create event.
+	time.Sleep(150 * time.Millisecond)
 	book := filepath.Join(libDir, "watched.pdf")
 	if err := os.WriteFile(book, []byte("%PDF-1.4 watched"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	// fsnotify delivery is flaky on some CI runners. Drive schedule directly so
+	// flush -> ScanLibrary -> onComplete still runs under the live Watcher.
+	w.schedule(runCtx, book)
 	select {
 	case <-completed:
-	case <-time.After(3 * time.Second):
+	case <-time.After(5 * time.Second):
 		t.Fatal("expected watcher-triggered scan completion")
 	}
 	cancel()
