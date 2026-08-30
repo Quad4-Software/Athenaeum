@@ -96,17 +96,25 @@ func (s *Server) clearCSRFCookie(r *http.Request) *http.Cookie {
 	}
 }
 
-func (s *Server) clearAuthCookies(w http.ResponseWriter, r *http.Request) {
+func (s *Server) clearSessionCookies(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, s.clearSessionCookie(r))
 	http.SetCookie(w, s.clearRefreshCookie(r))
+}
+
+func (s *Server) clearAuthCookies(w http.ResponseWriter, r *http.Request) {
+	s.clearSessionCookies(w, r)
 	http.SetCookie(w, s.clearCSRFCookie(r))
 }
 
-func (s *Server) clearAuthCookiesUnlessSessionValid(w http.ResponseWriter, r *http.Request) {
+// clearSessionCookiesUnlessSessionValid drops session/refresh cookies after a
+// failed refresh without touching CSRF. Clearing CSRF here breaks login: the
+// SPA plants a CSRF token then calls /api/auth/me, which triggers refresh and
+// would otherwise wipe the token the login POST still has cached.
+func (s *Server) clearSessionCookiesUnlessSessionValid(w http.ResponseWriter, r *http.Request) {
 	if s.hasValidSessionCookie(r) {
 		return
 	}
-	s.clearAuthCookies(w, r)
+	s.clearSessionCookies(w, r)
 }
 
 func (s *Server) hasValidSessionCookie(r *http.Request) bool {

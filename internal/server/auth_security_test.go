@@ -268,6 +268,46 @@ func TestRefreshTokenRotation(t *testing.T) {
 	}
 }
 
+func TestFailedRefreshPreservesCSRFCookie(t *testing.T) {
+	srv, store := testServer(t)
+	ctx := context.Background()
+	hash, _ := auth.HashPassword("longpassword")
+	if _, err := store.CreateUser(ctx, "bob", hash, true); err != nil {
+		t.Fatal(err)
+	}
+	handler, err := srv.Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	csrf := fetchCSRF(t, handler)
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/refresh", nil)
+	withCSRF(req, csrf)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("refresh without token status=%d, want 401", rec.Code)
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == auth.CSRFCookie && c.MaxAge < 0 {
+			t.Fatal("failed refresh must not clear CSRF cookie needed for login")
+		}
+	}
+
+	body := bytes.NewBufferString(`{"username":"bob","password":"wrong-password"}`)
+	loginReq := httptest.NewRequest(http.MethodPost, "/api/auth/login", body)
+	loginReq.Header.Set("Content-Type", "application/json")
+	withCSRF(loginReq, csrf)
+	loginRec := httptest.NewRecorder()
+	handler.ServeHTTP(loginRec, loginReq)
+	if loginRec.Code == http.StatusForbidden {
+		t.Fatalf("login CSRF rejected after failed refresh: %s", loginRec.Body.String())
+	}
+	if loginRec.Code != http.StatusUnauthorized {
+		t.Fatalf("login status=%d body=%s, want 401 bad credentials", loginRec.Code, loginRec.Body.String())
+	}
+}
+
 func TestLogoutWithExpiredSessionCookie(t *testing.T) {
 	srv, store := testServer(t)
 	ctx := context.Background()

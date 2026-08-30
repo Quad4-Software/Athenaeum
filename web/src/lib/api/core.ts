@@ -36,11 +36,14 @@ let cachedCsrf = "";
 export async function ensureCsrf(): Promise<string> {
   if (isDemoMode()) return "demo-csrf";
 
-  const existing = readCSRFCookie() || cachedCsrf;
-  if (existing) {
-    cachedCsrf = existing;
-    return existing;
+  // Cookie is the source of truth. Never reuse an in-memory token when the
+  // cookie is gone (failed refresh used to clear it and left login broken).
+  const cookie = readCSRFCookie();
+  if (cookie) {
+    cachedCsrf = cookie;
+    return cookie;
   }
+  cachedCsrf = "";
   if (!csrfReady) {
     csrfReady = fetch("/api/auth/csrf", { credentials: "same-origin" })
       .then(async (res) => {
@@ -87,8 +90,12 @@ async function tryRefresh(): Promise<boolean> {
         credentials: "same-origin",
         headers: { Accept: "application/json", [CSRF_HEADER]: csrf },
       });
+      if (!res.ok) {
+        clearCsrfCache();
+      }
       return res.ok;
     } catch {
+      clearCsrfCache();
       return false;
     } finally {
       refreshPromise = null;

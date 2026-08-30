@@ -12,7 +12,7 @@ func (s *Server) rotateFromRefreshCookie(w http.ResponseWriter, r *http.Request,
 	c, err := r.Cookie(auth.RefreshCookie)
 	if err != nil || c.Value == "" {
 		if clearOnFailure {
-			s.clearAuthCookiesUnlessSessionValid(w, r)
+			s.clearSessionCookiesUnlessSessionValid(w, r)
 		}
 		return models.User{}, errUnauthorized
 	}
@@ -20,7 +20,7 @@ func (s *Server) rotateFromRefreshCookie(w http.ResponseWriter, r *http.Request,
 	u, err := s.store.RefreshTokenUser(r.Context(), c.Value)
 	if err != nil {
 		if clearOnFailure {
-			s.clearAuthCookiesUnlessSessionValid(w, r)
+			s.clearSessionCookiesUnlessSessionValid(w, r)
 		}
 		return models.User{}, errUnauthorized
 	}

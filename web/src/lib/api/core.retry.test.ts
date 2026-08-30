@@ -1,6 +1,13 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { _shouldRetry, request, ApiError } from "./core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { _shouldRetry, request, ApiError, ensureCsrf, clearCsrfCache } from "./core";
 import { brand } from "$lib/brand";
+
+function clearDocumentCookies() {
+  for (const part of document.cookie.split(";")) {
+    const name = part.split("=")[0]?.trim();
+    if (name) document.cookie = `${name}=; Max-Age=0; path=/`;
+  }
+}
 
 describe("_shouldRetry", () => {
   it("retries network failures for GET", () => {
@@ -74,5 +81,37 @@ describe("request retry", () => {
     );
     await expect(request("/api/scan", { method: "POST" })).rejects.toBeInstanceOf(ApiError);
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ensureCsrf", () => {
+  beforeEach(() => {
+    clearDocumentCookies();
+    clearCsrfCache();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    clearDocumentCookies();
+    clearCsrfCache();
+  });
+
+  it("refetches when the cookie is gone even if memory still has a token", async () => {
+    document.cookie = `${brand.csrfCookie}=stale-token`;
+    await ensureCsrf();
+    clearDocumentCookies();
+
+    const fetchFn = vi.fn().mockImplementation(() => {
+      document.cookie = `${brand.csrfCookie}=fresh-token`;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({ csrfToken: "fresh-token" }),
+      } as Response);
+    });
+    vi.stubGlobal("fetch", fetchFn);
+
+    await expect(ensureCsrf()).resolves.toBe("fresh-token");
+    expect(fetchFn).toHaveBeenCalledWith("/api/auth/csrf", { credentials: "same-origin" });
   });
 });
