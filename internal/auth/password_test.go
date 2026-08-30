@@ -1,6 +1,11 @@
 package auth
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 func TestHashAndCheckPassword(t *testing.T) {
 	hash, err := HashPassword("correct horse battery")
@@ -12,6 +17,13 @@ func TestHashAndCheckPassword(t *testing.T) {
 	}
 	if CheckPassword(hash, "wrong") {
 		t.Fatal("expected password mismatch")
+	}
+	// Under go test, hashes use MinCost so -race CI stays under the package timeout.
+	if cost, err := bcrypt.Cost([]byte(hash)); err != nil || cost != bcrypt.MinCost {
+		t.Fatalf("test hash cost=%d err=%v, want MinCost=%d", cost, err, bcrypt.MinCost)
+	}
+	if !strings.Contains(hash, "$2a$04$") && !strings.Contains(hash, "$2b$04$") {
+		t.Fatalf("expected min-cost bcrypt prefix, got %q", hash)
 	}
 }
 
