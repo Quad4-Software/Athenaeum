@@ -23,11 +23,16 @@ web/coverage/
 *.tsbuildinfo
 
 # Built frontend bundle embedded into the Go binary (task build:web).
-# Static icons and robots.txt under dist/ stay tracked as fallbacks.
+# Static icons / robots / showcase under dist/ stay tracked as fallbacks.
+# Vite rewrites index.html with content-hashed asset URLs on every build;
+# that file is ignored so local builds do not dirty git. Missing index.html
+# is served from internal/assets/fallback/ via the embed overlay.
+internal/assets/dist/index.html
 internal/assets/dist/assets/
 internal/assets/dist/pdfjs/
 internal/assets/dist/sw.js
 internal/assets/dist/workbox-*.js
+internal/assets/dist/registerSW.js
 internal/assets/dist/manifest.webmanifest
 internal/assets/dist/**/*.br
 internal/assets/dist/**/*.gz

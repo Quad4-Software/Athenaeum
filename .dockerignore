@@ -1,13 +1,56 @@
+# VCS / editor
 .git
 .github
+.cursor
+.idea
+.vscode
+terminals
+
+# Local runtime / secrets
 bin
 data
 library
+backups
+.env
+*.db
+*.db-shm
+*.db-wal
+deploy/env/athenaeum.env
+
+# Frontend / docs install trees (image rebuilds these)
 web/node_modules
 web/dist
-**/*.test
+web/.svelte-kit
+web/coverage
+web/.lighthouseci
+web/playwright-report
+web/test-results
+web/blob-report
+web/reports
+docs/node_modules
+docs/build
+docs/.docusaurus
+site
+
+# Host Vite output (web stage regenerates into internal/assets/dist)
+internal/assets/dist/assets
+internal/assets/dist/pdfjs
+internal/assets/dist/sw.js
+internal/assets/dist/workbox-*.js
+internal/assets/dist/registerSW.js
+internal/assets/dist/manifest.webmanifest
+internal/assets/dist/index.html
+internal/assets/dist/**/*.br
+internal/assets/dist/**/*.gz
+
+# Tests / caches (not needed in image context)
+coverage
+.cache
+.gremlins
 **/*_test.go
-.cursor
-terminals
+**/*.test
+*.log
+
+# Docs noise in build context
 *.md
 !README.md
