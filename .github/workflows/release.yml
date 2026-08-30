@@ -303,12 +303,21 @@ jobs:
             echo "Generated at release time alongside athenaeum-sbom.spdx.json."
           } > dist/NOTICE.txt
 
+      # Immutable releases lock assets once published. Prereleases publish
+      # immediately, so create those as drafts, upload assets, then publish.
       - name: Create release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
           name: Athenaeum ${{ steps.tag.outputs.tag }}
-          draft: false
+          draft: ${{ contains(steps.tag.outputs.tag, '-') }}
           prerelease: ${{ contains(steps.tag.outputs.tag, '-') }}
           generate_release_notes: true
           files: dist/*
+
+      - name: Publish prerelease
+        if: contains(steps.tag.outputs.tag, '-')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: gh release edit "${TAG}" --draft=false
