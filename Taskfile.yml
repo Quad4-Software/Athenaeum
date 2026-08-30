@@ -88,7 +88,8 @@ tasks:
     dir: web
     cmds:
       - pnpm install
-      - pnpm build
+      # Cap Node old-space so svelte-check + Vite stay bounded on CI runners.
+      - NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=3072}" pnpm build
 
   build:cross:
     desc: Cross-compile all release targets (Linux/macOS/Windows/BSD/riscv/arm)
