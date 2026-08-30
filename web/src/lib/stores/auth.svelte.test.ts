@@ -7,8 +7,7 @@ vi.mock("$lib/router.svelte", () => ({
   router: {
     navigate,
     appPathname: (browserPath?: string) =>
-      browserPath ??
-      (typeof window !== "undefined" ? window.location.pathname : "/"),
+      browserPath ?? (typeof window !== "undefined" ? window.location.pathname : "/"),
   },
 }));
 
