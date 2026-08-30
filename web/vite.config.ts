@@ -201,6 +201,9 @@ export default defineConfig({
     target: "es2020",
     cssMinify: true,
     sourcemap: false,
+    // Skip gzip size accounting during build (saves Node heap on large assets).
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 1500,
     modulePreload: { polyfill: false },
     rollupOptions: {
       output: {
