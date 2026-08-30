@@ -88,8 +88,12 @@ func TestCleanAuthorNameKeepGood(t *testing.T) {
 	if CleanAuthorName("Real Author", "x.epub") != "Real Author" {
 		t.Fatal("keep good author")
 	}
-	if CleanAuthorName("1\uFFFD\uFFFD\uFFFD\uFFFDx", "Ada Lovelace - Notes.pdf") == "1\uFFFD\uFFFD\uFFFD\uFFFDx" {
-		t.Fatal("expected garbled author cleanup")
+	got := CleanAuthorName("1\uFFFD\uFFFD\uFFFD\uFFFDx", "Ada Lovelace - Notes.pdf")
+	if got == "" || got == "1\uFFFD\uFFFD\uFFFD\uFFFDx" || IsGarbledText(got) {
+		t.Fatalf("expected usable filename author fallback, got %q", got)
+	}
+	if CleanAuthorName("   ", "Notes.pdf") != "" {
+		t.Fatal("whitespace-only author")
 	}
 }
 
