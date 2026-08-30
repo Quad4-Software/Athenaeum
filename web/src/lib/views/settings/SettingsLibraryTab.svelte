@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import {
     ChevronDown,
     ChevronUp,
@@ -15,6 +16,7 @@
   import Skeleton from "$lib/components/Skeleton.svelte";
   import UploadPanel from "$lib/components/UploadPanel.svelte";
   import { listAppThemes, UI_FONT_PRESETS } from "$lib/brand";
+  import { loadUiFontCss } from "$lib/brand/load-ui-font";
   import { theme } from "$lib/stores/theme.svelte";
   import { typography } from "$lib/stores/typography.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
@@ -211,6 +213,12 @@
       sample: preset.sample,
       family: preset.family,
     }));
+  });
+
+  onMount(() => {
+    for (const preset of UI_FONT_PRESETS) {
+      void loadUiFontCss(preset.id);
+    }
   });
 </script>
 

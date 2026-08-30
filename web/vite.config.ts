@@ -114,7 +114,37 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["assets/**/*.{js,css,woff,woff2}", "index.html"],
-        globIgnores: ["**/kokoro-*.js", "**/ort-*.js", "**/ort-*.wasm", "**/*ort-wasm*"],
+        globIgnores: [
+          "**/kokoro-*.js",
+          "**/ort-*.js",
+          "**/ort-*.wasm",
+          "**/*ort-wasm*",
+          // Reader / captcha / TTS payloads are route-loaded, not shell.
+          "**/pdf-*.js",
+          "**/pdf.worker*",
+          "**/epub-*.js",
+          "**/altcha*.js",
+          "**/SettingsView-*.js",
+          "**/BookView-*.js",
+          "**/ReaderView-*.js",
+          "**/ComicReader-*.js",
+          "**/AudioReader-*.js",
+          "**/PdfReader-*.js",
+          "**/EpubReader-*.js",
+          "**/MobiReader-*.js",
+          "**/CollectionsView-*.js",
+          // Optional UI + reader fonts (latin files still fetched on demand).
+          "**/literata-*.woff2",
+          "**/crimson-*.woff2",
+          "**/newsreader-*.woff2",
+          "**/ibm-plex-*.woff2",
+          "**/dm-sans-*.woff2",
+          "**/source-serif-*.woff2",
+          "**/source-sans-3-cyrillic*",
+          "**/source-sans-3-greek*",
+          "**/source-sans-3-vietnamese*",
+          "**/fraunces-vietnamese*",
+        ],
         // Kokoro/ONNX chunks exceed the default 2 MiB precache budget and are
         // loaded on demand via dynamic import (not part of the app shell).
         maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,

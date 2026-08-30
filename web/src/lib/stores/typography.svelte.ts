@@ -3,6 +3,7 @@
  */
 
 import { applyUiFont, DEFAULT_UI_FONT, isUiFontId, type UiFontId } from "$lib/brand/fonts";
+import { loadUiFontCss } from "$lib/brand/load-ui-font";
 import { storageKey } from "$lib/brand/storage";
 
 const STORAGE_KEY = storageKey("ui-font");
@@ -19,13 +20,13 @@ class TypographyStore {
 
   constructor() {
     this.id = load();
-    applyUiFont(this.id);
+    void loadUiFontCss(this.id).then(() => applyUiFont(this.id));
   }
 
   set(id: UiFontId) {
     this.id = id;
     localStorage.setItem(STORAGE_KEY, id);
-    applyUiFont(id);
+    void loadUiFontCss(id).then(() => applyUiFont(id));
   }
 }
 

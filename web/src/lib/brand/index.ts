@@ -1,5 +1,6 @@
 import { brand } from "./config";
 import { applyUiFont, DEFAULT_UI_FONT, isUiFontId } from "./fonts";
+import { loadUiFontCss } from "./load-ui-font";
 import { storageKey } from "./storage";
 import { applyThemeTokens, getAppTheme, resolveThemeId } from "./themes";
 
@@ -32,7 +33,8 @@ export function initBrand(): void {
   }
 
   const savedFont = localStorage.getItem(storageKey("ui-font"));
-  applyUiFont(savedFont && isUiFontId(savedFont) ? savedFont : DEFAULT_UI_FONT);
+  const fontId = savedFont && isUiFontId(savedFont) ? savedFont : DEFAULT_UI_FONT;
+  void loadUiFontCss(fontId).then(() => applyUiFont(fontId));
 }
 
 export { brand } from "./config";
