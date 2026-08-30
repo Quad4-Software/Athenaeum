@@ -30,9 +30,6 @@ func TestPublicRouteExactAllowlist(t *testing.T) {
 		{http.MethodGet, "/docs/app.js"},
 		{http.MethodGet, "/auth/oidc/login"},
 		{http.MethodGet, "/auth/oidc/callback"},
-		{http.MethodGet, "/api/tts/status"},
-		{http.MethodGet, "/api/tts/voices"},
-		{http.MethodPost, "/api/tts/synthesize"},
 		{http.MethodGet, "/metrics"},
 		{http.MethodGet, "/api/i18n/en"},
 		{http.MethodGet, "/api/share/abc"},
@@ -61,6 +58,9 @@ func TestPublicRouteProtectedSample(t *testing.T) {
 		{http.MethodGet, "/api/auth/users"},
 		{http.MethodPost, "/api/i18n/en"},
 		{http.MethodPost, "/api/share/abc"},
+		{http.MethodGet, "/api/tts/status"},
+		{http.MethodGet, "/api/tts/voices"},
+		{http.MethodPost, "/api/tts/synthesize"},
 		{http.MethodDelete, "/api/tts/status"},
 	}
 	for _, tc := range cases {

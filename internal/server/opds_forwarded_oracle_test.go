@@ -12,7 +12,7 @@ import (
 )
 
 // PROVED_OPDS_FORWARDED_PROTO
-// Guarantee claimed: OPDS base URLs must ignore X-Forwarded-Proto unless
+// Guarantee: OPDS base URLs must ignore X-Forwarded-Proto unless
 // the peer is a trusted proxy (same as requestBaseURL).
 
 func TestOPDSIgnoresUntrustedForwardedProtoOracle(t *testing.T) {
@@ -39,11 +39,10 @@ func TestOPDSIgnoresUntrustedForwardedProtoOracle(t *testing.T) {
 	}
 	body := rec.Body.String()
 	if strings.Contains(body, "https://library.example") {
-		fmt.Println("PROVED_OPDS_FORWARDED_PROTO: untrusted X-Forwarded-Proto trusted in OPDS links")
-		return
+		t.Fatal("untrusted X-Forwarded-Proto trusted in OPDS links")
 	}
-	if strings.Contains(body, "http://library.example") {
-		t.Fatal("not vulnerable: OPDS ignored untrusted forwarded proto")
+	if !strings.Contains(body, "http://library.example") {
+		t.Fatalf("expected http base in body=%s", body)
 	}
-	t.Fatalf("unexpected body=%s", body)
+	fmt.Println("PROVED_OPDS_FORWARDED_PROTO: untrusted forwarded proto ignored")
 }

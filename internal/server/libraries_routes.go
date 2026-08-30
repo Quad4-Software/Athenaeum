@@ -219,6 +219,9 @@ func (s *Server) handleReorderLibraries(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *Server) handleScanLibrary(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requirePermission(w, r, models.PermManageLibrary); !ok {
+		return
+	}
 	id, ok := libraryPathID(w, r)
 	if !ok {
 		return

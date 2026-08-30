@@ -10,9 +10,9 @@ import (
 
 func buildMIMEText(from, to, subject, body string) []byte {
 	var b strings.Builder
-	b.WriteString("From: " + from + "\r\n")
-	b.WriteString("To: " + to + "\r\n")
-	b.WriteString("Subject: " + subject + "\r\n")
+	b.WriteString("From: " + sanitizeHeaderValue(from) + "\r\n")
+	b.WriteString("To: " + sanitizeHeaderValue(to) + "\r\n")
+	b.WriteString("Subject: " + sanitizeHeaderValue(subject) + "\r\n")
 	b.WriteString("MIME-Version: 1.0\r\n")
 	b.WriteString("Content-Type: text/plain; charset=utf-8\r\n\r\n")
 	b.WriteString(body)

@@ -29,6 +29,10 @@ func (s *Server) kosyncUser(w http.ResponseWriter, r *http.Request) (models.User
 		writeError(w, http.StatusUnauthorized, errors.New("invalid credentials"))
 		return models.User{}, false
 	}
+	if u.TOTPEnabled {
+		writeError(w, http.StatusUnauthorized, errors.New("totp enabled: use an API key"))
+		return models.User{}, false
+	}
 	return u, true
 }
 

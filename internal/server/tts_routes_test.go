@@ -59,6 +59,7 @@ func TestTTSAdminAndStatus(t *testing.T) {
 	session, csrf := loginAdmin(t, handler, store)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tts/status", nil)
+	req.AddCookie(session)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -97,6 +98,7 @@ func TestTTSAdminAndStatus(t *testing.T) {
 	}
 
 	req = httptest.NewRequest(http.MethodGet, "/api/tts/status", nil)
+	req.AddCookie(session)
 	rec = httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if err := json.NewDecoder(rec.Body).Decode(&status); err != nil {
@@ -166,6 +168,7 @@ func TestTTSSynthesizeProxy(t *testing.T) {
 	session, csrf := loginAdmin(t, handler, store)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tts/voices", nil)
+	req.AddCookie(session)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -175,6 +178,7 @@ func TestTTSSynthesizeProxy(t *testing.T) {
 	body, _ := json.Marshal(map[string]any{"text": "Hello", "voice": "af_heart", "speed": 1})
 	req = httptest.NewRequest(http.MethodPost, "/api/tts/synthesize", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(session)
 	withCSRF(req, csrf)
 	rec = httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)

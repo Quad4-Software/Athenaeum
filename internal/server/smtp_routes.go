@@ -156,9 +156,9 @@ func (s *Server) handleSendBook(w http.ResponseWriter, r *http.Request) {
 func buildMIMEAttachment(from, to, subject, filename string, data []byte) []byte {
 	boundary := "athenaeum-boundary"
 	var b strings.Builder
-	b.WriteString("From: " + from + "\r\n")
-	b.WriteString("To: " + to + "\r\n")
-	b.WriteString("Subject: " + subject + "\r\n")
+	b.WriteString("From: " + sanitizeHeaderValue(from) + "\r\n")
+	b.WriteString("To: " + sanitizeHeaderValue(to) + "\r\n")
+	b.WriteString("Subject: " + sanitizeHeaderValue(subject) + "\r\n")
 	b.WriteString("MIME-Version: 1.0\r\n")
 	b.WriteString("Content-Type: multipart/mixed; boundary=" + boundary + "\r\n\r\n")
 	b.WriteString("--" + boundary + "\r\n")
@@ -166,7 +166,7 @@ func buildMIMEAttachment(from, to, subject, filename string, data []byte) []byte
 	b.WriteString("Sent from Athenaeum\r\n\r\n")
 	b.WriteString("--" + boundary + "\r\n")
 	b.WriteString("Content-Type: application/octet-stream\r\n")
-	b.WriteString("Content-Disposition: attachment; filename=\"" + filename + "\"\r\n")
+	b.WriteString("Content-Disposition: attachment; filename=\"" + sanitizeFilenameToken(filename) + "\"\r\n")
 	b.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
 	encoded := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
 	base64.StdEncoding.Encode(encoded, data)

@@ -75,16 +75,11 @@ func (s *Server) registerAPI(mux *http.ServeMux) {
 }
 
 func (s *Server) handleGetChapters(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
-	if !ok {
+	if _, err := s.bookByIDChecked(w, r); err != nil {
 		return
 	}
-	if _, err := s.store.GetBook(r.Context(), id); err != nil {
-		if errors.Is(err, storage.ErrNotFound) {
-			writeError(w, http.StatusNotFound, errors.New("book not found"))
-		} else {
-			writeError(w, http.StatusInternalServerError, err)
-		}
+	id, ok := pathID(w, r)
+	if !ok {
 		return
 	}
 	chapters, err := s.store.ListChapters(r.Context(), id)
@@ -141,10 +136,16 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleScanStatus(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requirePermission(w, r, models.PermManageLibrary); !ok {
+		return
+	}
 	writeJSON(w, http.StatusOK, s.scanner.Status())
 }
 
 func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requirePermission(w, r, models.PermManageLibrary); !ok {
+		return
+	}
 	go func() {
 		if err := s.scanner.Scan(s.jobsCtx); err != nil {
 			s.log.Error("background scan failed", "err", err)
@@ -405,11 +406,12 @@ func contentType(format string) string {
 }
 
 func safeFilename(b models.Book) string {
-	name := b.Title
-	if name == "" {
-		name = "book"
+	name := sanitizeFilenameToken(b.Title)
+	format := sanitizeFilenameToken(b.Format)
+	if format == "" {
+		format = "bin"
 	}
-	return name + "." + b.Format
+	return name + "." + format
 }
 
 func atoiDefault(s string, def int) int {

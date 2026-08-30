@@ -43,9 +43,14 @@ func (s *Server) withSecurityHeaders(next http.Handler) http.Handler {
 		if cfg.CORSEnabled {
 			origin := r.Header.Get("Origin")
 			if origin != "" && corsOriginAllowed(origin, cfg.CORSOrigins) {
-				w.Header().Set("Access-Control-Allow-Origin", origin)
-				w.Header().Set("Vary", "Origin")
-				w.Header().Set("Access-Control-Allow-Credentials", "true")
+				allowCredentials := strings.TrimSpace(cfg.CORSOrigins) != "*"
+				if allowCredentials {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					w.Header().Set("Vary", "Origin")
+					w.Header().Set("Access-Control-Allow-Credentials", "true")
+				} else {
+					w.Header().Set("Access-Control-Allow-Origin", "*")
+				}
 				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-API-Key, X-CSRF-Token, Content-Range")
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 				if r.Method == http.MethodOptions {

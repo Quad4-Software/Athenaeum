@@ -29,9 +29,6 @@ var publicExact = map[string]struct{}{
 	http.MethodGet + " /docs/app.js":               {},
 	http.MethodGet + " /auth/oidc/login":           {},
 	http.MethodGet + " /auth/oidc/callback":        {},
-	http.MethodGet + " /api/tts/status":            {},
-	http.MethodGet + " /api/tts/voices":            {},
-	http.MethodPost + " /api/tts/synthesize":       {},
 	http.MethodGet + " /metrics":                   {},
 }
 

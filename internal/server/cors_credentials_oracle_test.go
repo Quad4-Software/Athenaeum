@@ -8,7 +8,7 @@ import (
 )
 
 // PROVED_CORS_STAR_CREDENTIALS
-// Guarantee claimed: CORSOrigins "*" must not pair reflected Origin with
+// Guarantee: CORSOrigins "*" must not pair reflected Origin with
 // Access-Control-Allow-Credentials true.
 
 func TestCORSStarCredentialsOracle(t *testing.T) {
@@ -22,6 +22,7 @@ func TestCORSStarCredentialsOracle(t *testing.T) {
 	if err := store.SaveServerConfig(t.Context(), cfg); err != nil {
 		t.Fatal(err)
 	}
+	srv.applyServerConfig(cfg)
 
 	handler, err := srv.Handler()
 	if err != nil {
@@ -35,12 +36,13 @@ func TestCORSStarCredentialsOracle(t *testing.T) {
 	aco := rec.Header().Get("Access-Control-Allow-Origin")
 	acc := rec.Header().Get("Access-Control-Allow-Credentials")
 	if aco == "https://evil.example" && acc == "true" {
-		fmt.Println("PROVED_CORS_STAR_CREDENTIALS: reflected origin with credentials ACO=", aco)
-		return
+		t.Fatalf("reflected origin with credentials ACO=%q", aco)
 	}
 	if aco == "*" && acc == "true" {
-		fmt.Println("PROVED_CORS_STAR_CREDENTIALS: star with credentials")
-		return
+		t.Fatal("star with credentials")
 	}
-	t.Fatalf("not vulnerable under this config: ACO=%q ACC=%q", aco, acc)
+	if acc == "true" {
+		t.Fatalf("credentials set under star origins ACO=%q", aco)
+	}
+	fmt.Println("PROVED_CORS_STAR_CREDENTIALS: star origins without credential reflection ACO=", aco)
 }

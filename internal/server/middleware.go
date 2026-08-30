@@ -81,6 +81,10 @@ func (s *Server) userFromBasicAuth(r *http.Request) (models.User, bool) {
 	if !auth.CheckPassword(hash, parts[1]) || hash == "" {
 		return models.User{}, false
 	}
+	if u.TOTPEnabled {
+		// Interactive TOTP is required. Use a session or API key instead.
+		return models.User{}, false
+	}
 	return u, true
 }
 

@@ -10,7 +10,6 @@ import (
 
 	"athenaeum/internal/library"
 	"athenaeum/internal/models"
-	"athenaeum/internal/storage"
 )
 
 func (s *Server) registerMediaRoutes(mux *http.ServeMux) {
@@ -22,7 +21,7 @@ func (s *Server) registerMediaRoutes(mux *http.ServeMux) {
 }
 
 func (s *Server) handleComicManifest(w http.ResponseWriter, r *http.Request) {
-	book, err := s.bookByID(w, r)
+	book, err := s.bookByIDChecked(w, r)
 	if err != nil {
 		return
 	}
@@ -45,7 +44,7 @@ func (s *Server) handleComicManifest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleComicPage(w http.ResponseWriter, r *http.Request) {
-	book, err := s.bookByID(w, r)
+	book, err := s.bookByIDChecked(w, r)
 	if err != nil {
 		return
 	}
@@ -75,7 +74,7 @@ func (s *Server) handleComicPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMobiSections(w http.ResponseWriter, r *http.Request) {
-	book, err := s.bookByID(w, r)
+	book, err := s.bookByIDChecked(w, r)
 	if err != nil {
 		return
 	}
@@ -98,24 +97,15 @@ func (s *Server) handleMobiSections(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAudiobookTracks(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
-	if !ok {
-		return
-	}
-	book, err := s.store.GetBook(r.Context(), id)
+	book, err := s.bookByIDChecked(w, r)
 	if err != nil {
-		if errors.Is(err, storage.ErrNotFound) {
-			writeError(w, http.StatusNotFound, errors.New("book not found"))
-		} else {
-			writeError(w, http.StatusInternalServerError, err)
-		}
 		return
 	}
 	if book.Format != models.FormatAudiobook {
 		writeError(w, http.StatusBadRequest, errors.New("not a multi-file audiobook"))
 		return
 	}
-	tracks, err := s.store.ListAudiobookTracks(r.Context(), id)
+	tracks, err := s.store.ListAudiobookTracks(r.Context(), book.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return

@@ -16,7 +16,7 @@ import (
 )
 
 // PROVED_SAFE_FILENAME_HEADER
-// Guarantee claimed: Content-Disposition / SMTP Subject from book titles
+// Guarantee: Content-Disposition / SMTP Subject from book titles
 // cannot inject CR LF header fields or break out of quoted filenames.
 
 func TestDownloadContentDispositionCRLFOracle(t *testing.T) {
@@ -64,25 +64,24 @@ func TestDownloadContentDispositionCRLFOracle(t *testing.T) {
 	raw := rec.Header().Get("Content-Disposition")
 	injected := rec.Header().Get("X-Injected")
 	if strings.Contains(raw, "\r") || strings.Contains(raw, "\n") || injected != "" {
-		fmt.Println("PROVED_SAFE_FILENAME_HEADER: CR/LF injection disposition=", raw, "X-Injected=", injected)
-		return
+		t.Fatalf("header injection disposition=%q X-Injected=%q", raw, injected)
 	}
-	t.Fatal("not vulnerable on wire: Go httptest may sanitize; check safeFilename + SMTP siblings")
+	fmt.Println("PROVED_SAFE_FILENAME_HEADER: CR/LF stripped from disposition=", raw)
 }
 
 func TestSafeFilenameQuoteBreakoutOracle(t *testing.T) {
 	name := safeFilename(models.Book{Title: `evil"; filename="pwned`, Format: "epub"})
-	if !strings.Contains(name, `"`) {
-		t.Fatal("not vulnerable: quotes already stripped")
+	if strings.Contains(name, `"`) {
+		t.Fatalf("quotes remain in filename=%q", name)
 	}
-	fmt.Println("PROVED_SAFE_FILENAME_HEADER: quote breakout in filename=", name)
+	fmt.Println("PROVED_SAFE_FILENAME_HEADER: quotes stripped filename=", name)
 }
 
 func TestSMTPSubjectHeaderInjectionOracle(t *testing.T) {
 	msg := buildMIMEAttachment("from@x", "to@x", "Title\r\nBcc: evil@x", "a.epub", []byte("x"))
 	raw := string(msg)
-	if !strings.Contains(raw, "\r\nBcc:") {
-		t.Fatal("not vulnerable: smtp subject sanitized")
+	if strings.Contains(raw, "\r\nBcc:") {
+		t.Fatal("smtp subject header injection still present")
 	}
-	fmt.Println("PROVED_SAFE_FILENAME_HEADER: smtp subject header injection present")
+	fmt.Println("PROVED_SAFE_FILENAME_HEADER: smtp subject sanitized")
 }

@@ -27,14 +27,7 @@ func (s *Server) registerOPDSRoutes(mux *http.ServeMux) {
 }
 
 func (s *Server) opdsWriter(r *http.Request) opds.FeedWriter {
-	scheme := "http"
-	if r.TLS != nil {
-		scheme = "https"
-	}
-	if fwd := r.Header.Get("X-Forwarded-Proto"); fwd != "" {
-		scheme = fwd
-	}
-	base := scheme + "://" + r.Host
+	base := s.requestBaseURL(r)
 	return opds.FeedWriter{BaseURL: base, Title: brand.Name}
 }
 
