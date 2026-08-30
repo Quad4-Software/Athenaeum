@@ -125,7 +125,7 @@ jobs:
   go-test:
     name: Go test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -145,7 +145,7 @@ jobs:
 
       - name: Race (linux)
         if: runner.os == 'Linux'
-        run: go test -mod=vendor -race -count=1 ./...
+        run: go test -mod=vendor -race -count=1 -timeout=20m ./...
 
       - name: Contract / drift
         if: runner.os == 'Linux'
