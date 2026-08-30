@@ -295,8 +295,9 @@
       handlePageKeys(event, pageKeyHandlers());
     });
 
+    // Harden only on spine.hooks above. Re-hardening the live iframe strips
+    // epubjs replaceLinks onclick handlers and chapter links 404 against /.
     r.hooks.content.register((contents: { document: Document }) => {
-      hardenEpubDocument(contents.document);
       injectEpubContentBackground(contents.document, palette[resolvedTheme()].bg);
       bindDocumentGestures(contents.document, {
         onSwipeLeft: next,

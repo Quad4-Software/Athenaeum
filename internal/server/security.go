@@ -7,7 +7,7 @@ import (
 	"athenaeum/internal/telemetry"
 )
 
-const defaultCSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data: https://covers.openlibrary.org https://books.google.com https://*.googleusercontent.com; font-src 'self' blob: data:; connect-src 'self'; media-src 'self' blob:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+const defaultCSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data: https://covers.openlibrary.org https://books.google.com https://*.googleusercontent.com; font-src 'self' blob: data:; connect-src 'self'; media-src 'self' blob:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 const embeddableCSP = "frame-ancestors 'self'"
 

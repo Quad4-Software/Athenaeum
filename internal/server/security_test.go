@@ -50,4 +50,7 @@ func TestSecurityHeadersSPABlocksFraming(t *testing.T) {
 	if !strings.Contains(csp, "style-src 'self' 'unsafe-inline' blob:") {
 		t.Fatalf("spa CSP = %q, want style-src blob:", csp)
 	}
+	if !strings.Contains(csp, "script-src 'self' 'wasm-unsafe-eval'") {
+		t.Fatalf("spa CSP = %q, want script-src wasm-unsafe-eval for PDF.js ICC", csp)
+	}
 }

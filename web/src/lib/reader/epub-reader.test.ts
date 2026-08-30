@@ -375,13 +375,18 @@ describe("paintEpubHighlight", () => {
 });
 
 describe("preloadEpubSpineSections", () => {
-  it("loads adjacent spine sections", () => {
-    const load = vi.fn(() => Promise.resolve());
-    const get = vi.fn((index: number) => (index === 2 || index === 4 ? { load } : undefined));
-    preloadEpubSpineSections({ spine: { length: 10, get } }, 3);
+  it("loads adjacent spine sections through the book archive request", () => {
+    const sectionLoad = vi.fn(() => Promise.resolve());
+    const bookLoad = vi.fn();
+    const get = vi.fn((index: number) =>
+      index === 2 || index === 4 ? { load: sectionLoad } : undefined,
+    );
+    preloadEpubSpineSections({ load: bookLoad, spine: { length: 10, get } }, 3);
     expect(get).toHaveBeenCalledWith(2);
     expect(get).toHaveBeenCalledWith(4);
-    expect(load).toHaveBeenCalledTimes(2);
+    expect(sectionLoad).toHaveBeenCalledTimes(2);
+    expect(sectionLoad).toHaveBeenCalledWith(expect.any(Function));
+    expect(sectionLoad).not.toHaveBeenCalledWith();
   });
 });
 

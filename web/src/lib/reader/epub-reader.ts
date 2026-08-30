@@ -289,21 +289,27 @@ export function paintEpubHighlight(
   annotations.add("highlight", cfi, {}, () => undefined, `hl-${id}`, epubHighlightStyles(color));
 }
 
+type EpubSectionRequest = (url: string) => Promise<unknown>;
+
 /** Preload adjacent spine sections around the current index. */
 export function preloadEpubSpineSections(
   book: {
+    load: EpubSectionRequest;
     spine: {
       length?: number;
-      get(index: number): { load(): unknown } | undefined;
+      get(index: number): { load(request?: EpubSectionRequest): unknown } | undefined;
     };
   },
   currentIndex: number,
 ): void {
   const length = book.spine.length ?? 0;
+  // section.load() without book.load hits the page origin for spine paths
+  // like /titlepage.xhtml and 404s instead of reading the EPUB archive.
+  const request = book.load.bind(book) as EpubSectionRequest;
   for (const index of spinePreloadIndices(currentIndex, length)) {
     const section = book.spine.get(index);
     if (!section) continue;
-    void Promise.resolve(section.load()).catch(() => undefined);
+    void Promise.resolve(section.load(request)).catch(() => undefined);
   }
 }
 

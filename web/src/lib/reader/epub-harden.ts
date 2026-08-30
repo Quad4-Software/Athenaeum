@@ -1,6 +1,8 @@
 /**
  * Harden EPUB spine HTML for XSS without breaking epubjs.
- * Keeps <base> (epubjs link/resource resolution), styles, SVG, and text.
+ * Call from spine.hooks.content only (before blob serialize).
+ * Do not run on the live iframe: that strips epubjs link onclick handlers.
+ * Keeps <base> (resource resolution), styles, SVG, and text.
  * Strips scripts, embeds, event handlers, and dangerous URLs.
  * Does not inject CSP: script-src/base-uri policies break epubjs blob iframes.
  */
@@ -8,7 +10,7 @@
 const DROP_TAGS = new Set(["script", "iframe", "object", "embed", "form", "input", "button"]);
 
 /**
- * Harden an EPUB spine document already loaded into an epubjs iframe.
+ * Harden an EPUB spine document before epubjs serializes it into a blob iframe.
  * Keeps text/layout for CFI, highlights, narration, styles, and SVG art.
  */
 export function hardenEpubDocument(doc: Document): void {
