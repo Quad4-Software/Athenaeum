@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -49,6 +50,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, errBadCredentials)
 		return
 	}
+	s.upgradePasswordHashIfNeeded(r.Context(), u.ID, req.Password, hash)
 
 	if u.TOTPEnabled {
 		token, err := s.newPendingTOTP(u.ID)
@@ -66,6 +68,17 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	s.logAudit(r, u.ID, u.Username, 0, "", "auth.login", "")
 	writeJSON(w, http.StatusOK, u)
+}
+
+func (s *Server) upgradePasswordHashIfNeeded(ctx context.Context, userID int64, plain, currentHash string) {
+	if !auth.NeedsRehash(currentHash) {
+		return
+	}
+	newHash, err := auth.HashPassword(plain)
+	if err != nil {
+		return
+	}
+	_ = s.store.UpdateUserPassword(ctx, userID, newHash)
 }
 
 func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {

@@ -5,23 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"testing"
-
-	"golang.org/x/crypto/bcrypt"
 )
-
-const (
-	// bcryptCost balances security with login latency on modest hardware.
-	bcryptCost = 12
-)
-
-func hashCost() int {
-	// Cost 12 is painfully slow under -race across the server package.
-	if testing.Testing() {
-		return bcrypt.MinCost
-	}
-	return bcryptCost
-}
 
 // PasswordPolicy is the configurable password strength policy.
 type PasswordPolicy struct {
@@ -101,20 +85,6 @@ func GetPasswordPolicy() PasswordPolicy {
 	policyMu.RLock()
 	defer policyMu.RUnlock()
 	return policy
-}
-
-// HashPassword returns a bcrypt hash of password.
-func HashPassword(password string) (string, error) {
-	b, err := bcrypt.GenerateFromPassword([]byte(password), hashCost())
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
-
-// CheckPassword reports whether password matches hash.
-func CheckPassword(hash, password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
 
 // ValidatePassword reports whether password meets minimum policy.

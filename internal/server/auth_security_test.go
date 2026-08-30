@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"athenaeum/internal/auth"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func loginUser(t *testing.T, handler http.Handler, username, password string) (*http.Cookie, *http.Cookie, *http.Cookie) {
@@ -396,5 +398,37 @@ func TestInvalidLoginDoesNotLeakUserExistence(t *testing.T) {
 		if errBody["error"] != "invalid username or password" {
 			t.Fatalf("unexpected error message: %q", errBody["error"])
 		}
+	}
+}
+
+func TestLoginUpgradesLegacyBcryptHash(t *testing.T) {
+	srv, store := testServer(t)
+	ctx := context.Background()
+	legacy, err := bcrypt.GenerateFromPassword([]byte("longpassword"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	u, err := store.CreateUser(ctx, "legacy", string(legacy), true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if u == 0 {
+		t.Fatal("expected created user id")
+	}
+	handler, err := srv.Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	loginUser(t, handler, "legacy", "longpassword")
+
+	_, hash, err := store.GetUserByUsername(ctx, "legacy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(hash, "$argon2id$") {
+		t.Fatalf("expected argon2id upgrade after login, got %q", hash)
+	}
+	if !auth.CheckPassword(hash, "longpassword") {
+		t.Fatal("upgraded hash should still verify")
 	}
 }

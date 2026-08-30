@@ -12,18 +12,39 @@ func TestHashAndCheckPassword(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !strings.HasPrefix(hash, argon2idPrefix) {
+		t.Fatalf("expected argon2id hash, got %q", hash)
+	}
 	if !CheckPassword(hash, "correct horse battery") {
 		t.Fatal("expected password to match")
 	}
 	if CheckPassword(hash, "wrong") {
 		t.Fatal("expected password mismatch")
 	}
-	// Under go test, hashes use MinCost so -race CI stays under the package timeout.
-	if cost, err := bcrypt.Cost([]byte(hash)); err != nil || cost != bcrypt.MinCost {
-		t.Fatalf("test hash cost=%d err=%v, want MinCost=%d", cost, err, bcrypt.MinCost)
+	if NeedsRehash(hash) {
+		t.Fatal("fresh argon2id hash should not need rehash under test params")
 	}
-	if !strings.Contains(hash, "$2a$04$") && !strings.Contains(hash, "$2b$04$") {
-		t.Fatalf("expected min-cost bcrypt prefix, got %q", hash)
+}
+
+func TestCheckPasswordLegacyBcrypt(t *testing.T) {
+	legacy, err := bcrypt.GenerateFromPassword([]byte("legacy-secret"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !CheckPassword(string(legacy), "legacy-secret") {
+		t.Fatal("expected bcrypt hash to verify")
+	}
+	if CheckPassword(string(legacy), "nope") {
+		t.Fatal("expected bcrypt mismatch")
+	}
+	if !NeedsRehash(string(legacy)) {
+		t.Fatal("bcrypt hashes should need rehash to argon2id")
+	}
+}
+
+func TestCheckPasswordRejectsGarbage(t *testing.T) {
+	if CheckPassword("", "x") || CheckPassword("not-a-hash", "x") || CheckPassword("$argon2id$bad", "x") {
+		t.Fatal("expected garbage hashes to fail")
 	}
 }
 
