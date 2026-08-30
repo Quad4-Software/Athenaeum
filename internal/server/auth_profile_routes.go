@@ -121,7 +121,7 @@ func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := s.store.RevokeUserSessions(r.Context(), u.ID); err != nil {
+	if _, err := s.store.RevokeUserSessions(r.Context(), u.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}

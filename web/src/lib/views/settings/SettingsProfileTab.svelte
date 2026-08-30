@@ -47,7 +47,7 @@
     try {
       sessions = await api.listSessions();
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to load sessions");
+      toast.error(e instanceof ApiError ? e.message : i18n.t("settings.sessionsLoadFailed"));
     } finally {
       sessionsLoading = false;
     }
@@ -70,10 +70,10 @@
         await auth.logout();
         return;
       }
-      toast.success("Session revoked");
+      toast.success(i18n.t("settings.sessionRevoked"));
       void loadSessions();
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to revoke session");
+      toast.error(e instanceof ApiError ? e.message : i18n.t("settings.sessionsRevokeFailed"));
     }
   }
 
@@ -88,10 +88,27 @@
     if (!ok) return;
     try {
       const res = await api.revokeOtherSessions();
-      toast.success(`Revoked ${res.revoked} session(s)`);
+      toast.success(i18n.t("settings.sessionsRevoked", { count: res.revoked }));
       void loadSessions();
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to revoke sessions");
+      toast.error(e instanceof ApiError ? e.message : i18n.t("settings.sessionsRevokeFailed"));
+    }
+  }
+
+  async function revokeAllSessions() {
+    const ok = await confirmDialog.ask({
+      title: i18n.t("settings.revokeAllTitle"),
+      message: i18n.t("settings.revokeAll"),
+      confirmLabel: i18n.t("settings.signOutAll"),
+      cancelLabel: i18n.t("confirm.cancel"),
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await api.revokeAllSessions();
+      await auth.logout();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : i18n.t("settings.sessionsRevokeFailed"));
     }
   }
 
@@ -305,7 +322,9 @@
               class="rounded-[var(--radius-control)] border border-border bg-white p-2"
             />
           {/if}
-          <p class="text-xs text-muted">Scan with your authenticator app, or enter the secret manually.</p>
+          <p class="text-xs text-muted">
+            Scan with your authenticator app, or enter the secret manually.
+          </p>
           <p class="break-all text-xs text-muted">Secret: {totpSecret}</p>
           {#if totpUrl}
             <a class="block break-all text-xs text-primary underline" href={totpUrl}>{totpUrl}</a>
@@ -333,16 +352,27 @@
     <div class="rounded-[var(--radius-card)] border border-border bg-surface p-5">
       <div class="space-y-2">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <p class="text-sm font-medium text-fg">Active sessions</p>
-          {#if sessions.length > 1}
-            <button
-              type="button"
-              class="btn btn-ghost text-xs ring-1 ring-border"
-              onclick={revokeOtherSessions}
-            >
-              Sign out other devices
-            </button>
-          {/if}
+          <p class="text-sm font-medium text-fg">{i18n.t("settings.activeSessions")}</p>
+          <div class="flex flex-wrap gap-2">
+            {#if sessions.length > 1}
+              <button
+                type="button"
+                class="btn btn-ghost text-xs ring-1 ring-border"
+                onclick={revokeOtherSessions}
+              >
+                {i18n.t("settings.signOutOthers")}
+              </button>
+            {/if}
+            {#if sessions.length > 0}
+              <button
+                type="button"
+                class="btn btn-ghost text-xs text-danger ring-1 ring-border"
+                onclick={revokeAllSessions}
+              >
+                {i18n.t("settings.signOutAll")}
+              </button>
+            {/if}
+          </div>
         </div>
         {#if sessionsLoading}
           <Skeleton height="4rem" rounded="lg" />
@@ -363,31 +393,37 @@
                 <div class="flex flex-wrap items-start justify-between gap-2">
                   <div class="min-w-0">
                     <p class="text-sm font-medium text-fg">
-                      {sess.device || "Unknown device"}
+                      {sess.device || i18n.t("settings.unknownDevice")}
                       {#if sess.current}
-                        <span class="ml-1 text-xs text-primary">(this device)</span>
+                        <span class="ml-1 text-xs text-primary"
+                          >{i18n.t("settings.thisDevice")}</span
+                        >
                       {/if}
                     </p>
                     <p class="text-xs text-muted">
-                      {sess.authMethod === "oidc" ? "SSO" : "Local"}
+                      {sess.authMethod === "oidc"
+                        ? i18n.t("settings.sessionAuthSSO")
+                        : i18n.t("settings.sessionAuthLocal")}
                       {#if sess.ip}
                         · {sess.ip}
                       {/if}
                     </p>
                     <p class="text-xs text-subtle">
-                      Last active {new Date(sess.lastSeenAt).toLocaleString()}
-                      · expires {new Date(sess.expiresAt).toLocaleDateString()}
+                      {i18n.t("settings.sessionLastActive", {
+                        when: new Date(sess.lastSeenAt).toLocaleString(),
+                      })}
+                      · {i18n.t("settings.sessionExpires", {
+                        when: new Date(sess.expiresAt).toLocaleDateString(),
+                      })}
                     </p>
                   </div>
-                  {#if !sess.current}
-                    <button
-                      type="button"
-                      class="btn btn-ghost text-xs text-danger"
-                      onclick={() => revokeSession(sess)}
-                    >
-                      Revoke
-                    </button>
-                  {/if}
+                  <button
+                    type="button"
+                    class="btn btn-ghost text-xs text-danger"
+                    onclick={() => revokeSession(sess)}
+                  >
+                    {i18n.t("settings.revoke")}
+                  </button>
                 </div>
               </li>
             {/each}

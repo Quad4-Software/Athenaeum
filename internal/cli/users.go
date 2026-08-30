@@ -249,7 +249,7 @@ func usersResetPassword(args []string) error {
 		return err
 	}
 	if *revoke {
-		if err := store.RevokeUserSessions(ctx, u.ID); err != nil {
+		if _, err := store.RevokeUserSessions(ctx, u.ID); err != nil {
 			return err
 		}
 	}

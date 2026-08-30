@@ -33,7 +33,7 @@
 
 <div class="flex flex-col gap-6 xl:flex-row xl:items-start">
   <nav
-    class="flex shrink-0 gap-1 overflow-x-auto border-b border-border pb-3 xl:sticky xl:top-4 xl:w-40 xl:flex-col xl:items-stretch xl:gap-0.5 xl:overflow-x-visible xl:overflow-y-auto xl:border-b-0 xl:border-r xl:pb-0 xl:pr-4"
+    class="sticky top-0 z-10 flex shrink-0 gap-1 overflow-x-auto border-b border-border bg-bg/95 pb-3 backdrop-blur xl:top-0 xl:max-h-[calc(100dvh-8rem)] xl:w-40 xl:flex-col xl:items-stretch xl:gap-0.5 xl:overflow-x-visible xl:overflow-y-auto xl:border-b-0 xl:border-r xl:bg-transparent xl:pb-0 xl:pr-4 xl:backdrop-blur-none"
     aria-label="Administration sections"
   >
     {#each adminSections as section (section.id)}

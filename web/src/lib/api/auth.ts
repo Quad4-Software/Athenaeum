@@ -170,6 +170,9 @@ export const authApi = {
   revokeOtherSessions: () =>
     request<{ revoked: number }>("/api/auth/sessions", { method: "DELETE" }),
 
+  revokeAllSessions: () =>
+    request<{ revoked: number }>("/api/auth/sessions?all=true", { method: "DELETE" }),
+
   listUserSessions: (userId: number) =>
     request<UserSession[]>(`/api/auth/users/${userId}/sessions`),
 

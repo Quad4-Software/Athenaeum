@@ -11,7 +11,7 @@ import (
 
 func (s *Server) registerSessionRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/auth/sessions", s.handleListSessions)
-	mux.HandleFunc("DELETE /api/auth/sessions", s.handleRevokeOtherSessions)
+	mux.HandleFunc("DELETE /api/auth/sessions", s.handleRevokeSessions)
 	mux.HandleFunc("DELETE /api/auth/sessions/{id}", s.handleRevokeSession)
 	mux.HandleFunc("GET /api/auth/users/{id}/sessions", s.handleListUserSessions)
 }
@@ -105,12 +105,26 @@ func (s *Server) handleRevokeSession(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *Server) handleRevokeOtherSessions(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 	u, ok := UserFromContext(r.Context())
 	if !ok {
 		writeError(w, http.StatusUnauthorized, errUnauthorized)
 		return
 	}
+
+	revokeAll := r.URL.Query().Get("all") == "true" || r.URL.Query().Get("scope") == "all"
+	if revokeAll {
+		n, err := s.store.RevokeUserSessions(r.Context(), u.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		s.logAudit(r, u.ID, u.Username, u.ID, u.Username, "session.revoke", "revoked all sessions")
+		s.clearAuthCookies(w, r)
+		writeJSON(w, http.StatusOK, map[string]any{"revoked": n})
+		return
+	}
+
 	current := ""
 	if c, err := r.Cookie(auth.SessionCookie); err == nil {
 		current = c.Value

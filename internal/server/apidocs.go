@@ -170,7 +170,9 @@ func apiDocumentation() APIDoc {
 					{Method: "GET", Path: "/api/system/stats", Summary: "Host CPU/memory/disk and version", Auth: "admin"},
 					{Method: "GET", Path: "/metrics", Summary: "Prometheus metrics", Auth: "optional Basic Auth when enabled"},
 					{Method: "GET", Path: "/api/auth/sessions", Summary: "Your active sessions", Auth: "required"},
+					{Method: "DELETE", Path: "/api/auth/sessions", Summary: "Revoke other sessions (all=true for every session)", Auth: "required", Query: "all"},
 					{Method: "DELETE", Path: "/api/auth/sessions/{id}", Summary: "Revoke session", Auth: "required"},
+					{Method: "GET", Path: "/api/auth/users/{id}/sessions", Summary: "List sessions for a user", Auth: "admin"},
 				},
 			},
 			{

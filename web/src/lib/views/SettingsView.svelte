@@ -65,7 +65,7 @@
 
   <div class="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start">
     <nav
-      class="sticky top-0 z-10 -mx-3 flex shrink-0 gap-1 overflow-x-auto border-b border-border bg-bg/95 px-3 pb-3 backdrop-blur lg:static lg:mx-0 lg:max-h-[calc(100vh-2rem)] lg:w-52 lg:flex-col lg:items-stretch lg:gap-1 lg:overflow-y-auto lg:overflow-x-visible lg:border-b-0 lg:border-r lg:bg-transparent lg:px-0 lg:pb-0 lg:pr-6 lg:backdrop-blur-none"
+      class="sticky top-0 z-10 -mx-3 flex shrink-0 gap-1 overflow-x-auto border-b border-border bg-bg/95 px-3 pb-3 backdrop-blur lg:top-0 lg:mx-0 lg:max-h-[calc(100dvh-8rem)] lg:w-52 lg:flex-col lg:items-stretch lg:gap-1 lg:overflow-y-auto lg:overflow-x-visible lg:border-b-0 lg:border-r lg:bg-transparent lg:px-0 lg:pb-0 lg:pr-6 lg:backdrop-blur-none"
       aria-label={i18n.t("settings.title")}
     >
       {#each settingsTabs as t (t.id)}
@@ -89,7 +89,7 @@
       {/each}
     </nav>
 
-    <div class="min-w-0 flex-1">
+    <div class="min-w-0 flex-1 pb-2">
       {#if tab === "library"}
         <SettingsLibraryTab />
       {:else if tab === "profile" && auth.authEnabled}

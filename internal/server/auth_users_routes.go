@@ -193,7 +193,7 @@ func (s *Server) handleResetUserPassword(w http.ResponseWriter, r *http.Request)
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
-	_ = s.store.RevokeUserSessions(r.Context(), targetID)
+	_, _ = s.store.RevokeUserSessions(r.Context(), targetID)
 	s.logAudit(r, actor.ID, actor.Username, target.ID, target.Username, "password.reset", "")
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }

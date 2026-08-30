@@ -233,20 +233,20 @@
     </a>
     <div class="flex h-[100dvh] overflow-hidden">
       <aside
-        class="sticky top-0 hidden h-[100dvh] shrink-0 self-start overflow-hidden border-r border-border bg-bg-elevated transition-[width] duration-200 md:block
+        class="hidden h-full min-h-0 shrink-0 overflow-hidden border-r border-border bg-bg-elevated transition-[width] duration-200 md:block
         {ui.sidebarCollapsed ? 'w-16' : 'w-60'}"
       >
         <Sidebar collapsed={ui.sidebarCollapsed} />
       </aside>
 
-      <div class="flex min-w-0 flex-1 flex-col">
+      <div class="flex min-h-0 min-w-0 flex-1 flex-col">
         <ConnectivityBanner />
         <PwaUpdateBanner />
         <Topbar bookTitle={ui.pageTitle} />
         <main
           id="main-content"
           tabindex="-1"
-          class="flex-1 overflow-y-auto outline-none pb-bottom-chrome"
+          class="min-h-0 flex-1 overflow-y-auto outline-none pb-bottom-chrome"
         >
           {#if route.name === "library" || route.name === "collection"}
             <LibraryView />
@@ -317,7 +317,7 @@
           role="dialog"
           aria-modal="true"
           aria-label={i18n.t("a11y.navigation")}
-          class="absolute left-0 top-0 h-full w-64 border-r border-border bg-bg-elevated"
+          class="absolute left-0 top-0 flex h-full min-h-0 w-64 flex-col overflow-hidden border-r border-border bg-bg-elevated"
           transition:fly={{ x: -260, duration: 200 }}
         >
           <button

@@ -56,7 +56,7 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 | POST | /api/auth/refresh | Rotate access token |
 | POST | /api/auth/register | Create user (admin) |
 | POST | /api/auth/register-public | Self-register (when enabled) |
-| DELETE | /api/auth/sessions | Revoke all other sessions |
+| DELETE | /api/auth/sessions | Revoke all other sessions (`?all=true` revokes every session including the current one) |
 | GET | /api/auth/sessions | List your sessions |
 | DELETE | `/api/auth/sessions/{id}` | Revoke one session |
 | GET | /api/auth/settings | Auth settings (registration, require TOTP) |

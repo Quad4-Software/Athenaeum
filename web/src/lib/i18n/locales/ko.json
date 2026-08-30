@@ -367,7 +367,21 @@
     "webhooksAttempts": "attempts",
     "appearance": "모양",
     "appearanceHint": "색 테마와 글꼴을 선택하세요.",
-    "interfaceFont": "인터페이스 글꼴"
+    "interfaceFont": "인터페이스 글꼴",
+    "revokeAllTitle": "Sign out all devices?",
+    "revokeAll": "Revoke every session, including this one. You will need to sign in again.",
+    "signOutAll": "Sign out all",
+    "activeSessions": "Active sessions",
+    "sessionRevoked": "Session revoked",
+    "sessionsRevoked": "Revoked {count} session(s)",
+    "sessionsLoadFailed": "Failed to load sessions",
+    "sessionsRevokeFailed": "Failed to revoke sessions",
+    "unknownDevice": "Unknown device",
+    "thisDevice": "(this device)",
+    "sessionAuthLocal": "Local",
+    "sessionAuthSSO": "SSO",
+    "sessionLastActive": "Last active {when}",
+    "sessionExpires": "expires {when}"
   },
   "sort": {
     "label": "책 정렬",

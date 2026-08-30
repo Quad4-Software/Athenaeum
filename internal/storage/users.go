@@ -249,12 +249,17 @@ func (s *Store) UpdateUserPassword(ctx context.Context, userID int64, passwordHa
 }
 
 // RevokeUserSessions deletes all sessions and refresh tokens for a user.
-func (s *Store) RevokeUserSessions(ctx context.Context, userID int64) error {
-	if _, err := s.execContext(ctx, `DELETE FROM sessions WHERE user_id=?`, userID); err != nil {
-		return err
+// It returns how many session rows were removed.
+func (s *Store) RevokeUserSessions(ctx context.Context, userID int64) (int64, error) {
+	res, err := s.execContext(ctx, `DELETE FROM sessions WHERE user_id=?`, userID)
+	if err != nil {
+		return 0, err
 	}
-	_, err := s.execContext(ctx, `DELETE FROM refresh_tokens WHERE user_id=?`, userID)
-	return err
+	n, _ := res.RowsAffected()
+	if _, err := s.execContext(ctx, `DELETE FROM refresh_tokens WHERE user_id=?`, userID); err != nil {
+		return n, err
+	}
+	return n, nil
 }
 
 // UsernameTaken reports whether another account already uses the name.
@@ -274,7 +279,7 @@ func (s *Store) UsernameTaken(ctx context.Context, username string, excludeUserI
 
 // DeleteUser removes an account and related sessions.
 func (s *Store) DeleteUser(ctx context.Context, userID int64) error {
-	if err := s.RevokeUserSessions(ctx, userID); err != nil {
+	if _, err := s.RevokeUserSessions(ctx, userID); err != nil {
 		return err
 	}
 	res, err := s.execContext(ctx, `DELETE FROM users WHERE id=?`, userID)

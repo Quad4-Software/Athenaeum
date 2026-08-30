@@ -385,7 +385,21 @@
     "webhooksAttempts": "attempts",
     "appearance": "Внешний вид",
     "appearanceHint": "Выберите цветовую тему и шрифт.",
-    "interfaceFont": "Шрифт интерфейса"
+    "interfaceFont": "Шрифт интерфейса",
+    "revokeAllTitle": "Sign out all devices?",
+    "revokeAll": "Revoke every session, including this one. You will need to sign in again.",
+    "signOutAll": "Sign out all",
+    "activeSessions": "Active sessions",
+    "sessionRevoked": "Session revoked",
+    "sessionsRevoked": "Revoked {count} session(s)",
+    "sessionsLoadFailed": "Failed to load sessions",
+    "sessionsRevokeFailed": "Failed to revoke sessions",
+    "unknownDevice": "Unknown device",
+    "thisDevice": "(this device)",
+    "sessionAuthLocal": "Local",
+    "sessionAuthSSO": "SSO",
+    "sessionLastActive": "Last active {when}",
+    "sessionExpires": "expires {when}"
   },
   "sort": {
     "label": "Сортировка книг",
