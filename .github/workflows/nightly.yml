@@ -1,5 +1,6 @@
 # Nightly prerelease builds from master/main.
-# Publishes a moving `nightly` GitHub Release and GHCR :nightly image.
+# Publishes a unique GitHub Release tag (nightly-YYYYMMDD-HHMMSS-<sha>) and
+# GHCR :nightly image. Unique tags avoid protected-tag force-update rules.
 # Actions are SHA-pinned (same pins as release.yml).
 name: Nightly
 
@@ -10,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: Build even when HEAD already matches the nightly tag
+        description: Build even when HEAD already has a nightly-* tag
         type: boolean
         default: false
       push_image:
@@ -38,6 +39,8 @@ jobs:
       should_run: ${{ steps.meta.outputs.should_run }}
       version: ${{ steps.meta.outputs.version }}
       date: ${{ steps.meta.outputs.date }}
+      stamp: ${{ steps.meta.outputs.stamp }}
+      tag: ${{ steps.meta.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -54,16 +57,20 @@ jobs:
         run: |
           set -euo pipefail
           date_utc="$(date -u +%Y%m%d)"
-          version="0.0.0-nightly.${date_utc}"
+          stamp_utc="$(date -u +%Y%m%d-%H%M%S)"
+          short_sha="$(printf '%.7s' "${HEAD_SHA}")"
+          tag="nightly-${stamp_utc}-${short_sha}"
+          version="0.0.0-nightly.${stamp_utc}+${short_sha}"
           echo "date=${date_utc}" >> "${GITHUB_OUTPUT}"
+          echo "stamp=${stamp_utc}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
           should_run=true
-          if [[ "${FORCE}" != "true" ]] && git rev-parse -q --verify refs/tags/nightly >/dev/null; then
-            nightly_sha="$(git rev-list -n 1 refs/tags/nightly)"
-            if [[ "${nightly_sha}" == "${HEAD_SHA}" ]]; then
+          if [[ "${FORCE}" != "true" ]]; then
+            if git tag --points-at "${HEAD_SHA}" | grep -q '^nightly-'; then
               should_run=false
-              echo "HEAD already published as nightly (${HEAD_SHA}); skipping."
+              echo "HEAD already has a nightly-* tag (${HEAD_SHA}); skipping."
             fi
           fi
           if [[ "${EVENT_NAME}" == "workflow_dispatch" && "${FORCE}" == "true" ]]; then
@@ -319,23 +326,6 @@ jobs:
           merge-multiple: true
           pattern: athenaeum-nightly-*
 
-      - name: Remove previous nightly release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          if gh release view nightly >/dev/null 2>&1; then
-            gh release delete nightly --yes
-          fi
-
-      - name: Point nightly tag at this commit
-        env:
-          HEAD_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          git tag -f nightly "${HEAD_SHA}"
-          git push -f origin refs/tags/nightly
-
       - name: Generate SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
@@ -356,6 +346,7 @@ jobs:
             echo "Frontend packages: see web/package.json and the SPDX SBOM attached to this release."
             echo
             echo "Nightly build ${{ needs.prepare.outputs.version }} at ${{ github.sha }}."
+            echo "Release tag: ${{ needs.prepare.outputs.tag }}."
           } > dist/NOTICE.txt
 
       # Immutable releases lock assets once published. Prereleases publish
@@ -363,8 +354,9 @@ jobs:
       - name: Create nightly release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
-          tag_name: nightly
-          name: Nightly ${{ needs.prepare.outputs.date }}
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Nightly ${{ needs.prepare.outputs.stamp }}
           draft: true
           prerelease: true
           make_latest: false
@@ -373,13 +365,13 @@ jobs:
             Automated nightly build from `${{ github.sha }}`.
 
             Version string: `${{ needs.prepare.outputs.version }}`
+            Release tag: `${{ needs.prepare.outputs.tag }}`
 
             Container image tags: `nightly`, `nightly-${{ needs.prepare.outputs.date }}`, and `sha-<short>`.
-
-            This GitHub Release is replaced on each successful nightly run.
           files: dist/*
 
       - name: Publish nightly release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release edit nightly --draft=false
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: gh release edit "${TAG}" --draft=false
