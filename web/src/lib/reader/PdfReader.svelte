@@ -4,6 +4,7 @@
   import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from "pdfjs-dist";
   import type { TextLayer } from "pdfjs-dist";
   import { pdfOpenOptions } from "$lib/reader/pdf-options";
+  import "$lib/reader/PdfReader.css";
   import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
   import ReaderShortcuts from "$lib/components/ReaderShortcuts.svelte";
   import ReaderAnnotations from "$lib/components/ReaderAnnotations.svelte";
@@ -432,5 +433,3 @@
     />
   {/if}
 </div>
-
-<style src="./PdfReader.css"></style>

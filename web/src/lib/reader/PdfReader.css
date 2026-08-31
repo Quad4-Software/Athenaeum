@@ -1,4 +1,5 @@
-:global(.pdf-page) {
+/* Global styles imported from PdfReader.svelte. vitePreprocess ignores style src=. */
+.pdf-page {
   position: relative;
   --user-unit: 1;
   --scale-round-x: 1px;
@@ -6,14 +7,14 @@
   --total-scale-factor: calc(var(--scale-factor, 1) * var(--user-unit));
 }
 
-:global(.pdf-page > canvas) {
+.pdf-page > canvas {
   position: relative;
   z-index: 0;
   display: block;
 }
 
-:global(.pdf-page .textLayer),
-:global(.pdf-page .pdf-text-layer) {
+.pdf-page .textLayer,
+.pdf-page .pdf-text-layer {
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -26,10 +27,13 @@
   z-index: 1;
   opacity: 1;
   color-scheme: only light;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
 }
 
-:global(.pdf-page .textLayer :is(span, br)),
-:global(.pdf-page .pdf-text-layer :is(span, br)) {
+.pdf-page .textLayer :is(span, br),
+.pdf-page .pdf-text-layer :is(span, br) {
   color: transparent;
   position: absolute;
   white-space: pre;
@@ -38,17 +42,10 @@
   user-select: text;
 }
 
-:global(.pdf-page .textLayer),
-:global(.pdf-page .pdf-text-layer) {
-  --min-font-size: 1;
-  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
-  --min-font-size-inv: calc(1 / var(--min-font-size));
-}
-
-:global(.pdf-page .textLayer > :not(.markedContent)),
-:global(.pdf-page .textLayer .markedContent span:not(.markedContent)),
-:global(.pdf-page .pdf-text-layer > :not(.markedContent)),
-:global(.pdf-page .pdf-text-layer .markedContent span:not(.markedContent)) {
+.pdf-page .textLayer > :not(.markedContent),
+.pdf-page .textLayer .markedContent span:not(.markedContent),
+.pdf-page .pdf-text-layer > :not(.markedContent),
+.pdf-page .pdf-text-layer .markedContent span:not(.markedContent) {
   z-index: 1;
   --font-height: 0;
   font-size: calc(var(--text-scale-factor) * var(--font-height));
@@ -57,18 +54,18 @@
   transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
 }
 
-:global(.pdf-page .textLayer .markedContent),
-:global(.pdf-page .pdf-text-layer .markedContent) {
+.pdf-page .textLayer .markedContent,
+.pdf-page .pdf-text-layer .markedContent {
   display: contents;
 }
 
-:global(.pdf-page .textLayer span::selection),
-:global(.pdf-page .pdf-text-layer span::selection) {
+.pdf-page .textLayer span::selection,
+.pdf-page .pdf-text-layer span::selection {
   background: color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
-:global(.pdf-page .textLayer mark.pdf-highlight-mark),
-:global(.pdf-page .pdf-text-layer mark.pdf-highlight-mark) {
+.pdf-page .textLayer mark.pdf-highlight-mark,
+.pdf-page .pdf-text-layer mark.pdf-highlight-mark {
   background: color-mix(in srgb, #fde047 55%, transparent);
   color: transparent;
   border-radius: 2px;

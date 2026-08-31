@@ -1,11 +1,12 @@
-:global(.epub-surface) {
+/* Global styles imported from EpubReader.svelte. vitePreprocess ignores style src=. */
+.epub-surface {
   position: relative;
   display: flex;
   flex: 1;
   align-items: stretch;
 }
 
-:global(.epub-nav) {
+.epub-nav {
   position: absolute;
   top: 0;
   z-index: 10;
@@ -17,27 +18,27 @@
   color: var(--color-subtle);
 }
 
-:global(.epub-nav:hover) {
+.epub-nav:hover {
   background: var(--color-surface-hover);
   color: var(--color-fg);
 }
 
-:global(.epub-nav--prev) {
+.epub-nav--prev {
   left: 0;
 }
 
-:global(.epub-nav--next) {
+.epub-nav--next {
   right: 0;
 }
 
 @media (min-width: 768px) {
-  :global(.epub-nav) {
+  .epub-nav {
     display: flex;
     width: 4rem;
   }
 }
 
-:global(.epub-stage) {
+.epub-stage {
   margin-left: auto;
   margin-right: auto;
   height: 100%;
@@ -47,25 +48,25 @@
 }
 
 @media (min-width: 640px) {
-  :global(.epub-stage) {
+  .epub-stage {
     padding-left: 3rem;
     padding-right: 3rem;
   }
 }
 
 @media (min-width: 768px) {
-  :global(.epub-stage) {
+  .epub-stage {
     padding-left: 4rem;
     padding-right: 4rem;
   }
 }
 
-:global(.epub-mount) {
+.epub-mount {
   height: 100%;
   width: 100%;
 }
 
-:global(.epub-status) {
+.epub-status {
   position: absolute;
   inset: 0;
   display: grid;
@@ -74,7 +75,7 @@
   color: var(--color-muted);
 }
 
-:global(.epub-status--error) {
+.epub-status--error {
   padding: 1.5rem;
   text-align: center;
 }

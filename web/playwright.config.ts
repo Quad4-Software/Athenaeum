@@ -11,7 +11,7 @@ export default defineConfig({
     ? undefined
     : {
         command:
-          "../bin/athenaeum --addr 127.0.0.1:8080 --data /tmp/athenaeum-e2e-data --library /tmp/athenaeum-e2e-lib",
+          "../bin/athenaeum --addr 127.0.0.1:8080 --data /tmp/athenaeum-e2e-data --library /tmp/athenaeum-e2e-lib --demo",
         port: 8080,
         reuseExistingServer: !process.env.CI,
       },

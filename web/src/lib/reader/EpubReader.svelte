@@ -6,6 +6,7 @@
     ensureEpubDocumentHead,
     hardenEpubDocument,
   } from "$lib/reader/epub-options";
+  import "$lib/reader/EpubReader.css";
   import { theme } from "$lib/stores/theme.svelte";
   import { api } from "$lib/api/client";
   import { toast } from "$lib/stores/toast.svelte";
@@ -500,5 +501,3 @@
     />
   {/if}
 </div>
-
-<style src="./EpubReader.css"></style>

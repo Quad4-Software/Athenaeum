@@ -21,6 +21,7 @@
   } from "@lucide/svelte";
   import MenuList from "$lib/components/MenuList.svelte";
   import Popover from "$lib/components/Popover.svelte";
+  import "$lib/reader/AudioReader.css";
   import type { Book, Chapter } from "$lib/api/types";
   import { audioCache } from "$lib/audio/cache";
   import { formatAudioTime, formatSleepRemaining } from "$lib/audio/format";
@@ -500,5 +501,3 @@
     </div>
   </div>
 </div>
-
-<style src="./AudioReader.css"></style>

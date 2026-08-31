@@ -9,7 +9,10 @@ export function epubOpenOptions(): BookOptions {
   } as unknown as BookOptions;
 }
 
-/** Avoid srcdoc sandbox script blocks; blob URLs load EPUB sections reliably. */
+/**
+ * Blob URLs for spine sections. allow-scripts is required so epubjs can attach
+ * link handlers inside the iframe. hardenEpubDocument strips book scripts first.
+ */
 export function epubRenderOptions(spread: "none" | "auto" | "always"): RenditionOptions {
   return {
     width: "100%",
@@ -17,7 +20,7 @@ export function epubRenderOptions(spread: "none" | "auto" | "always"): Rendition
     flow: "paginated",
     spread,
     method: "blobUrl",
-    allowScriptedContent: false,
+    allowScriptedContent: true,
   } as RenditionOptions;
 }
 
