@@ -37,11 +37,6 @@ function HomepageHeader() {
               Try the demo
             </Link>
           </div>
-          <ul className={styles.meta}>
-            <li>Single binary or Docker</li>
-            <li>EPUB, PDF, comics, audiobooks</li>
-            <li>OPDS, PWA, optional multi-user</li>
-          </ul>
         </div>
         <div className={styles.heroVisual}>
           <div className={styles.frame}>

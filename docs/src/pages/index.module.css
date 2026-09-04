@@ -1,14 +1,57 @@
 .hero {
   position: relative;
   overflow: hidden;
-  padding: 4.5rem 0 3.5rem;
+  isolation: isolate;
+  padding: 4.5rem 0 3.75rem;
   background-color: var(--ifm-background-color);
-  background-image: var(--athena-hero-glow), var(--athena-grid);
-  background-size: auto, 48px 48px;
+  background-image: var(--athena-hero-glow), var(--athena-hero-base);
   border-bottom: 1px solid var(--ifm-toc-border-color);
 }
 
+/* Soft alcove arcs: reading niche, not a tech grid. */
+.hero::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  width: min(72vw, 54rem);
+  height: min(72vw, 54rem);
+  left: -18%;
+  top: 50%;
+  translate: 0 -52%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--ifm-color-primary) 22%, transparent);
+  box-shadow:
+    0 0 0 2.75rem color-mix(in srgb, var(--ifm-font-color-base) 3%, transparent),
+    0 0 0 2.76rem color-mix(in srgb, var(--ifm-color-primary) 10%, transparent),
+    0 0 0 5.5rem color-mix(in srgb, var(--ifm-font-color-base) 2%, transparent);
+  opacity: 0.55;
+  mask-image: linear-gradient(
+    100deg,
+    #000 0%,
+    #000 38%,
+    transparent 78%
+  );
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 12% 4% 8% 48%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 70% 65% at 70% 45%,
+    color-mix(in srgb, var(--ifm-color-primary) 26%, transparent),
+    transparent 72%
+  );
+  filter: blur(28px);
+  opacity: 0.75;
+}
+
 .heroInner {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.2fr);
   gap: 2.75rem;
@@ -81,39 +124,29 @@
   ) !important;
 }
 
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem 1.1rem;
-  margin: 1.75rem 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--athena-muted);
-  font-size: 0.92rem;
-}
-
-.meta li {
-  position: relative;
-  padding-left: 0.9rem;
-}
-
-.meta li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 0.35rem;
-  height: 0.35rem;
-  border-radius: 999px;
-  background: var(--ifm-color-primary);
-}
-
 .heroVisual {
   position: relative;
 }
 
+.heroVisual::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 8% -6% -8% 6%;
+  border-radius: 28px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--ifm-color-primary) 35%, transparent),
+    transparent 75%
+  );
+  filter: blur(18px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
 .frame {
   position: relative;
+  z-index: 1;
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid var(--ifm-toc-border-color);
@@ -166,6 +199,18 @@
 @media (max-width: 996px) {
   .hero {
     padding: 3rem 0 2.5rem;
+  }
+
+  .hero::before {
+    width: 120vw;
+    height: 120vw;
+    left: -40%;
+    opacity: 0.35;
+  }
+
+  .hero::after {
+    inset: 40% 0 0 0;
+    opacity: 0.45;
   }
 
   .heroInner {

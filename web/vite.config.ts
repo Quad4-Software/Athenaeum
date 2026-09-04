@@ -366,7 +366,7 @@ export default defineConfig({
         /\.onnx$/,
         /\.bin$/,
         /\/models\//,
-        /\/ort\/.*\.wasm$/,
+        /\/ort\//,
       ],
     }),
   ],

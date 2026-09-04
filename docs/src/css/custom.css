@@ -47,16 +47,27 @@
   --ifm-toc-border-color: rgb(28 28 34 / 0.08);
 
   --docusaurus-highlighted-code-line-bg: rgb(196 60 46 / 0.08);
-  --athena-hero-glow: radial-gradient(
-    90% 70% at 80% 10%,
-    rgb(196 60 46 / 0.16),
-    transparent 55%
+  --athena-hero-base: linear-gradient(
+    180deg,
+    #faf9fb 0%,
+    var(--athena-paper) 55%,
+    #efecef 100%
   );
-  --athena-grid: linear-gradient(
-      rgb(28 28 34 / 0.035) 1px,
-      transparent 1px
+  --athena-hero-glow: radial-gradient(
+      70% 85% at 8% -10%,
+      rgb(255 252 248 / 0.95),
+      transparent 58%
     ),
-    linear-gradient(90deg, rgb(28 28 34 / 0.035) 1px, transparent 1px);
+    radial-gradient(
+      50% 55% at 92% 30%,
+      rgb(196 60 46 / 0.14),
+      transparent 68%
+    ),
+    radial-gradient(
+      40% 45% at 70% 100%,
+      rgb(60 58 70 / 0.06),
+      transparent 70%
+    );
 }
 
 [data-theme='dark'] {
@@ -83,16 +94,27 @@
   --ifm-toc-border-color: rgb(255 255 255 / 0.08);
 
   --docusaurus-highlighted-code-line-bg: rgb(232 93 76 / 0.15);
-  --athena-hero-glow: radial-gradient(
-    90% 70% at 80% 10%,
-    rgb(232 93 76 / 0.22),
-    transparent 55%
+  --athena-hero-base: linear-gradient(
+    180deg,
+    #15151a 0%,
+    #121216 52%,
+    #0d0d11 100%
   );
-  --athena-grid: linear-gradient(
-      rgb(255 255 255 / 0.035) 1px,
-      transparent 1px
+  --athena-hero-glow: radial-gradient(
+      75% 90% at 6% -15%,
+      rgb(48 44 42 / 0.9),
+      transparent 55%
     ),
-    linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+    radial-gradient(
+      52% 58% at 94% 28%,
+      rgb(232 93 76 / 0.24),
+      transparent 66%
+    ),
+    radial-gradient(
+      38% 42% at 68% 105%,
+      rgb(20 20 28 / 0.9),
+      transparent 70%
+    );
 }
 
 html {
@@ -107,25 +129,17 @@ body {
 .navbar {
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--ifm-toc-border-color);
+  box-shadow: none;
+  padding: 0;
 }
 
-.navbar__title {
-  font-family: var(--ifm-heading-font-family);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+.navbar .navbar-sidebar {
+  background: var(--ifm-background-surface-color);
 }
 
-.navbar__logo {
-  height: 1.75rem;
-  margin-right: 0.55rem;
-}
-
-.footer {
-  border-top: 1px solid rgb(255 255 255 / 0.06);
-}
-
-.footer__title {
-  font-family: var(--ifm-heading-font-family);
+.navbar-sidebar__brand {
+  box-shadow: none;
+  border-bottom: 1px solid var(--ifm-toc-border-color);
 }
 
 .theme-doc-markdown h1,
@@ -214,10 +228,4 @@ code {
 
 .prism-code {
   border-radius: 12px;
-}
-
-@media (max-width: 996px) {
-  .navbar__title {
-    font-size: 1.05rem;
-  }
 }

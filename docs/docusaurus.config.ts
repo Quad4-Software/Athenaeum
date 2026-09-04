@@ -79,6 +79,8 @@ const config: Config = {
         src: 'img/logo.svg',
         srcDark: 'img/logo.svg',
       },
+      // Desktop/mobile chrome is custom (src/theme/Navbar). Keep items for the
+      // Docusaurus mobile sidebar link list.
       items: [
         {
           type: 'docSidebar',
@@ -109,40 +111,11 @@ const config: Config = {
         },
       ],
     },
+    // Footer chrome is custom (src/theme/Footer). Keep a minimal config so
+    // theme hooks that read footer still resolve.
     footer: {
       style: 'dark',
-      links: [
-        {
-          title: 'Docs',
-          items: [
-            {label: 'Getting started', to: '/docs/getting-started'},
-            {label: 'Features', to: '/docs/features'},
-            {label: 'Deploying', to: '/docs/deploying'},
-            {label: 'Configuration', to: '/docs/configuration'},
-          ],
-        },
-        {
-          title: 'Guides',
-          items: [
-            {label: 'Authentication', to: '/docs/authentication'},
-            {label: 'Library', to: '/docs/library'},
-            {label: 'OPDS and KOSync', to: '/docs/catalogs'},
-            {label: 'HTTP API', to: '/docs/http-api'},
-          ],
-        },
-        {
-          title: 'Project',
-          items: [
-            {label: 'Roadmap', to: '/roadmap'},
-            {label: 'Privacy', to: '/privacy'},
-            {label: 'GitHub', href: githubUrl},
-            {label: 'Changelog', href: `${githubUrl}/blob/main/CHANGELOG.md`},
-            {label: 'Contributing', href: `${githubUrl}/blob/main/CONTRIBUTING.md`},
-            {label: 'Live demo', href: demoHref},
-          ],
-        },
-      ],
-      copyright: `Copyright © ${new Date().getFullYear()} Athenaeum contributors. MIT licensed.`,
+      copyright: `Copyright ${new Date().getFullYear()} Athenaeum contributors. MIT licensed.`,
     },
     prism: {
       theme: prismThemes.github,

@@ -3,8 +3,7 @@
   overflow: hidden;
   padding: 4.25rem 0 3.25rem;
   background-color: var(--ifm-background-color);
-  background-image: var(--athena-hero-glow), var(--athena-grid);
-  background-size: auto, 48px 48px;
+  background-image: var(--athena-hero-glow), var(--athena-hero-base);
   border-bottom: 1px solid var(--ifm-toc-border-color);
 }
 

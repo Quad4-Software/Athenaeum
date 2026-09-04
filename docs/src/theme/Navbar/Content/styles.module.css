@@ -1,0 +1,242 @@
+.bar {
+  width: 100%;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  min-height: var(--ifm-navbar-height);
+  padding: 0.35rem 0.75rem;
+}
+
+.left,
+.right {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.left {
+  flex: 1 1 auto;
+  gap: 1rem;
+}
+
+.right {
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mobileToggle {
+  display: none;
+}
+
+.mobileToggle :global(.navbar__toggle) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: 10px;
+  color: var(--ifm-font-color-base);
+  background: transparent;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: var(--ifm-font-color-base);
+  text-decoration: none;
+}
+
+.brand:hover {
+  color: var(--ifm-font-color-base);
+  text-decoration: none;
+}
+
+.brandLogo {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.brandName {
+  font-family: var(--ifm-heading-font-family);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.desktopNav {
+  min-width: 0;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  color: var(--athena-muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease;
+}
+
+.link:hover {
+  color: var(--ifm-font-color-base);
+  background: color-mix(in srgb, var(--ifm-color-primary) 8%, transparent);
+  text-decoration: none;
+}
+
+.linkActive {
+  color: var(--ifm-font-color-base);
+  background: color-mix(in srgb, var(--ifm-color-primary) 12%, transparent);
+}
+
+.colorToggle {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.colorToggle :global(button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: 10px !important;
+  color: var(--ifm-font-color-base);
+  background: transparent !important;
+  line-height: 0;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    background-color 140ms ease;
+}
+
+.colorToggle :global(button:hover),
+.colorToggle :global(button:focus-visible) {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+  background: color-mix(in srgb, var(--ifm-color-primary) 12%, transparent) !important;
+}
+
+.colorToggle :global(svg) {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: 10px;
+  color: var(--ifm-font-color-base);
+  background: transparent;
+  line-height: 0;
+  text-decoration: none;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    background-color 140ms ease;
+}
+
+.iconButton:hover,
+.iconButton:focus-visible {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+  background: color-mix(in srgb, var(--ifm-color-primary) 12%, transparent);
+  text-decoration: none;
+}
+
+.iconButton :global(svg) {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  padding: 0 0.95rem;
+  border-radius: 10px;
+  background: var(--ifm-color-primary);
+  color: #fff !important;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow: 0 10px 22px -16px var(--ifm-color-primary);
+  transition: background-color 140ms ease;
+  white-space: nowrap;
+}
+
+.cta:hover {
+  background: var(--ifm-color-primary-dark);
+  color: #fff !important;
+  text-decoration: none;
+}
+
+@media (max-width: 996px) {
+  .mobileToggle {
+    display: block;
+  }
+
+  .desktopNav {
+    display: none;
+  }
+
+  .cta {
+    display: none;
+  }
+
+  .brandName {
+    font-size: 1.1rem;
+  }
+}
+
+@media (min-width: 997px) {
+  .inner {
+    padding-left: 0.85rem;
+    padding-right: 1rem;
+  }
+}
