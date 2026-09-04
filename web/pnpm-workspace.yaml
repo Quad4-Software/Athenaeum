@@ -3,10 +3,15 @@
 packages:
   - "."
 
-# Force patched transitive deps.
+# Force patched / fixed transitive deps (Dependabot + supply-chain).
 overrides:
   "@xmldom/xmldom": ">=0.8.13"
   sharp: ">=0.35.0"
+  qs: ">=6.16.0"
+  uuid: ">=11.1.1"
+  tmp: ">=0.2.7"
+  # No upstream fix for symlink path traversal yet. Vendored 2.0.2 with checks.
+  extract-zip: link:vendor/extract-zip
 
 # Supply-chain defaults aligned with pnpm 11 (explicit for clarity).
 minimumReleaseAge: 1440

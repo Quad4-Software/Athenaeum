@@ -3,6 +3,14 @@
 packages:
   - "."
 
+# Force patched / fixed transitive deps (Dependabot + supply-chain).
+overrides:
+  qs: ">=6.16.0"
+  uuid: ">=11.1.1"
+  serialize-javascript: ">=7.0.5"
+  # No upstream fix for ICNS/HEIF/JXL infinite loops yet. Vendored 2.0.3 with guards.
+  image-size: link:vendor/image-size
+
 # Supply-chain defaults aligned with pnpm 11 (explicit for clarity).
 minimumReleaseAge: 1440
 minimumReleaseAgeStrict: false
