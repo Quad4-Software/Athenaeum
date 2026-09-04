@@ -193,25 +193,14 @@ func repoRoot(t *testing.T) string {
 func loadFrontendAPIPaths(t *testing.T) []string {
 	t.Helper()
 	apiDir := filepath.Join(repoRoot(t), "web/src/lib/api")
-	entries, err := os.ReadDir(apiDir)
-	if err != nil {
-		t.Fatal(err)
-	}
 	reSeg := regexp.MustCompile(`/\$\{[^}]+\}`)
 	reOther := regexp.MustCompile(`\$\{[^}]+\}`)
 	rePath := regexp.MustCompile(`/api/[A-Za-z0-9_./{}-]+`)
 	reDigits := regexp.MustCompile(`/\d+(/|$)`)
 	seen := map[string]struct{}{}
 	var out []string
-	for _, ent := range entries {
-		name := ent.Name()
-		if !strings.HasSuffix(name, ".ts") || strings.Contains(name, ".test.") {
-			continue
-		}
-		raw, err := os.ReadFile(filepath.Join(apiDir, name))
-		if err != nil {
-			t.Fatal(err)
-		}
+
+	collect := func(raw []byte) {
 		normalized := reSeg.ReplaceAllString(string(raw), "/{id}")
 		normalized = reOther.ReplaceAllString(normalized, "")
 		for _, m := range rePath.FindAllString(normalized, -1) {
@@ -234,6 +223,31 @@ func loadFrontendAPIPaths(t *testing.T) []string {
 			out = append(out, p)
 		}
 	}
+
+	entries, err := os.ReadDir(apiDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, ent := range entries {
+		name := ent.Name()
+		if !strings.HasSuffix(name, ".ts") || strings.Contains(name, ".test.") {
+			continue
+		}
+		raw, err := os.ReadFile(filepath.Join(apiDir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		collect(raw)
+	}
+
+	// Generated operation paths are the preferred client source of truth.
+	genPath := filepath.Join(apiDir, "generated", "paths.ts")
+	if raw, err := os.ReadFile(genPath); err != nil {
+		t.Fatal(err)
+	} else {
+		collect(raw)
+	}
+
 	if len(out) == 0 {
 		t.Fatal("no frontend /api paths found")
 	}

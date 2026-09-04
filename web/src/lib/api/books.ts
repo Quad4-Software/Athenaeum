@@ -21,15 +21,17 @@ import type {
 import { request, ensureCsrf, ApiError, buildQuery, CSRF_HEADER } from "./core";
 import { isDemoMode } from "$lib/demo/mode";
 import { demoCoverUrlForBook } from "$lib/demo/covers";
+import { opURL } from "./op";
 
 export const booksApi = {
-  listBooks: (params: BookQueryParams = {}) => request<BookPage>(`/api/books${buildQuery(params)}`),
+  listBooks: (params: BookQueryParams = {}) =>
+    request<BookPage>(`${opURL("GET__api_books")}${buildQuery(params)}`),
 
-  getBook: (id: number) => request<Book>(`/api/books/${id}`),
+  getBook: (id: number) => request<Book>(opURL("GET__api_books__id", { id })),
 
   deleteBook: (id: number) => request<void>(`/api/books/${id}`, { method: "DELETE" }),
 
-  getChapters: (id: number) => request<Chapter[]>(`/api/books/${id}/chapters`),
+  getChapters: (id: number) => request<Chapter[]>(opURL("GET__api_books__id__chapters", { id })),
 
   getAudiobookTracks: (id: number) => request<AudiobookTrack[]>(`/api/books/${id}/tracks`),
 
@@ -41,7 +43,7 @@ export const booksApi = {
     request<ConvertResult>(`/api/books/${id}/convert?target=${target}`, { method: "POST" }),
 
   updateBook: (id: number, data: BookUpdate) =>
-    request<Book>(`/api/books/${id}`, {
+    request<Book>(opURL("PUT__api_books__id", { id }), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -51,7 +53,7 @@ export const booksApi = {
     const csrf = await ensureCsrf();
     const form = new FormData();
     form.append("cover", file);
-    const res = await fetch(`/api/books/${id}/cover`, {
+    const res = await fetch(opURL("GET__api_books__id__cover", { id }), {
       method: "PUT",
       credentials: "same-origin",
       headers: { Accept: "application/json", [CSRF_HEADER]: csrf },
@@ -70,7 +72,8 @@ export const booksApi = {
     return (await res.json()) as Book;
   },
 
-  deleteCover: (id: number) => request<Book>(`/api/books/${id}/cover`, { method: "DELETE" }),
+  deleteCover: (id: number) =>
+    request<Book>(opURL("GET__api_books__id__cover", { id }), { method: "DELETE" }),
 
   listMetadataProviders: () => request<MetadataProvider[]>("/api/metadata/providers"),
 
@@ -119,10 +122,10 @@ export const booksApi = {
       body: JSON.stringify({ url }),
     }),
 
-  getProgress: (id: number) => request<Progress>(`/api/books/${id}/progress`),
+  getProgress: (id: number) => request<Progress>(opURL("GET__api_books__id__progress", { id })),
 
   saveProgress: (id: number, p: Pick<Progress, "location" | "percent">) =>
-    request<Progress>(`/api/books/${id}/progress`, {
+    request<Progress>(opURL("PUT__api_books__id__progress", { id }), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(p),
@@ -161,38 +164,43 @@ export const booksApi = {
   deleteHighlight: (bookId: number, highlightId: number) =>
     request<void>(`/api/books/${bookId}/highlights/${highlightId}`, { method: "DELETE" }),
 
-  listTags: () => request<Tag[]>("/api/tags"),
+  listTags: () => request<Tag[]>(opURL("GET__api_tags")),
 
   createTag: (name: string) =>
-    request<Tag>("/api/tags", {
+    request<Tag>(opURL("POST__api_tags"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     }),
 
-  listBookTags: (bookId: number) => request<string[]>(`/api/books/${bookId}/tags`),
+  listBookTags: (bookId: number) =>
+    request<string[]>(opURL("GET__api_books__id__tags", { id: bookId })),
 
   setBookTags: (bookId: number, tags: string[]) =>
-    request<string[]>(`/api/books/${bookId}/tags`, {
+    request<string[]>(opURL("PUT__api_books__id__tags", { id: bookId }), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tags }),
     }),
 
   addBookTag: (bookId: number, name: string) =>
-    request<string[]>(`/api/books/${bookId}/tags`, {
+    request<string[]>(opURL("POST__api_books__id__tags", { id: bookId }), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     }),
 
   removeBookTag: (bookId: number, tagId: number) =>
-    request<{ ok: boolean }>(`/api/books/${bookId}/tags/${tagId}`, { method: "DELETE" }),
+    request<{ ok: boolean }>(
+      opURL("DELETE__api_books__id__tags__tagId", { id: bookId, tagId }),
+      { method: "DELETE" },
+    ),
 
-  getRating: (bookId: number) => request<BookRating>(`/api/books/${bookId}/rating`),
+  getRating: (bookId: number) =>
+    request<BookRating>(opURL("GET__api_books__id__rating", { id: bookId })),
 
   setRating: (bookId: number, rating: number) =>
-    request<BookRating>(`/api/books/${bookId}/rating`, {
+    request<BookRating>(opURL("PUT__api_books__id__rating", { id: bookId }), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating }),
@@ -241,12 +249,14 @@ export const booksApi = {
 
   coverUrl: (id: number, version?: string) => {
     if (isDemoMode()) return demoCoverUrlForBook(id);
-    const base = `/api/books/${id}/cover`;
+    const base = opURL("GET__api_books__id__cover", { id });
     return version ? `${base}?v=${encodeURIComponent(version)}` : base;
   },
-  fileUrl: (id: number, track?: number) =>
-    track != null ? `/api/books/${id}/file?track=${track}` : `/api/books/${id}/file`,
+  fileUrl: (id: number, track?: number) => {
+    const base = opURL("GET__api_books__id__file", { id });
+    return track != null ? `${base}?track=${track}` : base;
+  },
 
   comicPageUrl: (id: number, page: number) => `/api/books/${id}/pages/${page}`,
-  downloadUrl: (id: number) => `/api/books/${id}/download`,
+  downloadUrl: (id: number) => opURL("GET__api_books__id__download", { id }),
 };

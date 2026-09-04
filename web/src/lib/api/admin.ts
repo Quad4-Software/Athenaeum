@@ -12,6 +12,7 @@ import type {
   WebhookDelivery,
 } from "./types";
 import { request, ensureCsrf, ApiError, CSRF_HEADER } from "./core";
+import { opURL } from "./op";
 
 export const adminApi = {
   listAudit: (limit = 50, offset = 0, action = "", q = "") => {
@@ -21,15 +22,15 @@ export const adminApi = {
     });
     if (action) params.set("action", action);
     if (q.trim()) params.set("q", q.trim());
-    return request<AuditPage>(`/api/auth/audit?${params}`);
+    return request<AuditPage>(`${opURL("GET__api_auth_audit")}?${params}`);
   },
 
-  getSystemStats: () => request<SystemStats>("/api/system/stats"),
+  getSystemStats: () => request<SystemStats>(opURL("GET__api_system_stats")),
 
-  getServerConfig: () => request<ServerConfig>("/api/admin/server"),
+  getServerConfig: () => request<ServerConfig>(opURL("GET__api_admin_server")),
 
   saveServerConfig: (config: ServerConfig) =>
-    request<ServerConfig>("/api/admin/server", {
+    request<ServerConfig>(opURL("PUT__api_admin_server"), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(config),
@@ -52,7 +53,7 @@ export const adminApi = {
       body: JSON.stringify(config),
     }),
 
-  getPocketID: () => request<PocketIDSettingsPublic>("/api/admin/pocketid"),
+  getPocketID: () => request<PocketIDSettingsPublic>(opURL("GET__api_admin_pocketid")),
 
   savePocketID: (config: {
     enabled: boolean;
@@ -60,19 +61,24 @@ export const adminApi = {
     apiKey?: string;
     defaultGroupIds: string[];
   }) =>
-    request<PocketIDSettingsPublic>("/api/admin/pocketid", {
+    request<PocketIDSettingsPublic>(opURL("PUT__api_admin_pocketid"), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(config),
     }),
 
-  testPocketID: () => request<{ ok: string }>("/api/admin/pocketid/test", { method: "POST" }),
+  testPocketID: () =>
+    request<{ ok: string }>(opURL("POST__api_admin_pocketid_test"), { method: "POST" }),
 
   applyPocketIDOIDC: () =>
-    request<Record<string, unknown>>("/api/admin/pocketid/apply-oidc", { method: "POST" }),
+    request<Record<string, unknown>>(opURL("POST__api_admin_pocketid_apply_oidc"), {
+      method: "POST",
+    }),
 
   listInvites: (status?: string) =>
-    request<Invite[]>(`/api/invites${status ? `?status=${encodeURIComponent(status)}` : ""}`),
+    request<Invite[]>(
+      `${opURL("GET__api_invites")}${status ? `?status=${encodeURIComponent(status)}` : ""}`,
+    ),
 
   createInvite: (body: {
     kind: string;
@@ -83,18 +89,19 @@ export const adminApi = {
     guestExpiresInHours?: number;
     provisionPocketId?: boolean;
   }) =>
-    request<InviteCreateResult>("/api/invites", {
+    request<InviteCreateResult>(opURL("POST__api_invites"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
 
-  revokeInvite: (id: number) => request<{ ok: string }>(`/api/invites/${id}`, { method: "DELETE" }),
+  revokeInvite: (id: number) =>
+    request<{ ok: string }>(opURL("DELETE__api_invites__id", { id }), { method: "DELETE" }),
 
-  listWebhooks: () => request<Webhook[]>("/api/admin/webhooks"),
+  listWebhooks: () => request<Webhook[]>(opURL("GET__api_admin_webhooks")),
 
   createWebhook: (body: { url: string; secret?: string; events: string[]; enabled?: boolean }) =>
-    request<Webhook>("/api/admin/webhooks", {
+    request<Webhook>(opURL("POST__api_admin_webhooks"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -104,22 +111,24 @@ export const adminApi = {
     id: number,
     body: { url?: string; secret?: string; events?: string[]; enabled?: boolean },
   ) =>
-    request<Webhook>(`/api/admin/webhooks/${id}`, {
+    request<Webhook>(opURL("PUT__api_admin_webhooks__id", { id }), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
 
   deleteWebhook: (id: number) =>
-    request<{ ok: string }>(`/api/admin/webhooks/${id}`, { method: "DELETE" }),
+    request<{ ok: string }>(opURL("DELETE__api_admin_webhooks__id", { id }), { method: "DELETE" }),
 
   listWebhookDeliveries: (id: number, limit = 50, offset = 0) =>
     request<WebhookDelivery[]>(
-      `/api/admin/webhooks/${id}/deliveries?limit=${limit}&offset=${offset}`,
+      `${opURL("GET__api_admin_webhooks__id__deliveries", { id })}?limit=${limit}&offset=${offset}`,
     ),
 
   testWebhook: (id: number) =>
-    request<{ ok: string }>(`/api/admin/webhooks/${id}/test`, { method: "POST" }),
+    request<{ ok: string }>(opURL("POST__api_admin_webhooks__id__test", { id }), {
+      method: "POST",
+    }),
 
   adminContentIndex: () =>
     request<{ status: string }>("/api/admin/content-index", { method: "POST" }),

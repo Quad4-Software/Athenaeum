@@ -381,7 +381,7 @@ func (s *Server) oidcGroups(ctx context.Context, idToken *oidc.IDToken, token *o
 		return nil
 	}
 	client := oauthCfg.Client(ctx, token)
-	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	reqCtx, cancel := context.WithTimeout(ctx, httpClientTimeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, cfg.UserinfoURL, nil)
 	if err != nil {

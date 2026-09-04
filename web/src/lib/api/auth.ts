@@ -18,10 +18,11 @@ import type {
 } from "./types";
 import type { EpubDisplayPrefs } from "$lib/reader/epub-reader";
 import { request } from "./core";
+import { opURL } from "./op";
 
 export const authApi = {
   login: (username: string, password: string, altcha?: string) =>
-    request<LoginResult>("/api/auth/login", {
+    request<LoginResult>(opURL("POST__api_auth_login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password, altcha: altcha || undefined }),
@@ -66,9 +67,9 @@ export const authApi = {
       body: JSON.stringify(settings),
     }),
 
-  logout: () => request<void>("/api/auth/logout", { method: "POST" }),
+  logout: () => request<void>(opURL("POST__api_auth_logout"), { method: "POST" }),
 
-  me: () => request<User>("/api/auth/me"),
+  me: () => request<User>(opURL("GET__api_auth_me")),
 
   authSetup: () =>
     request<{
@@ -77,24 +78,24 @@ export const authApi = {
       allowRegistration?: boolean;
       passwordPolicy?: import("./types").PasswordPolicy;
       altcha?: import("./types").AltchaPublic;
-    }>("/api/auth/setup"),
+    }>(opURL("GET__api_auth_setup")),
 
   setupAdmin: (username: string, password: string, altcha?: string) =>
-    request<User>("/api/auth/setup", {
+    request<User>(opURL("POST__api_auth_setup"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password, altcha: altcha || undefined }),
     }),
 
   register: (username: string, password: string) =>
-    request<User>("/api/auth/register", {
+    request<User>(opURL("POST__api_auth_register"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     }),
 
   createGuest: (username: string, expiresInHours: number) =>
-    request<GuestCredentials>("/api/auth/users/guest", {
+    request<GuestCredentials>(opURL("POST__api_auth_users_guest"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: username || undefined, expiresInHours }),
@@ -114,20 +115,22 @@ export const authApi = {
       body: JSON.stringify({ currentPassword, newPassword }),
     }),
 
-  listUsers: () => request<User[]>("/api/auth/users"),
+  listUsers: () => request<User[]>(opURL("GET__api_auth_users")),
 
   resetUserPassword: (userId: number, password: string) =>
-    request<{ ok: boolean }>(`/api/auth/users/${userId}/password`, {
+    request<{ ok: boolean }>(opURL("PUT__api_auth_users__id__password", { id: userId }), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     }),
 
   deleteUser: (userId: number) =>
-    request<{ ok: boolean }>(`/api/auth/users/${userId}`, { method: "DELETE" }),
+    request<{ ok: boolean }>(opURL("DELETE__api_auth_users__id", { id: userId }), {
+      method: "DELETE",
+    }),
 
   setUserAdmin: (userId: number, admin: boolean) =>
-    request<User>(`/api/auth/users/${userId}/admin`, {
+    request<User>(opURL("PUT__api_auth_users__id__admin", { id: userId }), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ admin }),
@@ -141,10 +144,10 @@ export const authApi = {
     }),
 
   getUserLibraries: (userId: number) =>
-    request<UserLibraries>(`/api/auth/users/${userId}/libraries`),
+    request<UserLibraries>(opURL("GET__api_auth_users__id__libraries", { id: userId })),
 
   setUserLibraries: (userId: number, libraryIds: number[]) =>
-    request<UserLibraries>(`/api/auth/users/${userId}/libraries`, {
+    request<UserLibraries>(opURL("PUT__api_auth_users__id__libraries", { id: userId }), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ libraryIds }),
@@ -157,24 +160,26 @@ export const authApi = {
       body: JSON.stringify({ password }),
     }),
 
-  authMethods: () => request<AuthMethods>("/api/auth/methods"),
+  authMethods: () => request<AuthMethods>(opURL("GET__api_auth_methods")),
 
-  listSessions: () => request<UserSession[]>("/api/auth/sessions"),
+  listSessions: () => request<UserSession[]>(opURL("GET__api_auth_sessions")),
 
   revokeSession: (sessionId: string, userId?: number) =>
     request<void>(
-      `/api/auth/sessions/${encodeURIComponent(sessionId)}${userId != null ? `?userId=${userId}` : ""}`,
+      `${opURL("DELETE__api_auth_sessions__id", { id: sessionId })}${userId != null ? `?userId=${userId}` : ""}`,
       { method: "DELETE" },
     ),
 
   revokeOtherSessions: () =>
-    request<{ revoked: number }>("/api/auth/sessions", { method: "DELETE" }),
+    request<{ revoked: number }>(opURL("DELETE__api_auth_sessions"), { method: "DELETE" }),
 
   revokeAllSessions: () =>
-    request<{ revoked: number }>("/api/auth/sessions?all=true", { method: "DELETE" }),
+    request<{ revoked: number }>(`${opURL("DELETE__api_auth_sessions")}?all=true`, {
+      method: "DELETE",
+    }),
 
   listUserSessions: (userId: number) =>
-    request<UserSession[]>(`/api/auth/users/${userId}/sessions`),
+    request<UserSession[]>(opURL("GET__api_auth_users__id__sessions", { id: userId })),
 
   getOIDCConfig: () => request<OIDCConfig>("/api/auth/oidc/config"),
 
@@ -194,18 +199,19 @@ export const authApi = {
 
   oidcLoginUrl: () => "/auth/oidc/login",
 
-  listAPIKeys: () => request<APIKey[]>("/api/auth/api-keys"),
+  listAPIKeys: () => request<APIKey[]>(opURL("GET__api_auth_api_keys")),
 
   createAPIKey: (name: string) =>
-    request<APIKeyCreated>("/api/auth/api-keys", {
+    request<APIKeyCreated>(opURL("POST__api_auth_api_keys"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     }),
 
-  deleteAPIKey: (id: number) => request<void>(`/api/auth/api-keys/${id}`, { method: "DELETE" }),
+  deleteAPIKey: (id: number) =>
+    request<void>(opURL("DELETE__api_auth_api_keys__id", { id }), { method: "DELETE" }),
 
-  getAPIDocs: () => request<APIDoc>("/api/docs"),
+  getAPIDocs: () => request<APIDoc>(opURL("GET__api_docs")),
 
   listGuests: (expiringWithinHours?: number) =>
     request<User[]>(
@@ -226,10 +232,10 @@ export const authApi = {
       body: JSON.stringify({ expiresInHours }),
     }),
 
-  getReaderPrefs: () => request<ReaderPrefs>("/api/auth/reader-prefs"),
+  getReaderPrefs: () => request<ReaderPrefs>(opURL("GET__api_auth_reader_prefs")),
 
   saveReaderPrefs: (prefs: EpubDisplayPrefs) =>
-    request<ReaderPrefs>("/api/auth/reader-prefs", {
+    request<ReaderPrefs>(opURL("PUT__api_auth_reader_prefs"), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prefs }),
@@ -244,10 +250,11 @@ export const authApi = {
       body: JSON.stringify({ email }),
     }),
 
-  getInviteMeta: (token: string) => request<InviteMeta>(`/api/invite/${encodeURIComponent(token)}`),
+  getInviteMeta: (token: string) =>
+    request<InviteMeta>(opURL("GET__api_invite__token", { token })),
 
   acceptInvite: (token: string, body: { username?: string; password?: string }) =>
-    request<Record<string, unknown>>(`/api/invite/${encodeURIComponent(token)}/accept`, {
+    request<Record<string, unknown>>(opURL("POST__api_invite__token__accept", { token }), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

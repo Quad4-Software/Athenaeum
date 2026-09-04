@@ -38,7 +38,7 @@ export function initBrand(): void {
 }
 
 export { brand } from "./config";
-export { storageKey, legacyStorageKey } from "./storage";
+export { storageKey, legacyStorageKey, IDB_BOOKS, IDB_AUDIO, IDB_FONTS, DEMO_MODE_STORAGE_KEY } from "./storage";
 export { applyUiFont, DEFAULT_UI_FONT, getUiFont, isUiFontId, UI_FONT_PRESETS } from "./fonts";
 export type { UiFontId, UiFontPreset } from "./fonts";
 export {

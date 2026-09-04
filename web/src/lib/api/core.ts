@@ -9,6 +9,7 @@ import {
   maybeRecoverProxyGate,
 } from "./proxy-gate";
 import { isDemoMode } from "$lib/demo/mode";
+import { opURL } from "./op";
 
 const GATEWAY_AUTH_MESSAGE = "gateway authentication required";
 
@@ -47,7 +48,7 @@ export async function ensureCsrf(): Promise<string> {
   const cookie = readCSRFCookie();
   if (cookie) return cookie;
   if (!csrfReady) {
-    csrfReady = fetch("/api/auth/csrf", { credentials: "same-origin" })
+    csrfReady = fetch(opURL("GET__api_auth_csrf"), { credentials: "same-origin" })
       .then(async (res) => {
         if (maybeRecoverProxyGate(res)) {
           throw new ApiError(401, GATEWAY_AUTH_MESSAGE);
@@ -79,7 +80,8 @@ export function clearCsrfCache(): void {
 
 let refreshPromise: Promise<boolean> | null = null;
 
-function apiPath(path: string): string {
+/** Strip query string from a request path (auth 401 matching, error telemetry). */
+function stripApiQuery(path: string): string {
   const q = path.indexOf("?");
   return q === -1 ? path : path.slice(0, q);
 }
@@ -89,7 +91,7 @@ async function tryRefresh(): Promise<boolean> {
   refreshPromise = (async () => {
     try {
       const csrf = await ensureCsrf();
-      const res = await fetch("/api/auth/refresh", {
+      const res = await fetch(opURL("POST__api_auth_refresh"), {
         method: "POST",
         credentials: "same-origin",
         headers: { Accept: "application/json", [CSRF_HEADER]: csrf },
@@ -201,7 +203,7 @@ async function requestWithRetry<T>(
       return requestWithRetry(path, init, authRetried, attempt + 1);
     }
     const message = err instanceof Error ? err.message : "network error";
-    captureApiError(apiPath(path), 0, message);
+    captureApiError(stripApiQuery(path), 0, message);
     throw new ApiError(0, message);
   }
 
@@ -209,8 +211,10 @@ async function requestWithRetry<T>(
     if (maybeRecoverProxyGate(res) || isProxyGateRecovering()) {
       throw new ApiError(401, GATEWAY_AUTH_MESSAGE);
     }
-    const base = apiPath(path);
-    if (!authRetried && base !== "/api/auth/refresh" && base !== "/api/auth/login") {
+    const base = stripApiQuery(path);
+    const refreshPath = opURL("POST__api_auth_refresh");
+    const loginPath = opURL("POST__api_auth_login");
+    if (!authRetried && base !== refreshPath && base !== loginPath) {
       const refreshed = await tryRefresh();
       if (refreshed) return requestWithRetry(path, init, true, attempt);
       if (isProxyGateRecovering()) {
@@ -222,7 +226,7 @@ async function requestWithRetry<T>(
     }
   }
 
-  if (res.status === 403 && !AUTH_SILENT_403.has(apiPath(path))) {
+  if (res.status === 403 && !AUTH_SILENT_403.has(stripApiQuery(path))) {
     notifyForbidden();
   }
 
@@ -241,7 +245,7 @@ async function requestWithRetry<T>(
     if (res.status >= 500 || res.status === 0) {
       connectivity.markUnreachable();
     }
-    captureApiError(apiPath(path), res.status, message);
+    captureApiError(stripApiQuery(path), res.status, message);
     throw new ApiError(res.status, message);
   }
   clearProxyGateReloadGuard();

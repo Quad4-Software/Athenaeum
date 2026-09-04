@@ -12,12 +12,15 @@ import type {
   UploadSession,
 } from "./types";
 import { request, ensureCsrf, ApiError, CSRF_HEADER } from "./core";
+import { opURL } from "./op";
 
 export const librariesApi = {
   stats: (library?: number) =>
-    request<LibraryStats>(`/api/library/stats${library != null ? `?library=${library}` : ""}`),
+    request<LibraryStats>(
+      `${opURL("GET__api_library_stats")}${library != null ? `?library=${library}` : ""}`,
+    ),
 
-  scanStatus: () => request<ScanStatus>("/api/library/scan/status"),
+  scanStatus: () => request<ScanStatus>(opURL("GET__api_library_scan_status")),
 
   startMetadataMatch: (body: MetadataAutoMatchRequest) =>
     request<{ ok: boolean }>("/api/library/metadata/match", {
@@ -33,60 +36,72 @@ export const librariesApi = {
 
   scan: (library?: number) =>
     request<{ started: boolean }>(
-      library != null ? `/api/libraries/${library}/scan` : "/api/library/scan",
+      library != null
+        ? opURL("POST__api_libraries__id__scan", { id: library })
+        : opURL("POST__api_library_scan"),
       { method: "POST" },
     ),
 
   listSeries: (library?: number) =>
-    request<SeriesInfo[]>(`/api/series${library != null ? `?library=${library}` : ""}`),
+    request<SeriesInfo[]>(
+      `${opURL("GET__api_series")}${library != null ? `?library=${library}` : ""}`,
+    ),
 
   listAuthors: (library?: number) =>
-    request<AuthorInfo[]>(`/api/authors${library != null ? `?library=${library}` : ""}`),
+    request<AuthorInfo[]>(
+      `${opURL("GET__api_authors")}${library != null ? `?library=${library}` : ""}`,
+    ),
 
-  listLibraries: () => request<LibraryMount[]>("/api/libraries"),
+  listLibraries: () => request<LibraryMount[]>(opURL("GET__api_libraries")),
 
   createLibrary: (input: LibraryCreateInput) =>
-    request<LibraryMount>("/api/libraries", {
+    request<LibraryMount>(opURL("POST__api_libraries"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     }),
 
   updateLibrary: (id: number, input: LibraryCreateInput) =>
-    request<LibraryMount>(`/api/libraries/${id}`, {
+    request<LibraryMount>(opURL("PUT__api_libraries__id", { id }), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     }),
 
   testS3: (s3: LibraryS3Input) =>
-    request<{ ok: boolean }>("/api/libraries/test-s3", {
+    request<{ ok: boolean }>(opURL("POST__api_libraries_test_s3"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(s3),
     }),
 
-  deleteLibrary: (id: number) => request<void>(`/api/libraries/${id}`, { method: "DELETE" }),
+  deleteLibrary: (id: number) =>
+    request<void>(opURL("DELETE__api_libraries__id", { id }), { method: "DELETE" }),
 
   reorderLibraries: (ids: number[]) =>
-    request<{ ok: boolean }>("/api/libraries/reorder", {
+    request<{ ok: boolean }>(opURL("PUT__api_libraries_reorder"), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids }),
     }),
 
   createUpload: (libraryId: number, relPath: string, totalSize: number) =>
-    request<UploadSession>(`/api/libraries/${libraryId}/uploads`, {
+    request<UploadSession>(opURL("POST__api_libraries__id__uploads", { id: libraryId }), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ relPath, totalSize }),
     }),
 
   getUpload: (libraryId: number, uploadId: string) =>
-    request<UploadSession>(`/api/libraries/${libraryId}/uploads/${uploadId}`),
+    request<UploadSession>(
+      opURL("GET__api_libraries__id__uploads__uploadId", { id: libraryId, uploadId }),
+    ),
 
   cancelUpload: (libraryId: number, uploadId: string) =>
-    request<void>(`/api/libraries/${libraryId}/uploads/${uploadId}`, { method: "DELETE" }),
+    request<void>(
+      opURL("DELETE__api_libraries__id__uploads__uploadId", { id: libraryId, uploadId }),
+      { method: "DELETE" },
+    ),
 
   uploadChunk: async (
     libraryId: number,
@@ -97,16 +112,19 @@ export const librariesApi = {
     total: number,
   ): Promise<UploadSession> => {
     const csrf = await ensureCsrf();
-    const res = await fetch(`/api/libraries/${libraryId}/uploads/${uploadId}`, {
-      method: "PATCH",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Range": `bytes ${start}-${end}/${total}`,
-        [CSRF_HEADER]: csrf,
+    const res = await fetch(
+      opURL("PATCH__api_libraries__id__uploads__uploadId", { id: libraryId, uploadId }),
+      {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Content-Range": `bytes ${start}-${end}/${total}`,
+          [CSRF_HEADER]: csrf,
+        },
+        body: chunk,
       },
-      body: chunk,
-    });
+    );
     if (!res.ok) {
       let msg = res.statusText;
       try {

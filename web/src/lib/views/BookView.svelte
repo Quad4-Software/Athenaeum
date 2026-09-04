@@ -1,30 +1,18 @@
 <script lang="ts">
-  import {
-    BookOpen,
-    CloudOff,
-    Copy,
-    Download,
-    FileOutput,
-    FileText,
-    Headphones,
-    Link2,
-    MoreVertical,
-    Pencil,
-    Plus,
-    ScanSearch,
-    Star,
-    Tag,
-    Trash2,
-    X,
-  } from "@lucide/svelte";
+  import { Star } from "@lucide/svelte";
   import Cover from "$lib/components/Cover.svelte";
   import BookCoverProgress from "$lib/components/BookCoverProgress.svelte";
   import ContextMenu from "$lib/components/ContextMenu.svelte";
   import BookMetadataEditor from "$lib/components/BookMetadataEditor.svelte";
   import HtmlDescription from "$lib/components/HtmlDescription.svelte";
-  import Button from "$lib/components/Button.svelte";
   import Skeleton from "$lib/components/Skeleton.svelte";
   import ErrorView from "$lib/views/ErrorView.svelte";
+  import BookActionBar from "$lib/views/book/BookActionBar.svelte";
+  import BookShareLink from "$lib/views/book/BookShareLink.svelte";
+  import BookTagsSection from "$lib/views/book/BookTagsSection.svelte";
+  import BookCollectionsQuickAdd from "$lib/views/book/BookCollectionsQuickAdd.svelte";
+  import BookCitationSection from "$lib/views/book/BookCitationSection.svelte";
+  import * as bookViewActions from "$lib/views/book/book-view-actions";
   import { api, ApiError } from "$lib/api/client";
   import { router } from "$lib/router.svelte";
   import { collections } from "$lib/stores/collections.svelte";
@@ -36,18 +24,10 @@
   import { ui } from "$lib/stores/ui.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
   import { rememberBook } from "$lib/commands/recent";
-  import { can } from "$lib/permissions";
   import { formatBytes, seriesLabel } from "$lib/utils/format";
   import { descriptionLooksLikeHtml } from "$lib/utils/sanitize-html";
-  import { parseAudioLocation } from "$lib/audio/progress";
   import { bookOfflineCache, type BookOfflineStatus } from "$lib/offline/book-cache";
-  import {
-    isAudioFormat,
-    isComicFormat,
-    isMobiFormat,
-    type Book,
-    type Progress,
-  } from "$lib/api/types";
+  import { isAudioFormat, type Book, type Progress } from "$lib/api/types";
   import type { MenuItem } from "$lib/components/MenuList.svelte";
 
   interface Props {
@@ -139,18 +119,12 @@
 
   async function addToCollection(collectionId: number) {
     if (!book) return;
-    try {
-      await api.addToCollection(collectionId, book.id);
-      toast.success("Added to list");
-      void collections.refresh();
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to add");
-    }
+    await bookViewActions.addToCollection(book.id, collectionId);
   }
 
   async function toggleFavorite() {
     if (!book) return;
-    await favorites.toggle(book.id);
+    await bookViewActions.toggleFavorite(book.id);
   }
 
   async function addTag() {
@@ -159,11 +133,11 @@
     if (!name) return;
     addingTag = true;
     try {
-      const tags = await api.addBookTag(book.id, name);
-      book = { ...book, tags };
-      tagInput = "";
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to add tag");
+      const tags = await bookViewActions.addTag(book.id, name);
+      if (tags) {
+        book = { ...book, tags };
+        tagInput = "";
+      }
     } finally {
       addingTag = false;
     }
@@ -172,28 +146,18 @@
   async function removeTag(name: string) {
     if (!book) return;
     const remaining = (book.tags ?? []).filter((t) => t !== name);
-    try {
-      const tags = await api.setBookTags(book.id, remaining);
-      book = { ...book, tags };
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to remove tag");
-    }
+    const tags = await bookViewActions.removeTag(book.id, remaining);
+    if (tags) book = { ...book, tags };
   }
 
   function filterByTag(name: string) {
-    library.setTag(name);
-    router.navigate("/");
+    bookViewActions.filterByTag(name);
   }
 
   async function setRating(value: number) {
     if (!book) return;
-    const next = book.userRating === value ? 0 : value;
-    try {
-      const rating = await api.setRating(book.id, next);
-      book = { ...book, userRating: rating.rating };
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to save rating");
-    }
+    const rating = await bookViewActions.setRating(book.id, book.userRating ?? 0, value);
+    if (rating !== null) book = { ...book, userRating: rating };
   }
 
   async function createShare() {
@@ -201,63 +165,21 @@
     shareBusy = true;
     shareUrl = "";
     try {
-      const link = await api.createShareLink(book.id, 168);
-      shareUrl = link.url;
-      try {
-        await navigator.clipboard.writeText(link.url);
-        toast.success(i18n.t("book.shareCopied"));
-      } catch {
-        toast.success(i18n.t("book.shareCreated"));
-      }
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : i18n.t("book.shareFailed"));
+      shareUrl = (await bookViewActions.createShare(book.id)) ?? "";
     } finally {
       shareBusy = false;
     }
   }
 
   async function copyShareUrl() {
-    if (!shareUrl) return;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success(i18n.t("book.shareCopied"));
-    } catch {
-      toast.info(i18n.t("book.shareCopyManual"));
-    }
-  }
-
-  function hasCitation(b: Book): boolean {
-    return Boolean(b.doi || b.arxivId || b.pubmedId || b.journal || b.publishedYear);
-  }
-
-  function citationVolumeLine(b: Book): string {
-    const parts: string[] = [];
-    if (b.volume) parts.push(`${i18n.t("book.volume")} ${b.volume}`);
-    if (b.issue) parts.push(`${i18n.t("book.issue")} ${b.issue}`);
-    if (b.pages) parts.push(`${i18n.t("book.pages")} ${b.pages}`);
-    return parts.join(", ");
-  }
-
-  async function fetchBibTeX(): Promise<string | null> {
-    if (!book) return null;
-    try {
-      return await api.getBibTeX(book.id);
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : i18n.t("book.bibtexFailed"));
-      return null;
-    }
+    await bookViewActions.copyShareUrl(shareUrl);
   }
 
   async function copyBibTeX() {
     if (!book || bibtexBusy) return;
     bibtexBusy = true;
     try {
-      const text = await fetchBibTeX();
-      if (!text) return;
-      await navigator.clipboard.writeText(text);
-      toast.success(i18n.t("book.bibtexCopied"));
-    } catch {
-      toast.error(i18n.t("book.bibtexFailed"));
+      await bookViewActions.copyBibTeX(book.id);
     } finally {
       bibtexBusy = false;
     }
@@ -267,15 +189,7 @@
     if (!book || bibtexBusy) return;
     bibtexBusy = true;
     try {
-      const text = await fetchBibTeX();
-      if (!text) return;
-      const blob = new Blob([text], { type: "application/x-bibtex" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${book.title.replace(/[^\w.-]+/g, "_").slice(0, 80) || "citation"}.bib`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await bookViewActions.downloadBibTeX(book);
     } finally {
       bibtexBusy = false;
     }
@@ -285,33 +199,7 @@
     if (!book || isAudioFormat(book.format)) return;
     offlineBusy = true;
     try {
-      if (offlineStatus.complete) {
-        await bookOfflineCache.clear(book.id);
-        await api.removeOffline([book.id]);
-        toast.info(i18n.t("book.offlineCleared"));
-      } else {
-        await api.addOffline([book.id]);
-        const url = api.fileUrl(book.id);
-        if (isComicFormat(book.format)) {
-          const manifest = await api.getComicManifest(book.id);
-          bookOfflineCache.startDownload(
-            book.id,
-            url,
-            book.fileSize,
-            book.modifiedAt,
-            "application/octet-stream",
-            {
-              total: manifest.total,
-              pageUrl: (page) => api.comicPageUrl(book!.id, page),
-            },
-          );
-        } else {
-          bookOfflineCache.startDownload(book.id, url, book.fileSize, book.modifiedAt);
-        }
-        toast.success(i18n.t("book.offlineStarted"));
-      }
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : i18n.t("book.offlineFailed"));
+      await bookViewActions.toggleOffline(book, offlineStatus.complete);
     } finally {
       offlineBusy = false;
     }
@@ -354,129 +242,43 @@
       danger: true,
     });
     if (!ok) return;
-    try {
-      await api.deleteBook(book.id);
-      toast.success(i18n.t("book.deleted"));
-      void library.refresh();
-      router.navigate("/");
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : i18n.t("book.deleteFailed"));
-    }
+    await bookViewActions.deleteBook(book);
   }
 
   async function convertBook(target: "epub" | "pdf") {
     if (!book) return;
     closeMenu();
-    try {
-      const res = await toast.promise(() => api.convertBook(book!.id, target), {
-        loading: `Converting to ${target}…`,
-        success: (r) => r.message || `Converted to ${target}`,
-        error: (e) => (e instanceof ApiError ? e.message : "Conversion failed"),
-      });
-      if (res.bookId) {
-        void library.refresh();
-        router.navigate(`/book/${res.bookId}`);
-      }
-    } catch {
-      // toast.promise already surfaced the error
-    }
+    await bookViewActions.convertBook(book, target);
   }
 
   const menuItems = $derived<MenuItem[]>(
     book
-      ? [
-          ...(can("edit_metadata")
-            ? [
-                {
-                  id: "edit",
-                  label: i18n.t("book.editMetadata"),
-                  icon: Pencil,
-                  onclick: () => openEditor("edit"),
-                },
-                {
-                  id: "identify",
-                  label: i18n.t("book.identify"),
-                  icon: ScanSearch,
-                  onclick: () => openEditor("identify"),
-                },
-                ...(isMobiFormat(book.format) || book.format === "pdf"
-                  ? [
-                      {
-                        id: "convert-epub",
-                        label: i18n.t("book.convertEpub"),
-                        icon: FileOutput,
-                        onclick: () => void convertBook("epub"),
-                      },
-                    ]
-                  : []),
-              ]
-            : []),
-          ...(hasCitation(book)
-            ? [
-                {
-                  id: "copy-bibtex",
-                  label: i18n.t("book.copyBibtex"),
-                  icon: Copy,
-                  onclick: () => {
-                    closeMenu();
-                    void copyBibTeX();
-                  },
-                },
-                {
-                  id: "download-bibtex",
-                  label: i18n.t("book.downloadBibtex"),
-                  icon: FileText,
-                  onclick: () => {
-                    closeMenu();
-                    void downloadBibTeX();
-                  },
-                },
-              ]
-            : []),
-          {
-            id: "favorite",
-            label: isFavorite ? i18n.t("book.removeFavorite") : i18n.t("book.addFavorite"),
-            icon: Star,
-            active: isFavorite,
-            onclick: () => {
-              closeMenu();
-              void toggleFavorite();
-            },
+      ? bookViewActions.buildMenuItems({
+          book,
+          isFavorite,
+          onEdit: () => openEditor("edit"),
+          onIdentify: () => openEditor("identify"),
+          onConvertEpub: () => void convertBook("epub"),
+          onCopyBibtex: () => {
+            closeMenu();
+            void copyBibTeX();
           },
-          ...(can("delete_books")
-            ? [
-                {
-                  id: "delete",
-                  label: i18n.t("book.delete"),
-                  icon: Trash2,
-                  danger: true,
-                  separator: true,
-                  onclick: () => void deleteBook(),
-                },
-              ]
-            : []),
-        ]
+          onDownloadBibtex: () => {
+            closeMenu();
+            void downloadBibTeX();
+          },
+          onToggleFavorite: () => {
+            closeMenu();
+            void toggleFavorite();
+          },
+          onDelete: () => void deleteBook(),
+        })
       : [],
   );
 
   function resumeLabel(): string | null {
-    if (!book || !progress || progress.percent <= 0) return null;
-    if (isAudioFormat(book.format)) {
-      const loc = parseAudioLocation(progress.location);
-      if (loc.seconds <= 0 && loc.trackIndex <= 0) return null;
-      const m = Math.floor(loc.seconds / 60);
-      const time = `${m}:${String(Math.floor(loc.seconds % 60)).padStart(2, "0")}`;
-      if (loc.trackIndex > 0) {
-        return i18n.t("book.resumeTrackAt", { track: String(loc.trackIndex + 1), time });
-      }
-      return i18n.t("book.resumeAt", { time });
-    }
-    if (book.format === "pdf") {
-      const page = Number(progress.location) || 0;
-      if (page > 1) return i18n.t("book.resumePage", { page });
-      return null;
-    }
-    return null;
+    if (!book) return null;
+    return bookViewActions.resumeLabel(book, progress);
   }
 </script>
 
@@ -547,108 +349,27 @@
           <p class="mt-3 text-sm text-primary">{resumeLabel()}</p>
         {/if}
 
-        <div class="book-actions mt-6 flex flex-wrap gap-2 sm:gap-3">
-          <Button
-            class="min-h-11 flex-1 sm:flex-none"
-            onclick={() => router.navigate(`/read/${book?.id}`)}
-          >
-            {#if isAudioFormat(book.format)}
-              <Headphones size={16} /> {i18n.t("book.listen")}
-            {:else if resumeLabel()}
-              <BookOpen size={16} /> {i18n.t("book.resume")}
-            {:else}
-              <BookOpen size={16} /> {i18n.t("book.read")}
-            {/if}
-          </Button>
-          <Button variant="ghost" class="min-h-11 ring-1 ring-border" onclick={toggleFavorite}>
-            <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
-            {isFavorite ? i18n.t("book.favorited") : i18n.t("book.favorite")}
-          </Button>
-          <a
-            class="btn btn-ghost min-h-11 ring-1 ring-border"
-            href={api.downloadUrl(book.id)}
-            download
-          >
-            <Download size={16} />
-            {i18n.t("book.download")}
-          </a>
-          {#if !isAudioFormat(book.format)}
-            <Button
-              variant="ghost"
-              class="min-h-11 ring-1 ring-border"
-              loading={offlineBusy || offlineStatus.downloading}
-              onclick={() => void toggleOffline()}
-            >
-              <CloudOff size={16} />
-              {#if offlineStatus.complete}
-                {i18n.t("book.offlineReady")}
-              {:else if offlineStatus.downloading}
-                {i18n.t("book.offlineCaching", {
-                  pct: String(
-                    Math.round(
-                      (offlineStatus.cachedBytes / Math.max(offlineStatus.totalBytes, 1)) * 100,
-                    ),
-                  ),
-                })}
-              {:else}
-                {i18n.t("book.saveOffline")}
-              {/if}
-            </Button>
-          {/if}
-          <Button
-            variant="ghost"
-            class="min-h-11 ring-1 ring-border"
-            loading={shareBusy}
-            onclick={() => void createShare()}
-          >
-            <Link2 size={16} />
-            {i18n.t("book.share")}
-          </Button>
-          {#if menuItems.length > 0}
-            <button
-              type="button"
-              class="btn btn-ghost min-h-11 min-w-11 ring-1 ring-border"
-              aria-label={i18n.t("book.moreActions")}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onclick={openMenuFromButton}
-            >
-              <MoreVertical size={18} />
-            </button>
-          {/if}
-        </div>
+        <BookActionBar
+          {book}
+          {isFavorite}
+          resumeText={resumeLabel()}
+          {shareBusy}
+          {offlineBusy}
+          {offlineStatus}
+          {menuOpen}
+          hasMenu={menuItems.length > 0}
+          ontogglefavorite={() => void toggleFavorite()}
+          oncreateshare={() => void createShare()}
+          ontoggleoffline={() => void toggleOffline()}
+          onopenmenu={openMenuFromButton}
+        />
 
         {#if shareUrl}
-          <div
-            class="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2"
-          >
-            <input
-              class="field-input min-w-0 flex-1 text-xs"
-              type="text"
-              readonly
-              value={shareUrl}
-              onclick={(e) => {
-                const el = e.currentTarget;
-                if (el instanceof HTMLInputElement) el.select();
-              }}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              class="ring-1 ring-border"
-              onclick={() => void copyShareUrl()}
-            >
-              {i18n.t("book.copyLink")}
-            </Button>
-            <button
-              type="button"
-              class="btn btn-ghost text-xs"
-              aria-label={i18n.t("book.dismissShare")}
-              onclick={() => (shareUrl = "")}
-            >
-              <X size={14} />
-            </button>
-          </div>
+          <BookShareLink
+            url={shareUrl}
+            oncopy={() => void copyShareUrl()}
+            ondismiss={() => (shareUrl = "")}
+          />
         {/if}
 
         <div
@@ -676,168 +397,34 @@
           {/each}
         </div>
 
-        <div class="mt-4">
-          <p class="mb-1.5 flex items-center gap-1.5 text-sm text-muted">
-            <Tag size={14} />
-            {i18n.t("book.tags")}
-          </p>
-          <div class="flex flex-wrap items-center gap-2">
-            {#each book.tags ?? [] as tagName (tagName)}
-              <span
-                class="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-fg"
-              >
-                <button type="button" class="hover:underline" onclick={() => filterByTag(tagName)}>
-                  {tagName}
-                </button>
-                <button
-                  type="button"
-                  class="text-subtle hover:text-danger"
-                  aria-label={i18n.t("book.removeTag", { name: tagName })}
-                  onclick={() => void removeTag(tagName)}
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            {/each}
-            <form
-              class="inline-flex items-center gap-1"
-              onsubmit={(e) => {
-                e.preventDefault();
-                void addTag();
-              }}
-            >
-              <input
-                type="text"
-                class="field-input h-8 w-28 text-xs"
-                placeholder={i18n.t("book.addTagPlaceholder")}
-                bind:value={tagInput}
-                disabled={addingTag}
-              />
-              <button
-                type="submit"
-                class="btn btn-ghost min-h-8 px-2 text-xs ring-1 ring-border"
-                disabled={addingTag || !tagInput.trim()}
-              >
-                <Plus size={14} />
-              </button>
-            </form>
-          </div>
-        </div>
+        <BookTagsSection
+          tags={book.tags ?? []}
+          bind:tagInput
+          {addingTag}
+          onfilter={filterByTag}
+          onremove={(name) => void removeTag(name)}
+          onadd={() => void addTag()}
+        />
 
-        {#if collections.shelfItems().filter((c) => c.kind === "manual").length > 0}
-          <div class="mt-4">
-            <p class="text-sm text-muted">{i18n.t("book.addToShelf")}</p>
-            <div class="mt-1 flex flex-wrap gap-2">
-              {#each collections.shelfItems().filter((c) => c.kind === "manual") as c (c.id)}
-                <button
-                  type="button"
-                  class="btn btn-ghost min-h-10 ring-1 ring-border text-xs"
-                  onclick={() => addToCollection(c.id)}
-                >
-                  <Plus size={14} />
-                  {c.name}
-                </button>
-              {/each}
-            </div>
-          </div>
-        {/if}
+        <BookCollectionsQuickAdd
+          label={i18n.t("book.addToShelf")}
+          items={collections.shelfItems().filter((c) => c.kind === "manual")}
+          onadd={addToCollection}
+        />
 
-        {#if collections.readingItems().length > 0}
-          <div class="mt-4">
-            <p class="text-sm text-muted">{i18n.t("book.addToReadingList")}</p>
-            <div class="mt-1 flex flex-wrap gap-2">
-              {#each collections.readingItems() as c (c.id)}
-                <button
-                  type="button"
-                  class="btn btn-ghost min-h-10 ring-1 ring-border text-xs"
-                  onclick={() => addToCollection(c.id)}
-                >
-                  <Plus size={14} />
-                  {c.name}
-                </button>
-              {/each}
-            </div>
-          </div>
-        {/if}
+        <BookCollectionsQuickAdd
+          label={i18n.t("book.addToReadingList")}
+          items={collections.readingItems()}
+          onadd={addToCollection}
+        />
 
-        {#if hasCitation(book)}
-          <div class="mt-6 space-y-2">
-            <p class="text-sm font-medium text-fg">{i18n.t("book.citation")}</p>
-            {#if book.journal}
-              <p class="text-sm text-muted">
-                <span class="text-subtle">{i18n.t("book.journal")}:</span>
-                {book.journal}
-              </p>
-            {/if}
-            {#if book.publishedYear}
-              <p class="text-sm text-muted">
-                <span class="text-subtle">{i18n.t("book.year")}:</span>
-                {book.publishedYear}
-              </p>
-            {/if}
-            {#if citationVolumeLine(book)}
-              <p class="text-sm text-muted">{citationVolumeLine(book)}</p>
-            {/if}
-            {#if book.doi}
-              <p class="text-sm text-muted">
-                <span class="text-subtle">{i18n.t("book.doi")}:</span>
-                <a
-                  class="text-primary underline-offset-2 hover:underline"
-                  href={`https://doi.org/${book.doi}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {book.doi}
-                </a>
-              </p>
-            {/if}
-            {#if book.arxivId}
-              <p class="text-sm text-muted">
-                <span class="text-subtle">{i18n.t("book.arxiv")}:</span>
-                <a
-                  class="text-primary underline-offset-2 hover:underline"
-                  href={`https://arxiv.org/abs/${book.arxivId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {book.arxivId}
-                </a>
-              </p>
-            {/if}
-            {#if book.pubmedId}
-              <p class="text-sm text-muted">
-                <span class="text-subtle">{i18n.t("book.pubmed")}:</span>
-                <a
-                  class="text-primary underline-offset-2 hover:underline"
-                  href={`https://pubmed.ncbi.nlm.nih.gov/${book.pubmedId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {book.pubmedId}
-                </a>
-              </p>
-            {/if}
-            <div class="flex flex-wrap gap-2 pt-1">
-              <Button
-                variant="ghost"
-                class="min-h-10 ring-1 ring-border text-xs"
-                loading={bibtexBusy}
-                onclick={() => void copyBibTeX()}
-              >
-                <Copy size={14} />
-                {i18n.t("book.copyBibtex")}
-              </Button>
-              <Button
-                variant="ghost"
-                class="min-h-10 ring-1 ring-border text-xs"
-                loading={bibtexBusy}
-                onclick={() => void downloadBibTeX()}
-              >
-                <FileText size={14} />
-                {i18n.t("book.downloadBibtex")}
-              </Button>
-            </div>
-          </div>
+        {#if bookViewActions.hasCitation(book)}
+          <BookCitationSection
+            {book}
+            {bibtexBusy}
+            oncopybibtex={() => void copyBibTeX()}
+            ondownloadbibtex={() => void downloadBibTeX()}
+          />
         {/if}
 
         {#if book.description}
@@ -960,26 +547,5 @@
         transparent 78%,
         color-mix(in oklch, var(--color-bg) 45%, transparent)
       );
-  }
-
-  .book-actions {
-    position: sticky;
-    bottom: calc(var(--bottom-chrome) + 0.5rem);
-    z-index: 5;
-    margin-inline: -0.25rem;
-    padding: 0.5rem 0.25rem;
-    border-radius: 0.75rem;
-    background: color-mix(in oklch, var(--color-bg) 88%, transparent);
-    backdrop-filter: blur(10px);
-  }
-
-  @media (min-width: 640px) {
-    .book-actions {
-      position: static;
-      margin-inline: 0;
-      padding: 0;
-      background: transparent;
-      backdrop-filter: none;
-    }
   }
 </style>

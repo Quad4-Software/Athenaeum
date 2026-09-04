@@ -1,3 +1,5 @@
+import { apiOp } from "./generated/paths";
+
 export type AuthRedirectReason = "required" | "session_expired" | "logged_out";
 
 let unauthorizedHandler: ((reason: AuthRedirectReason) => void) | null = null;
@@ -19,12 +21,12 @@ export function notifyForbidden() {
   forbiddenHandler?.();
 }
 
-export const AUTH_SILENT_401 = new Set([
-  "/api/auth/me",
-  "/api/auth/setup",
-  "/api/auth/login",
-  "/api/auth/refresh",
-  "/api/auth/logout",
+export const AUTH_SILENT_401 = new Set<string>([
+  apiOp("GET__api_auth_me").path,
+  apiOp("GET__api_auth_setup").path,
+  apiOp("POST__api_auth_login").path,
+  apiOp("POST__api_auth_refresh").path,
+  apiOp("POST__api_auth_logout").path,
 ]);
 
 export const AUTH_SILENT_403 = new Set<string>([]);

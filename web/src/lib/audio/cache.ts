@@ -1,4 +1,6 @@
-const DB_NAME = "athenaeum-audio";
+import { IDB_AUDIO } from "$lib/brand/storage";
+
+const DB_NAME = IDB_AUDIO;
 const DB_VERSION = 2;
 const META_STORE = "meta";
 const CHUNK_STORE = "chunks";

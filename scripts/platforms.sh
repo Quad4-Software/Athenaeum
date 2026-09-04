@@ -27,6 +27,46 @@ netbsd amd64 - amd64
 EOF
 }
 
+
+# platforms_selfcheck_list prints self-check matrix rows:
+# name goos goarch goarm suffix runner qemu
+# qemu is "-" when unused (native runner).
+platforms_selfcheck_list() {
+  cat <<'EOF'
+linux-amd64 linux amd64 - amd64 ubuntu-latest -
+linux-arm64 linux arm64 - arm64 ubuntu-latest qemu-aarch64
+linux-armv7 linux arm 7 armv7 ubuntu-latest qemu-arm
+linux-armv6 linux arm 6 armv6 ubuntu-latest qemu-arm
+linux-riscv64 linux riscv64 - riscv64 ubuntu-latest qemu-riscv64
+darwin-arm64 darwin arm64 - arm64 macos-latest -
+windows-amd64 windows amd64 - amd64 windows-latest -
+EOF
+}
+
+# platforms_selfcheck_include prints JSON for strategy.matrix.include.
+platforms_selfcheck_include() {
+  local first=1 name goos goarch goarm suffix runner qemu goarm_json qemu_json
+  printf '['
+  while read -r name goos goarch goarm suffix runner qemu; do
+    [[ -z "${name}" || "${name}" =~ ^# ]] && continue
+    goarm_json="${goarm}"
+    if [[ "${goarm}" == "-" ]]; then
+      goarm_json=""
+    fi
+    qemu_json="${qemu}"
+    if [[ "${qemu}" == "-" ]]; then
+      qemu_json=""
+    fi
+    if [[ "${first}" -eq 0 ]]; then
+      printf ','
+    fi
+    first=0
+    printf '{"name":"%s","goos":"%s","goarch":"%s","goarm":"%s","suffix":"%s","runner":"%s","qemu":"%s"}' \
+      "${name}" "${goos}" "${goarch}" "${goarm_json}" "${suffix}" "${runner}" "${qemu_json}"
+  done < <(platforms_selfcheck_list)
+  printf ']\n'
+}
+
 # platforms_gha_include prints a compact JSON array for GitHub Actions
 # strategy.matrix.include. goarm is "" when unused (matches prior YAML).
 platforms_gha_include() {
@@ -142,11 +182,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     gha-include)
       platforms_gha_include
       ;;
+    selfcheck-include)
+      platforms_selfcheck_include
+      ;;
     list)
       platforms_list
       ;;
     *)
-      echo "usage: $0 {gha-include|list}" >&2
+      echo "usage: $0 {gha-include|selfcheck-include|list}" >&2
       exit 1
       ;;
   esac

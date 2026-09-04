@@ -30,6 +30,10 @@ permissions:
 env:
   GOTOOLCHAIN: local
   REGISTRY: ghcr.io
+  NODE_VERSION: "22"
+  PNPM_VERSION: "11.17.0"
+  DOCKER_PLATFORMS: linux/amd64,linux/arm64
+  ARTIFACT_RETENTION_DAYS: "7"
 
 jobs:
   prepare:
@@ -112,13 +116,13 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
-          version: 11.17.0
+          version: ${{ env.PNPM_VERSION }}
           run_install: false
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
 
@@ -161,7 +165,7 @@ jobs:
           name: athenaeum-nightly-${{ matrix.name }}
           path: dist/*
           if-no-files-found: error
-          retention-days: 7
+          retention-days: ${{ fromJSON(env.ARTIFACT_RETENTION_DAYS) }}
 
   container:
     name: Container image
@@ -229,7 +233,7 @@ jobs:
             CREATED=${{ steps.buildmeta.outputs.created }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ env.DOCKER_PLATFORMS }}
 
   release:
     name: GitHub Nightly Release

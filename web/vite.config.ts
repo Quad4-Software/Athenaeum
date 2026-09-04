@@ -12,7 +12,7 @@ import {
   KOKORO_MODEL_ID,
   KOKORO_VOICE_HF_PREFIX,
   KOKORO_VOICE_LOCAL_PREFIX,
-} from "./src/lib/narrator/kokoro-paths.ts";
+} from "./src/lib/narrator/kokoro-paths.js";
 
 const require = createRequire(import.meta.url);
 const rootDir = import.meta.dirname;

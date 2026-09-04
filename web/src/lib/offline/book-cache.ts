@@ -1,4 +1,6 @@
-const DB_NAME = "athenaeum-books";
+import { IDB_BOOKS } from "$lib/brand/storage";
+
+const DB_NAME = IDB_BOOKS;
 const DB_VERSION = 1;
 const FILE_STORE = "files";
 const PAGE_STORE = "pages";

@@ -18,7 +18,7 @@ import (
 
 const (
 	webhookMaxAttempts = 3
-	webhookHTTPTimeout = 10 * time.Second
+	webhookHTTPTimeout = httpClientTimeout
 )
 
 func (s *Server) emitWebhook(event string, data map[string]any) {

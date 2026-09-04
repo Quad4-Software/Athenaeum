@@ -1,5 +1,5 @@
 import type { Rendition } from "epubjs";
-import { storageKey } from "$lib/brand/storage";
+import { IDB_FONTS, storageKey } from "$lib/brand/storage";
 
 import sourceSerifUrl from "@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2?url";
 import literataUrl from "@fontsource-variable/literata/files/literata-latin-wght-normal.woff2?url";
@@ -18,7 +18,7 @@ export const EPUB_FONT_KEY = storageKey("epub-font-family");
 const CUSTOM_FONT_THEME = "athenaeum-custom-font";
 const VENDORED_FONT_THEME = "athenaeum-vendored-font";
 const CUSTOM_FONT_FAMILY = "Athenaeum Custom";
-const DB_NAME = "athenaeum-fonts";
+const DB_NAME = IDB_FONTS;
 const DB_VERSION = 1;
 const STORE = "epub";
 const FONT_SAMPLE = "Aa The quick brown fox";

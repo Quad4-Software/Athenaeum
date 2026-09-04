@@ -18,6 +18,7 @@ import type {
   MetadataProvider,
 } from "$lib/api/types";
 import { isAudioFormat } from "$lib/api/types";
+import { opURL } from "$lib/api/op";
 import { DEMO_CATALOG, allDemoBooks } from "./catalog";
 import { demoCoverDataUrl } from "./covers";
 
@@ -249,16 +250,16 @@ export async function handleDemoRequest(
   const method = (init?.method ?? "GET").toUpperCase();
   const urlPath = path.split("?")[0] ?? path;
 
-  if (urlPath === "/api/health" && method === "GET") {
+  if (urlPath === opURL("GET__api_health") && method === "GET") {
     const body: HealthResponse = { status: "ok", version: "demo", webVersion: "demo" };
     return jsonResponse(body);
   }
 
-  if (urlPath === "/api/auth/csrf" && method === "GET") {
+  if (urlPath === opURL("GET__api_auth_csrf") && method === "GET") {
     return jsonResponse({ ok: true });
   }
 
-  if (urlPath === "/api/auth/setup" && method === "GET") {
+  if (urlPath === opURL("GET__api_auth_setup") && method === "GET") {
     return jsonResponse({
       needed: false,
       authEnabled: false,
@@ -274,7 +275,7 @@ export async function handleDemoRequest(
     });
   }
 
-  if (urlPath === "/api/auth/methods" && method === "GET") {
+  if (urlPath === opURL("GET__api_auth_methods") && method === "GET") {
     return jsonResponse({
       authEnabled: false,
       loginLocal: false,
@@ -292,11 +293,11 @@ export async function handleDemoRequest(
     });
   }
 
-  if (urlPath === "/api/i18n/locales" && method === "GET") {
+  if (urlPath === opURL("GET__api_i18n_locales") && method === "GET") {
     return jsonResponse({ locales: [] });
   }
 
-  if (urlPath === "/api/books" && method === "GET") {
+  if (urlPath === opURL("GET__api_books") && method === "GET") {
     return jsonResponse(listFiltered(parseQuery(path)));
   }
 
@@ -439,15 +440,15 @@ export async function handleDemoRequest(
     }
   }
 
-  if (urlPath === "/api/library/stats" && method === "GET") return jsonResponse(stats());
+  if (urlPath === opURL("GET__api_library_stats") && method === "GET") return jsonResponse(stats());
 
-  if (urlPath === "/api/library/scan/status" && method === "GET") {
+  if (urlPath === opURL("GET__api_library_scan_status") && method === "GET") {
     const status: ScanStatus = { scanning: false, indexed: books.length, skipped: 0 };
     return jsonResponse(status);
   }
 
   if (
-    (urlPath === "/api/library/scan" || urlPath.match(/^\/api\/libraries\/\d+\/scan$/)) &&
+    (urlPath === opURL("POST__api_library_scan") || urlPath.match(/^\/api\/libraries\/\d+\/scan$/)) &&
     method === "POST"
   ) {
     return jsonResponse({ started: false });
@@ -464,7 +465,7 @@ export async function handleDemoRequest(
     });
   }
 
-  if (urlPath === "/api/series" && method === "GET") {
+  if (urlPath === opURL("GET__api_series") && method === "GET") {
     const map = new Map<string, number>();
     for (const b of books) {
       if (!b.series) continue;
@@ -475,7 +476,7 @@ export async function handleDemoRequest(
     return jsonResponse(out);
   }
 
-  if (urlPath === "/api/authors" && method === "GET") {
+  if (urlPath === opURL("GET__api_authors") && method === "GET") {
     const map = new Map<string, number>();
     for (const b of books) map.set(b.author, (map.get(b.author) ?? 0) + 1);
     const out: AuthorInfo[] = [...map.entries()].map(([name, count]) => ({ name, count }));
@@ -483,7 +484,7 @@ export async function handleDemoRequest(
     return jsonResponse(out);
   }
 
-  if (urlPath === "/api/libraries" && method === "GET") {
+  if (urlPath === opURL("GET__api_libraries") && method === "GET") {
     const libs: LibraryMount[] = [
       {
         id: 1,
@@ -498,9 +499,9 @@ export async function handleDemoRequest(
     return jsonResponse(libs);
   }
 
-  if (urlPath === "/api/collections" && method === "GET") return jsonResponse(collections());
+  if (urlPath === opURL("GET__api_collections") && method === "GET") return jsonResponse(collections());
 
-  if (urlPath === "/api/favorites" && method === "GET") {
+  if (urlPath === opURL("GET__api_favorites") && method === "GET") {
     return jsonResponse({ ids: [...favorites] });
   }
 
@@ -522,7 +523,7 @@ export async function handleDemoRequest(
     return jsonResponse(providers);
   }
 
-  if (urlPath === "/api/docs" && method === "GET") {
+  if (urlPath === opURL("GET__api_docs") && method === "GET") {
     return jsonResponse({ title: "Athenaeum Demo API", baseUrl: "/api", groups: [] });
   }
 
