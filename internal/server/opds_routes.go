@@ -22,6 +22,7 @@ func (s *Server) registerOPDSRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /opds/series/{name}", s.handleOPDSSeriesBooks)
 	mux.HandleFunc("GET /opds/comics", s.handleOPDSComics)
 	mux.HandleFunc("GET /opds/kindle", s.handleOPDSKindle)
+	mux.HandleFunc("GET /opds/papers", s.handleOPDSPapers)
 	mux.HandleFunc("GET /opds/v2/", s.handleOPDS2Root)
 	mux.HandleFunc("GET /opds/v2/recent", s.handleOPDS2Recent)
 }
@@ -249,6 +250,26 @@ func (s *Server) handleOPDSKindle(w http.ResponseWriter, r *http.Request) {
 	progress := s.opdsProgressMap(r, page.Items)
 	if err := s.opdsWriter(r).WriteAcquisitionFeed(w, page.Items, "/opds/kindle", progress); err != nil {
 		s.log.Error("opds kindle", "err", err)
+	}
+}
+
+func (s *Server) handleOPDSPapers(w http.ResponseWriter, r *http.Request) {
+	query := models.BookQuery{Format: models.FormatPapers, Sort: "recent", Limit: 50}
+	var err error
+	query, err = s.opdsBookQuery(r, query)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	page, err := s.store.ListBooks(r.Context(), query)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	opds.SetXMLHeaders(w)
+	progress := s.opdsProgressMap(r, page.Items)
+	if err := s.opdsWriter(r).WriteAcquisitionFeed(w, page.Items, "/opds/papers", progress); err != nil {
+		s.log.Error("opds papers", "err", err)
 	}
 }
 

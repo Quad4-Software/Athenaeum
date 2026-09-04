@@ -16,6 +16,7 @@
     BookOpen,
     PanelsTopLeft,
     Tablet,
+    FileText,
   } from "@lucide/svelte";
   import { router, link } from "$lib/router.svelte";
   import { library } from "$lib/stores/library.svelte";
@@ -42,6 +43,7 @@
     { key: "nav.allBooks", value: "", icon: Library },
     { key: "nav.epub", value: "epub", icon: BookText },
     { key: "nav.pdf", value: "pdf", icon: Files },
+    { key: "nav.papers", value: "papers", icon: FileText },
     { key: "nav.comics", value: "comic", icon: PanelsTopLeft },
     { key: "nav.kindle", value: "kindle", icon: Tablet },
     { key: "nav.audiobooks", value: "audio", icon: Headphones },

@@ -24,7 +24,7 @@ import {
 
 import styles from './roadmap.module.css';
 
-type Status = 'planned';
+type Status = 'planned' | 'shipped';
 
 type RoadmapItem = {
   id: string;
@@ -102,7 +102,7 @@ const libraryItems: RoadmapItem[] = [
     detail:
       'DOI, arXiv, and PubMed metadata lookup. Citation fields (authors, journal, year, abstract). BibTeX import and export.',
     Icon: FileText,
-    status: 'planned',
+    status: 'shipped',
   },
   {
     id: 'zim',
@@ -174,7 +174,7 @@ const platformItems: RoadmapItem[] = [
 function StatusChip({status}: {status: Status}) {
   return (
     <span className={styles.status} data-status={status}>
-      {status === 'planned' ? 'Planned' : status}
+      {status === 'shipped' ? 'Shipped' : 'Planned'}
     </span>
   );
 }

@@ -100,6 +100,14 @@ func (w FeedWriter) WriteRootCatalog(out io.Writer) error {
 				},
 			},
 			{
+				ID:      w.BaseURL + "/opds/papers",
+				Title:   "Research papers",
+				Updated: now,
+				Links: []link{
+					{Rel: "subsection", Href: w.BaseURL + "/opds/papers", Type: "application/atom+xml;profile=opds-catalog;kind=acquisition"},
+				},
+			},
+			{
 				Title:   "Search",
 				Updated: now,
 				Links: []link{
@@ -227,6 +235,20 @@ func bookEntry(base string, b models.Book, p models.Progress) entry {
 	}
 	if b.Author != "" {
 		e.Author = &author{Name: b.Author}
+	}
+	if b.DOI != "" {
+		e.Links = append(e.Links, link{
+			Rel:  "related",
+			Href: "https://doi.org/" + b.DOI,
+			Type: "text/html",
+		})
+	}
+	if b.ArxivID != "" {
+		e.Links = append(e.Links, link{
+			Rel:  "related",
+			Href: "https://arxiv.org/abs/" + b.ArxivID,
+			Type: "text/html",
+		})
 	}
 	return e
 }

@@ -36,11 +36,22 @@
   let seriesIndex = $state("");
   let language = $state("");
   let description = $state("");
+  let doi = $state("");
+  let arxivId = $state("");
+  let pubmedId = $state("");
+  let journal = $state("");
+  let volume = $state("");
+  let issue = $state("");
+  let pages = $state("");
+  let publishedYear = $state("");
 
   let searchTitle = $state("");
   let searchAuthor = $state("");
   let searchISBN = $state("");
   let searchASIN = $state("");
+  let searchDOI = $state("");
+  let searchArxiv = $state("");
+  let searchPubmed = $state("");
   let providers = $state<MetadataProvider[]>([]);
   let selectedProviders = $state<string[]>([]);
   let matches = $state<MetadataMatch[]>([]);
@@ -68,10 +79,21 @@
     seriesIndex = b.seriesIndex != null && b.seriesIndex > 0 ? String(b.seriesIndex) : "";
     language = b.language ?? "";
     description = b.description ?? "";
+    doi = b.doi ?? "";
+    arxivId = b.arxivId ?? "";
+    pubmedId = b.pubmedId ?? "";
+    journal = b.journal ?? "";
+    volume = b.volume ?? "";
+    issue = b.issue ?? "";
+    pages = b.pages ?? "";
+    publishedYear = b.publishedYear != null && b.publishedYear > 0 ? String(b.publishedYear) : "";
     searchTitle = b.title;
     searchAuthor = b.author;
     searchISBN = "";
     searchASIN = "";
+    searchDOI = b.doi ?? "";
+    searchArxiv = b.arxivId ?? "";
+    searchPubmed = b.pubmedId ?? "";
     matches = [];
     matchCoverUrl = "";
   }
@@ -112,8 +134,16 @@
   }
 
   async function runSearch() {
-    if (!searchTitle.trim() && !searchAuthor.trim() && !searchISBN.trim() && !searchASIN.trim()) {
-      toast.error("Enter a title, author, ISBN, or ASIN to search");
+    if (
+      !searchTitle.trim() &&
+      !searchAuthor.trim() &&
+      !searchISBN.trim() &&
+      !searchASIN.trim() &&
+      !searchDOI.trim() &&
+      !searchArxiv.trim() &&
+      !searchPubmed.trim()
+    ) {
+      toast.error("Enter a title, author, ISBN, ASIN, DOI, arXiv ID, or PubMed ID to search");
       return;
     }
     if (selectedProviders.length === 0) {
@@ -128,6 +158,9 @@
         author: searchAuthor.trim(),
         isbn: searchISBN.trim(),
         asin: searchASIN.trim(),
+        doi: searchDOI.trim(),
+        arxivId: searchArxiv.trim(),
+        pubmedId: searchPubmed.trim(),
         providers: selectedProviders,
       });
       matches = res.matches;
@@ -150,6 +183,16 @@
     }
     if (match.language) language = match.language;
     if (match.description) description = match.description;
+    if (match.doi) doi = match.doi;
+    if (match.arxivId) arxivId = match.arxivId;
+    if (match.pubmedId) pubmedId = match.pubmedId;
+    if (match.journal) journal = match.journal;
+    if (match.volume) volume = match.volume;
+    if (match.issue) issue = match.issue;
+    if (match.pages) pages = match.pages;
+    if (match.publishedYear != null && match.publishedYear > 0) {
+      publishedYear = String(match.publishedYear);
+    }
     matchCoverUrl = match.coverUrl ?? "";
     toast.success(`Filled from ${providerLabel(match.source)}`);
   }
@@ -186,6 +229,7 @@
     saving = true;
     try {
       const idx = seriesIndex.trim() ? Number(seriesIndex) : 0;
+      const year = publishedYear.trim() ? Number(publishedYear) : 0;
       let updated = await api.updateBook(book.id, {
         title: title.trim(),
         author: author.trim(),
@@ -193,6 +237,14 @@
         seriesIndex: Number.isFinite(idx) ? idx : 0,
         language: language.trim(),
         description: description.trim(),
+        doi: doi.trim(),
+        arxivId: arxivId.trim(),
+        pubmedId: pubmedId.trim(),
+        journal: journal.trim(),
+        volume: volume.trim(),
+        issue: issue.trim(),
+        pages: pages.trim(),
+        publishedYear: Number.isFinite(year) ? year : 0,
       });
       if (applyCoverOnSave && matchCoverUrl) {
         updated = await api.coverFromUrl(book.id, matchCoverUrl);
@@ -281,6 +333,18 @@
             <span class="text-xs text-muted">ISBN</span>
             <input class="input mt-1 w-full" bind:value={searchISBN} placeholder="Optional" />
           </label>
+          <label class="block">
+            <span class="text-xs text-muted">DOI</span>
+            <input class="input mt-1 w-full" bind:value={searchDOI} placeholder="Optional" />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">arXiv ID</span>
+            <input class="input mt-1 w-full" bind:value={searchArxiv} placeholder="Optional" />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">PubMed ID</span>
+            <input class="input mt-1 w-full" bind:value={searchPubmed} placeholder="Optional" />
+          </label>
           {#if needsAsin}
             <label class="block sm:col-span-2">
               <span class="text-xs text-muted">ASIN (Audnexus / Audible)</span>
@@ -343,6 +407,18 @@
                     {/if}
                     {#if match.asin}
                       <span>ASIN {match.asin}</span>
+                    {/if}
+                    {#if match.doi}
+                      <span>DOI {match.doi}</span>
+                    {/if}
+                    {#if match.arxivId}
+                      <span>arXiv {match.arxivId}</span>
+                    {/if}
+                    {#if match.pubmedId}
+                      <span>PMID {match.pubmedId}</span>
+                    {/if}
+                    {#if match.journal}
+                      <span>{match.journal}</span>
                     {/if}
                   </p>
                   {#if match.description}
@@ -435,6 +511,38 @@
               min="0"
               bind:value={seriesIndex}
             />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">Journal</span>
+            <input class="input mt-1 w-full" bind:value={journal} />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">Year</span>
+            <input class="input mt-1 w-full" type="number" min="0" bind:value={publishedYear} />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">Volume</span>
+            <input class="input mt-1 w-full" bind:value={volume} />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">Issue</span>
+            <input class="input mt-1 w-full" bind:value={issue} />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">Pages</span>
+            <input class="input mt-1 w-full" bind:value={pages} />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">DOI</span>
+            <input class="input mt-1 w-full" bind:value={doi} />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">arXiv ID</span>
+            <input class="input mt-1 w-full" bind:value={arxivId} />
+          </label>
+          <label class="block">
+            <span class="text-xs text-muted">PubMed ID</span>
+            <input class="input mt-1 w-full" bind:value={pubmedId} />
           </label>
           <label class="block sm:col-span-2">
             <span class="text-xs text-muted">Description</span>

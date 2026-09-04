@@ -45,12 +45,18 @@ func SearchMetadata(ctx context.Context, q models.MetadataSearchQuery) []models.
 	author := strings.TrimSpace(q.Author)
 	isbn := strings.TrimSpace(q.ISBN)
 	asin := strings.TrimSpace(q.ASIN)
+	doi := NormalizeDOI(q.DOI)
+	arxivID := NormalizeArxivID(q.ArxivID)
+	pubmedID := NormalizePubmedID(q.PubmedID)
 
-	if title == "" && author == "" && isbn == "" && asin == "" {
+	if title == "" && author == "" && isbn == "" && asin == "" && doi == "" && arxivID == "" && pubmedID == "" {
 		return nil
 	}
 
-	in := MetadataSearchInput{Title: title, Author: author, ISBN: isbn, ASIN: asin}
+	in := MetadataSearchInput{
+		Title: title, Author: author, ISBN: isbn, ASIN: asin,
+		DOI: doi, ArxivID: arxivID, PubmedID: pubmedID,
+	}
 
 	var (
 		mu      sync.Mutex
@@ -382,12 +388,20 @@ func (s *metadataSearcher) audnexusBook(ctx context.Context, asin string) (model
 // MatchToBookUpdate converts an external match into editable book fields.
 func MatchToBookUpdate(m models.MetadataMatch) models.BookUpdate {
 	return models.BookUpdate{
-		Title:       strings.TrimSpace(m.Title),
-		Author:      strings.TrimSpace(m.Author),
-		Series:      CleanSeriesName(m.Series),
-		SeriesIndex: m.SeriesIndex,
-		Language:    strings.TrimSpace(m.Language),
-		Description: strings.TrimSpace(m.Description),
+		Title:         strings.TrimSpace(m.Title),
+		Author:        strings.TrimSpace(m.Author),
+		Series:        CleanSeriesName(m.Series),
+		SeriesIndex:   m.SeriesIndex,
+		Language:      strings.TrimSpace(m.Language),
+		Description:   strings.TrimSpace(m.Description),
+		DOI:           NormalizeDOI(m.DOI),
+		ArxivID:       NormalizeArxivID(m.ArxivID),
+		PubmedID:      NormalizePubmedID(m.PubmedID),
+		Journal:       strings.TrimSpace(m.Journal),
+		Volume:        strings.TrimSpace(m.Volume),
+		Issue:         strings.TrimSpace(m.Issue),
+		Pages:         strings.TrimSpace(m.Pages),
+		PublishedYear: m.PublishedYear,
 	}
 }
 
@@ -430,6 +444,18 @@ func scoreMetadataMatch(book models.Book, m models.MetadataMatch) float64 {
 	}
 	if m.CoverURL != "" {
 		score += 1
+	}
+	if book.DOI != "" && NormalizeDOI(m.DOI) == NormalizeDOI(book.DOI) {
+		score += 20
+	}
+	if book.ArxivID != "" && NormalizeArxivID(m.ArxivID) == NormalizeArxivID(book.ArxivID) {
+		score += 20
+	}
+	if book.PubmedID != "" && NormalizePubmedID(m.PubmedID) == NormalizePubmedID(book.PubmedID) {
+		score += 20
+	}
+	if m.DOI != "" || m.ArxivID != "" || m.PubmedID != "" {
+		score += 3
 	}
 	return score
 }

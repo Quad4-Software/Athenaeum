@@ -12,28 +12,51 @@ import (
 )
 
 type sidecarFields struct {
-	Title       string  `json:"title"`
-	Author      string  `json:"author"`
-	Series      string  `json:"series"`
-	SeriesIndex float64 `json:"seriesIndex"`
-	Description string  `json:"description"`
-	Language    string  `json:"language"`
-	ISBN        string  `json:"isbn"`
-	ASIN        string  `json:"asin"`
+	Title         string  `json:"title"`
+	Author        string  `json:"author"`
+	Series        string  `json:"series"`
+	SeriesIndex   float64 `json:"seriesIndex"`
+	Description   string  `json:"description"`
+	Language      string  `json:"language"`
+	ISBN          string  `json:"isbn"`
+	ASIN          string  `json:"asin"`
+	DOI           string  `json:"doi"`
+	ArxivID       string  `json:"arxivId"`
+	PubmedID      string  `json:"pubmedId"`
+	Journal       string  `json:"journal"`
+	Volume        string  `json:"volume"`
+	Issue         string  `json:"issue"`
+	Pages         string  `json:"pages"`
+	PublishedYear int     `json:"publishedYear"`
 }
 
-// sidecarMetadata reads metadata.json or a companion .opf next to a book file.
+const maxSidecarBytes = 4 << 20
+
+// sidecarMetadata reads metadata.json, companion .opf, or .bib next to a book file.
 func sidecarMetadata(filePath string) sidecarFields {
 	dir := filepath.Dir(filePath)
 	base := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
-	candidates := []string{
+	perFile := []string{
 		filepath.Join(dir, base+".json"),
 		filepath.Join(dir, base+".metadata.json"),
-		filepath.Join(dir, "metadata.json"),
 		filepath.Join(dir, base+".opf"),
-		filepath.Join(dir, "metadata.opf"),
+		filepath.Join(dir, base+".bib"),
 	}
-	for _, p := range candidates {
+	for _, p := range perFile {
+		if meta, ok := readSidecarFile(p); ok {
+			return meta
+		}
+	}
+	// Shared directory sidecars only when this folder has a single book file.
+	if !dirHasSingleBookFile(dir) {
+		return sidecarFields{}
+	}
+	shared := []string{
+		filepath.Join(dir, "metadata.json"),
+		filepath.Join(dir, "metadata.opf"),
+		filepath.Join(dir, "metadata.bib"),
+	}
+	for _, p := range shared {
 		if meta, ok := readSidecarFile(p); ok {
 			return meta
 		}
@@ -41,12 +64,38 @@ func sidecarMetadata(filePath string) sidecarFields {
 	return sidecarFields{}
 }
 
+func dirHasSingleBookFile(dir string) bool {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+	count := 0
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if FormatFromExt(e.Name()) == "" {
+			continue
+		}
+		count++
+		if count > 1 {
+			return false
+		}
+	}
+	return count == 1
+}
+
 func readSidecarFile(path string) (sidecarFields, bool) {
+	fi, err := os.Stat(path)
+	if err != nil || fi.IsDir() || fi.Size() == 0 || fi.Size() > maxSidecarBytes {
+		return sidecarFields{}, false
+	}
 	data, err := os.ReadFile(path) // #nosec G304
 	if err != nil || len(data) == 0 {
 		return sidecarFields{}, false
 	}
-	if strings.HasSuffix(strings.ToLower(path), ".opf") {
+	lower := strings.ToLower(path)
+	if strings.HasSuffix(lower, ".opf") {
 		meta, err := parseOPFBytes(data)
 		if err != nil {
 			return sidecarFields{}, false
@@ -60,10 +109,20 @@ func readSidecarFile(path string) (sidecarFields, bool) {
 			Language:    meta.Language,
 		}, true
 	}
+	if strings.HasSuffix(lower, ".bib") {
+		entries := ParseBibTeX(string(data))
+		if len(entries) == 0 {
+			return sidecarFields{}, false
+		}
+		return BibEntryToSidecar(entries[0]), true
+	}
 	var raw sidecarFields
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return sidecarFields{}, false
 	}
+	raw.DOI = NormalizeDOI(raw.DOI)
+	raw.ArxivID = NormalizeArxivID(raw.ArxivID)
+	raw.PubmedID = NormalizePubmedID(raw.PubmedID)
 	return raw, true
 }
 
@@ -113,7 +172,30 @@ func applySidecarMeta(book *models.Book, side sidecarFields) (isbn, asin string)
 	if side.Language != "" {
 		book.Language = side.Language
 	}
+	applyCitationFields(book, side, true)
 	return strings.TrimSpace(side.ISBN), strings.TrimSpace(side.ASIN)
+}
+
+func applyCitationFields(book *models.Book, side sidecarFields, overwrite bool) {
+	set := func(dst *string, src string) {
+		src = strings.TrimSpace(src)
+		if src == "" {
+			return
+		}
+		if overwrite || *dst == "" {
+			*dst = src
+		}
+	}
+	set(&book.DOI, NormalizeDOI(side.DOI))
+	set(&book.ArxivID, NormalizeArxivID(side.ArxivID))
+	set(&book.PubmedID, NormalizePubmedID(side.PubmedID))
+	set(&book.Journal, side.Journal)
+	set(&book.Volume, side.Volume)
+	set(&book.Issue, side.Issue)
+	set(&book.Pages, side.Pages)
+	if side.PublishedYear > 0 && (overwrite || book.PublishedYear == 0) {
+		book.PublishedYear = side.PublishedYear
+	}
 }
 
 func applyLookupMeta(book *models.Book, fields sidecarFields) {
@@ -135,4 +217,5 @@ func applyLookupMeta(book *models.Book, fields sidecarFields) {
 	if fields.SeriesIndex > 0 && book.SeriesIndex == 0 {
 		book.SeriesIndex = fields.SeriesIndex
 	}
+	applyCitationFields(book, fields, false)
 }

@@ -15,7 +15,8 @@ export type BookFormat =
   | "flac"
   | "audio"
   | "comic"
-  | "kindle";
+  | "kindle"
+  | "papers";
 
 import type { PasswordPolicy } from "$lib/utils/password-strength";
 export type { PasswordStrength, PasswordPolicy } from "$lib/utils/password-strength";
@@ -32,6 +33,10 @@ export function isComicFormat(format: string): boolean {
 
 export function isMobiFormat(format: string): boolean {
   return format === "mobi" || format === "azw3" || format === "azw";
+}
+
+export function isPaperBook(book: { doi?: string; arxivId?: string; pubmedId?: string }): boolean {
+  return Boolean(book.doi || book.arxivId || book.pubmedId);
 }
 
 export interface MetadataProvider {
@@ -54,6 +59,13 @@ export interface MetadataMatch {
   asin?: string;
   coverUrl?: string;
   publishedYear?: number;
+  doi?: string;
+  arxivId?: string;
+  pubmedId?: string;
+  journal?: string;
+  volume?: string;
+  issue?: string;
+  pages?: string;
 }
 
 export interface MetadataSearchQuery {
@@ -61,6 +73,9 @@ export interface MetadataSearchQuery {
   author?: string;
   isbn?: string;
   asin?: string;
+  doi?: string;
+  arxivId?: string;
+  pubmedId?: string;
   providers?: string[];
 }
 
@@ -83,6 +98,14 @@ export interface Book {
   hasCover: boolean;
   language?: string;
   description?: string;
+  doi?: string;
+  arxivId?: string;
+  pubmedId?: string;
+  journal?: string;
+  volume?: string;
+  issue?: string;
+  pages?: string;
+  publishedYear?: number;
   addedAt: string;
   modifiedAt: string;
   metaEdited?: boolean;
@@ -101,6 +124,14 @@ export interface BookUpdate {
   seriesIndex?: number;
   language?: string;
   description?: string;
+  doi?: string;
+  arxivId?: string;
+  pubmedId?: string;
+  journal?: string;
+  volume?: string;
+  issue?: string;
+  pages?: string;
+  publishedYear?: number;
 }
 
 export interface BookPage {

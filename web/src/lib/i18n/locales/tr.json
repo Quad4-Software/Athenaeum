@@ -34,7 +34,8 @@
     "scanning": "Tarama...",
     "settings": "Ayarlar",
     "shelfAuto": "otomobil",
-    "shelfSmart": "akıllı"
+    "shelfSmart": "akıllı",
+    "papers": "Papers"
   },
   "search": {
     "placeholder": "Arama başlığı, yazar veya dizisi...",
@@ -129,7 +130,11 @@
       "libraryFallback": "Kütüphane",
       "collectionFallback": "Toplama",
       "clearAll": "Her şeyi temizleyin."
-    }
+    },
+    "importBibtex": "Import BibTeX",
+    "importBibtexHint": "Match .bib entries to existing PDFs by DOI, arXiv, PMID, or title",
+    "importBibtexDone": "BibTeX import: {updated} updated, {matched} matched, {unmatched} unmatched",
+    "importBibtexFailed": "BibTeX import failed"
   },
   "book": {
     "moreActions": "Daha fazla eylem",
@@ -178,7 +183,20 @@
     "offlineCaching": "Kayıtlama %",
     "offlineStarted": "Çevrimdışı indirme başlandı",
     "offlineCleared": "Çevrimdışı kopyası kaldırıldı",
-    "offlineFailed": "OFFLINE cache başarısız oldu"
+    "offlineFailed": "OFFLINE cache başarısız oldu",
+    "journal": "Journal",
+    "year": "Year",
+    "volume": "Volume",
+    "issue": "Issue",
+    "pages": "Pages",
+    "doi": "DOI",
+    "arxiv": "arXiv",
+    "pubmed": "PubMed",
+    "citation": "Citation",
+    "downloadBibtex": "Download BibTeX",
+    "copyBibtex": "Copy BibTeX",
+    "bibtexCopied": "BibTeX copied",
+    "bibtexFailed": "Failed to get BibTeX"
   },
   "confirm": {
     "confirm": "- Evet .",

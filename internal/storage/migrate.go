@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const currentSchemaVersion = 24
+const currentSchemaVersion = 25
 
 func (s *Store) migrate(ctx context.Context) error {
 	if s.driver == DriverPostgres {
@@ -51,6 +51,7 @@ func (s *Store) migrateSQLite(ctx context.Context) error {
 		{22, s.migrateV22},
 		{23, s.migrateV23},
 		{24, s.migrateV24},
+		{25, s.migrateV25},
 	}
 	for _, step := range steps {
 		if version >= step.to {
@@ -88,6 +89,12 @@ func (s *Store) migratePostgres(ctx context.Context) error {
 		return fmt.Errorf("database schema version %d is newer than this binary (%d)", version, currentSchemaVersion)
 	}
 	if version < currentSchemaVersion {
+		if version == 24 && currentSchemaVersion == 25 {
+			if err := s.migratePostgresV25(ctx); err != nil {
+				return err
+			}
+			return s.setUserVersion(ctx, 25)
+		}
 		return fmt.Errorf("postgres schema upgrade from %d to %d is not supported yet (recreate the database or stay on sqlite)", version, currentSchemaVersion)
 	}
 	return nil
@@ -103,6 +110,10 @@ CREATE VIRTUAL TABLE IF NOT EXISTS books_fts USING fts5(
 	author,
 	series,
 	description,
+	doi,
+	arxiv_id,
+	pubmed_id,
+	journal,
 	content='books',
 	content_rowid='id',
 	tokenize='unicode61'
@@ -114,18 +125,18 @@ CREATE VIRTUAL TABLE IF NOT EXISTS books_fts USING fts5(
 
 	triggers := []string{
 		`CREATE TRIGGER IF NOT EXISTS books_fts_ai AFTER INSERT ON books BEGIN
-			INSERT INTO books_fts(rowid, title, author, series, description)
-			VALUES (new.id, new.title, new.author, new.series, new.description);
+			INSERT INTO books_fts(rowid, title, author, series, description, doi, arxiv_id, pubmed_id, journal)
+			VALUES (new.id, new.title, new.author, new.series, new.description, new.doi, new.arxiv_id, new.pubmed_id, new.journal);
 		END`,
 		`CREATE TRIGGER IF NOT EXISTS books_fts_ad AFTER DELETE ON books BEGIN
-			INSERT INTO books_fts(books_fts, rowid, title, author, series, description)
-			VALUES ('delete', old.id, old.title, old.author, old.series, old.description);
+			INSERT INTO books_fts(books_fts, rowid, title, author, series, description, doi, arxiv_id, pubmed_id, journal)
+			VALUES ('delete', old.id, old.title, old.author, old.series, old.description, old.doi, old.arxiv_id, old.pubmed_id, old.journal);
 		END`,
 		`CREATE TRIGGER IF NOT EXISTS books_fts_au AFTER UPDATE ON books BEGIN
-			INSERT INTO books_fts(books_fts, rowid, title, author, series, description)
-			VALUES ('delete', old.id, old.title, old.author, old.series, old.description);
-			INSERT INTO books_fts(rowid, title, author, series, description)
-			VALUES (new.id, new.title, new.author, new.series, new.description);
+			INSERT INTO books_fts(books_fts, rowid, title, author, series, description, doi, arxiv_id, pubmed_id, journal)
+			VALUES ('delete', old.id, old.title, old.author, old.series, old.description, old.doi, old.arxiv_id, old.pubmed_id, old.journal);
+			INSERT INTO books_fts(rowid, title, author, series, description, doi, arxiv_id, pubmed_id, journal)
+			VALUES (new.id, new.title, new.author, new.series, new.description, new.doi, new.arxiv_id, new.pubmed_id, new.journal);
 		END`,
 	}
 	for _, q := range triggers {
@@ -144,8 +155,8 @@ CREATE VIRTUAL TABLE IF NOT EXISTS books_fts USING fts5(
 	}
 	if ftsCount == 0 && bookCount > 0 {
 		_, err := s.db.ExecContext(ctx, `
-INSERT INTO books_fts(rowid, title, author, series, description)
-SELECT id, title, author, series, description FROM books`)
+INSERT INTO books_fts(rowid, title, author, series, description, doi, arxiv_id, pubmed_id, journal)
+SELECT id, title, author, series, description, doi, arxiv_id, pubmed_id, journal FROM books`)
 		return err
 	}
 	return nil

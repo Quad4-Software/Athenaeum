@@ -34,7 +34,8 @@
     "scanning": "Scannen...",
     "settings": "Instellingen",
     "shelfAuto": "automatisch",
-    "shelfSmart": "slim"
+    "shelfSmart": "slim",
+    "papers": "Papers"
   },
   "search": {
     "placeholder": "Zoek op titel, auteur of reeks...",
@@ -129,7 +130,11 @@
       "libraryFallback": "Bibliotheek",
       "collectionFallback": "Collectie",
       "clearAll": "Alles wissen"
-    }
+    },
+    "importBibtex": "Import BibTeX",
+    "importBibtexHint": "Match .bib entries to existing PDFs by DOI, arXiv, PMID, or title",
+    "importBibtexDone": "BibTeX import: {updated} updated, {matched} matched, {unmatched} unmatched",
+    "importBibtexFailed": "BibTeX import failed"
   },
   "book": {
     "moreActions": "Meer acties",
@@ -178,7 +183,20 @@
     "offlineCaching": "In cache opslaan {pct}%",
     "offlineStarted": "Offline download gestart",
     "offlineCleared": "Offline kopie verwijderd",
-    "offlineFailed": "Offline cache mislukt"
+    "offlineFailed": "Offline cache mislukt",
+    "journal": "Journal",
+    "year": "Year",
+    "volume": "Volume",
+    "issue": "Issue",
+    "pages": "Pages",
+    "doi": "DOI",
+    "arxiv": "arXiv",
+    "pubmed": "PubMed",
+    "citation": "Citation",
+    "downloadBibtex": "Download BibTeX",
+    "copyBibtex": "Copy BibTeX",
+    "bibtexCopied": "BibTeX copied",
+    "bibtexFailed": "Failed to get BibTeX"
   },
   "confirm": {
     "confirm": "Bevestigen",

@@ -41,7 +41,7 @@ Details: [Library and readers](./library) and [Deploying](./deploying).
   access for non-admins.
 - Optional EPUB full-text content index (admin job).
 - Resumable chunked uploads with SHA-256 duplicate detection.
-- Metadata edit, external metadata search/apply, optional format conversion.
+- Metadata edit, external metadata search/apply (including Crossref, arXiv, PubMed), citation fields, BibTeX import/export, optional format conversion.
 
 ## Catalogs and sharing
 

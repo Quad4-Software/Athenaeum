@@ -3,7 +3,6 @@
 - Podcasts support and transcriptions via Whisper or similar
 - RSS reader and aggregator, and FreshRSS support
 - Audiobookshelf support for podcasts or audiobooks
-- Research and medical papers (DOI / arXiv / PubMed metadata, citation fields, BibTeX)
 - ZIM / Kiwix offline content (Wikipedia and other OpenZIM archives)
 - Desktop and mobile apps via Wails v3
 - AI research assistance and chat (Ollama, LM Studio, OpenAI-compatible). Opt-in. Local first.

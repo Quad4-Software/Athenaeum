@@ -107,6 +107,7 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 | PATCH | `/api/libraries/{id}/uploads/{uploadId}` | Upload chunk |
 | POST | /api/library/metadata/match | Start bulk metadata match |
 | GET | /api/library/metadata/match/status | Bulk metadata match status |
+| POST | /api/library/bibtex/import | Match BibTeX entries to existing books |
 | POST | /api/library/scan | Background rescan all |
 | GET | /api/library/scan/status | Live scan progress |
 | POST | /api/library/series/cleanup | Cleanup series names |
@@ -140,6 +141,8 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 | DELETE | `/api/books/{id}/highlights/{highlightId}` | Delete highlight |
 | POST | `/api/books/{id}/metadata/apply` | Apply metadata match |
 | POST | `/api/books/{id}/metadata/search` | Search external metadata |
+| GET | `/api/books/{id}/bibtex` | Download BibTeX for one book |
+| GET | `/api/books/bibtex` | Download BibTeX (`?ids=` or `?format=papers`) |
 | GET | `/api/books/{id}/mobi-sections` | MOBI/AZW section list |
 | GET | `/api/books/{id}/pages` | Comic page list |
 | GET | `/api/books/{id}/pages/{page}` | Comic page image |
@@ -254,6 +257,7 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 | GET | /opds/ | OPDS 1.2 navigation catalog |
 | GET | /opds/comics | OPDS comics feed |
 | GET | /opds/kindle | OPDS Kindle-friendly feed |
+| GET | /opds/papers | OPDS research papers feed |
 | GET | /opds/recent | OPDS recent acquisitions |
 | GET | /opds/search | OPDS search feed |
 | GET | /opds/series | OPDS series navigation |

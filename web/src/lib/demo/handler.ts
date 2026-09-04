@@ -102,6 +102,7 @@ function listFiltered(params: BookQueryParams): BookPage {
       if (f === "audio") return isAudioFormat(b.format);
       if (f === "comic") return b.format === "cbz" || b.format === "cbr";
       if (f === "kindle") return b.format === "mobi" || b.format === "azw" || b.format === "azw3";
+      if (f === "papers") return Boolean(b.doi || b.arxivId || b.pubmedId);
       return b.format === f;
     });
   }

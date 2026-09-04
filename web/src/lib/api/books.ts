@@ -88,6 +88,30 @@ export const booksApi = {
       body: JSON.stringify({ match, applyCover }),
     }),
 
+  getBibTeX: async (id: number) => {
+    const res = await fetch(`/api/books/${id}/bibtex`, {
+      credentials: "same-origin",
+      headers: { Accept: "application/x-bibtex, text/plain" },
+    });
+    if (!res.ok) {
+      throw new ApiError(res.status, res.statusText || "BibTeX export failed");
+    }
+    return await res.text();
+  },
+
+  importBibTeX: (bibtex: string) =>
+    request<{
+      matched: number;
+      updated: number;
+      unmatched: number;
+      skipped: number;
+      unmatchedTitles?: string[];
+    }>("/api/library/bibtex/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bibtex }),
+    }),
+
   coverFromUrl: (id: number, url: string) =>
     request<Book>(`/api/books/${id}/cover-from-url`, {
       method: "PUT",

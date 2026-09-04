@@ -34,7 +34,8 @@
     "scanning": "Scanning...",
     "settings": "Inställningar",
     "shelfAuto": "auto auto auto",
-    "shelfSmart": "Smart smart"
+    "shelfSmart": "Smart smart",
+    "papers": "Papers"
   },
   "search": {
     "placeholder": "Sök titel, författare eller serie...",
@@ -129,7 +130,11 @@
       "libraryFallback": "Bibliotek",
       "collectionFallback": "Samling",
       "clearAll": "Tydliga alla"
-    }
+    },
+    "importBibtex": "Import BibTeX",
+    "importBibtexHint": "Match .bib entries to existing PDFs by DOI, arXiv, PMID, or title",
+    "importBibtexDone": "BibTeX import: {updated} updated, {matched} matched, {unmatched} unmatched",
+    "importBibtexFailed": "BibTeX import failed"
   },
   "book": {
     "moreActions": "Fler åtgärder",
@@ -178,7 +183,20 @@
     "offlineCaching": "Caching {pct}%",
     "offlineStarted": "Offline nedladdning startade",
     "offlineCleared": "Offline-kopia bort",
-    "offlineFailed": "Offline cache misslyckades"
+    "offlineFailed": "Offline cache misslyckades",
+    "journal": "Journal",
+    "year": "Year",
+    "volume": "Volume",
+    "issue": "Issue",
+    "pages": "Pages",
+    "doi": "DOI",
+    "arxiv": "arXiv",
+    "pubmed": "PubMed",
+    "citation": "Citation",
+    "downloadBibtex": "Download BibTeX",
+    "copyBibtex": "Copy BibTeX",
+    "bibtexCopied": "BibTeX copied",
+    "bibtexFailed": "Failed to get BibTeX"
   },
   "confirm": {
     "confirm": "bekräfta",

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BookOpen, RefreshCw, Search, Star } from "@lucide/svelte";
+  import { BookOpen, FileText, RefreshCw, Search, Star } from "@lucide/svelte";
   import { SvelteSet } from "svelte/reactivity";
   import BookGrid from "$lib/components/BookGrid.svelte";
   import BrowseHeader from "$lib/components/BrowseHeader.svelte";
@@ -22,6 +22,7 @@
   let selectMode = $state(false);
   let selected = new SvelteSet<number>();
   let matching = $state(false);
+  let importingBibtex = $state(false);
 
   let jobActive = $derived(scan.status?.scanning || metadataMatch.status?.running);
   let jobLabel = $derived.by(() => {
@@ -49,6 +50,7 @@
       const map: Record<string, string> = {
         epub: i18n.t("nav.epub"),
         pdf: i18n.t("nav.pdf"),
+        papers: i18n.t("nav.papers"),
         comic: i18n.t("nav.comics"),
         kindle: i18n.t("nav.kindle"),
         audio: i18n.t("nav.audiobooks"),
@@ -126,6 +128,31 @@
       matching = false;
     }
   }
+
+  async function onBibTeXSelected(event: Event) {
+    if (!can("edit_metadata")) return;
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    importingBibtex = true;
+    try {
+      const text = await file.text();
+      const res = await api.importBibTeX(text);
+      toast.success(
+        i18n.t("library.importBibtexDone", {
+          updated: res.updated,
+          matched: res.matched,
+          unmatched: res.unmatched,
+        }),
+      );
+      void library.refresh({ background: true });
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : i18n.t("library.importBibtexFailed"));
+    } finally {
+      importingBibtex = false;
+    }
+  }
 </script>
 
 <section class="mx-auto w-full max-w-[1600px] px-3 py-5 sm:px-6">
@@ -181,6 +208,21 @@
           {i18n.t("library.matchAll")}
         </button>
       {/if}
+      <label
+        class="btn btn-ghost min-h-10 cursor-pointer text-xs ring-1 ring-border"
+        class:opacity-60={importingBibtex}
+        class:pointer-events-none={importingBibtex}
+      >
+        <FileText size={14} />
+        {i18n.t("library.importBibtex")}
+        <input
+          type="file"
+          accept=".bib,text/plain"
+          class="sr-only"
+          disabled={importingBibtex}
+          onchange={(e) => void onBibTeXSelected(e)}
+        />
+      </label>
     </div>
   {/if}
 

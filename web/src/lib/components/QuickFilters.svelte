@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BookText, Files, Headphones } from "@lucide/svelte";
+  import { BookText, Files, FileText, Headphones } from "@lucide/svelte";
   import { library } from "$lib/stores/library.svelte";
   import { router } from "$lib/router.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
@@ -14,6 +14,7 @@
   }[] = [
     { id: "epub", labelKey: "nav.epub", icon: BookText },
     { id: "pdf", labelKey: "nav.pdf", icon: Files },
+    { id: "papers", labelKey: "nav.papers", icon: FileText },
     { id: "audio", labelKey: "nav.audiobooks", icon: Headphones },
   ];
 

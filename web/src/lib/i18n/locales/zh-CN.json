@@ -34,7 +34,8 @@
     "scanning": "正在扫描...",
     "settings": "设置",
     "shelfAuto": "自动",
-    "shelfSmart": "智能"
+    "shelfSmart": "智能",
+    "papers": "Papers"
   },
   "search": {
     "placeholder": "搜索书名、作者或系列...",
@@ -129,7 +130,11 @@
       "libraryFallback": "书库",
       "collectionFallback": "藏书集",
       "clearAll": "全部清除"
-    }
+    },
+    "importBibtex": "Import BibTeX",
+    "importBibtexHint": "Match .bib entries to existing PDFs by DOI, arXiv, PMID, or title",
+    "importBibtexDone": "BibTeX import: {updated} updated, {matched} matched, {unmatched} unmatched",
+    "importBibtexFailed": "BibTeX import failed"
   },
   "book": {
     "moreActions": "更多操作",
@@ -178,7 +183,20 @@
     "offlineCaching": "正在缓存 {pct}%",
     "offlineStarted": "离线下载已开始",
     "offlineCleared": "离线副本已移除",
-    "offlineFailed": "离线缓存失败"
+    "offlineFailed": "离线缓存失败",
+    "journal": "Journal",
+    "year": "Year",
+    "volume": "Volume",
+    "issue": "Issue",
+    "pages": "Pages",
+    "doi": "DOI",
+    "arxiv": "arXiv",
+    "pubmed": "PubMed",
+    "citation": "Citation",
+    "downloadBibtex": "Download BibTeX",
+    "copyBibtex": "Copy BibTeX",
+    "bibtexCopied": "BibTeX copied",
+    "bibtexFailed": "Failed to get BibTeX"
   },
   "confirm": {
     "confirm": "确认",

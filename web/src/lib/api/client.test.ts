@@ -230,7 +230,7 @@ describe("api client", () => {
         json: async () => {
           throw new Error("not json");
         },
-      } as Response),
+      } as unknown as Response),
     );
 
     await expect(api.listBooks()).rejects.toMatchObject({

@@ -20,8 +20,9 @@ func (s *Store) UpsertBook(ctx context.Context, b *models.Book, mtime int64) (in
 	now := time.Now().Unix()
 	return s.insertID(ctx, `
 INSERT INTO books (library_id, title, author, series, series_index, format, rel_path, abs_path,
-	file_size, has_cover, language, description, mtime, added_at, modified_at, meta_edited, cover_edited)
-VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+	file_size, has_cover, language, description, doi, arxiv_id, pubmed_id, journal, volume, issue, pages,
+	published_year, mtime, added_at, modified_at, meta_edited, cover_edited)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 ON CONFLICT(library_id, rel_path) DO UPDATE SET
 	title=CASE WHEN books.meta_edited=1 THEN books.title ELSE excluded.title END,
 	author=CASE WHEN books.meta_edited=1 THEN books.author ELSE excluded.author END,
@@ -33,12 +34,21 @@ ON CONFLICT(library_id, rel_path) DO UPDATE SET
 	has_cover=CASE WHEN books.cover_edited=1 THEN books.has_cover ELSE excluded.has_cover END,
 	language=CASE WHEN books.meta_edited=1 THEN books.language ELSE excluded.language END,
 	description=CASE WHEN books.meta_edited=1 THEN books.description ELSE excluded.description END,
+	doi=CASE WHEN books.meta_edited=1 THEN books.doi ELSE excluded.doi END,
+	arxiv_id=CASE WHEN books.meta_edited=1 THEN books.arxiv_id ELSE excluded.arxiv_id END,
+	pubmed_id=CASE WHEN books.meta_edited=1 THEN books.pubmed_id ELSE excluded.pubmed_id END,
+	journal=CASE WHEN books.meta_edited=1 THEN books.journal ELSE excluded.journal END,
+	volume=CASE WHEN books.meta_edited=1 THEN books.volume ELSE excluded.volume END,
+	issue=CASE WHEN books.meta_edited=1 THEN books.issue ELSE excluded.issue END,
+	pages=CASE WHEN books.meta_edited=1 THEN books.pages ELSE excluded.pages END,
+	published_year=CASE WHEN books.meta_edited=1 THEN books.published_year ELSE excluded.published_year END,
 	mtime=excluded.mtime,
 	modified_at=excluded.modified_at
 RETURNING id`,
 		b.LibraryID, b.Title, b.Author, b.Series, b.SeriesIndex, b.Format, b.RelPath, b.AbsPath,
-		b.FileSize, boolToInt(b.HasCover), b.Language, b.Description, mtime, now, now,
-		boolToInt(b.MetaEdited), boolToInt(b.CoverEdited))
+		b.FileSize, boolToInt(b.HasCover), b.Language, b.Description,
+		b.DOI, b.ArxivID, b.PubmedID, b.Journal, b.Volume, b.Issue, b.Pages, b.PublishedYear,
+		mtime, now, now, boolToInt(b.MetaEdited), boolToInt(b.CoverEdited))
 }
 
 // FileState returns the stored mtime and size for a path within a library.
@@ -113,11 +123,14 @@ func (s *Store) DeleteBook(ctx context.Context, id int64) error {
 }
 
 const selectColumns = `SELECT id, library_id, title, author, series, series_index, format, rel_path,
-	abs_path, file_size, has_cover, language, description, added_at, modified_at, meta_edited, cover_edited,
+	abs_path, file_size, has_cover, language, description, doi, arxiv_id, pubmed_id, journal, volume, issue, pages,
+	published_year, added_at, modified_at, meta_edited, cover_edited,
 	content_hash, duplicate_of, hidden, audiobook_set_id FROM books`
 
 const listSelectColumns = `SELECT books.id, books.library_id, books.title, books.author, books.series, books.series_index, books.format, books.rel_path,
-	'' AS abs_path, books.file_size, books.has_cover, books.language, '' AS description, books.added_at, books.modified_at, books.meta_edited, books.cover_edited,
+	'' AS abs_path, books.file_size, books.has_cover, books.language, '' AS description,
+	books.doi, books.arxiv_id, books.pubmed_id, books.journal, books.volume, books.issue, books.pages, books.published_year,
+	books.added_at, books.modified_at, books.meta_edited, books.cover_edited,
 	books.content_hash, books.duplicate_of, COALESCE(progress.percent, 0) FROM books`
 
 // GetBookByPath returns a book by library and relative path.
@@ -141,10 +154,20 @@ UPDATE books SET
 	series_index=?,
 	language=?,
 	description=?,
+	doi=?,
+	arxiv_id=?,
+	pubmed_id=?,
+	journal=?,
+	volume=?,
+	issue=?,
+	pages=?,
+	published_year=?,
 	meta_edited=1,
 	modified_at=?
 WHERE id=?`,
-		u.Title, u.Author, u.Series, u.SeriesIndex, u.Language, u.Description, now, id)
+		u.Title, u.Author, u.Series, u.SeriesIndex, u.Language, u.Description,
+		u.DOI, u.ArxivID, u.PubmedID, u.Journal, u.Volume, u.Issue, u.Pages, u.PublishedYear,
+		now, id)
 	if err != nil {
 		return models.Book{}, err
 	}
@@ -278,6 +301,8 @@ func bookWhereClause(q models.BookQuery, ftsIDs []int64, useFTS bool, contentIDs
 			where = append(where, "books.format IN ('cbz','cbr')")
 		} else if q.Format == models.FormatKindle {
 			where = append(where, "books.format IN ('mobi','azw3','azw')")
+		} else if q.Format == models.FormatPapers {
+			where = append(where, `(books.doi != '' OR books.arxiv_id != '' OR books.pubmed_id != '')`)
 		} else {
 			where = append(where, "books.format = ?")
 			args = append(args, q.Format)
@@ -299,9 +324,10 @@ func bookWhereClause(q models.BookQuery, ftsIDs []int64, useFTS bool, contentIDs
 				condArgs = append(condArgs, id)
 			}
 		} else {
-			conds = append(conds, "(books.title LIKE ? OR books.author LIKE ? OR books.series LIKE ? OR books.description LIKE ? OR books.rel_path LIKE ?)")
+			conds = append(conds, `(books.title LIKE ? OR books.author LIKE ? OR books.series LIKE ? OR books.description LIKE ? OR books.rel_path LIKE ?
+				OR books.doi LIKE ? OR books.arxiv_id LIKE ? OR books.pubmed_id LIKE ? OR books.journal LIKE ?)`)
 			like := "%" + q.Search + "%"
-			condArgs = append(condArgs, like, like, like, like, like)
+			condArgs = append(condArgs, like, like, like, like, like, like, like, like, like)
 		}
 		if len(contentIDs) > 0 {
 			placeholders := strings.Repeat("?,", len(contentIDs))
@@ -530,8 +556,9 @@ func scanBook(row scanner) (models.Book, error) {
 	var added, modified int64
 	var setID int64
 	err := row.Scan(&b.ID, &b.LibraryID, &b.Title, &b.Author, &b.Series, &b.SeriesIndex, &b.Format,
-		&b.RelPath, &b.AbsPath, &b.FileSize, &hasCover, &b.Language, &b.Description, &added, &modified,
-		&metaEdited, &coverEdited, &b.ContentHash, &b.DuplicateOf, &hidden, &setID)
+		&b.RelPath, &b.AbsPath, &b.FileSize, &hasCover, &b.Language, &b.Description,
+		&b.DOI, &b.ArxivID, &b.PubmedID, &b.Journal, &b.Volume, &b.Issue, &b.Pages, &b.PublishedYear,
+		&added, &modified, &metaEdited, &coverEdited, &b.ContentHash, &b.DuplicateOf, &hidden, &setID)
 	if err != nil {
 		return models.Book{}, err
 	}
@@ -550,8 +577,9 @@ func scanListBook(row scanner) (models.Book, error) {
 	var added, modified int64
 	var progress float64
 	err := row.Scan(&b.ID, &b.LibraryID, &b.Title, &b.Author, &b.Series, &b.SeriesIndex, &b.Format,
-		&b.RelPath, &b.AbsPath, &b.FileSize, &hasCover, &b.Language, &b.Description, &added, &modified,
-		&metaEdited, &coverEdited, &b.ContentHash, &b.DuplicateOf, &progress)
+		&b.RelPath, &b.AbsPath, &b.FileSize, &hasCover, &b.Language, &b.Description,
+		&b.DOI, &b.ArxivID, &b.PubmedID, &b.Journal, &b.Volume, &b.Issue, &b.Pages, &b.PublishedYear,
+		&added, &modified, &metaEdited, &coverEdited, &b.ContentHash, &b.DuplicateOf, &progress)
 	if err != nil {
 		return models.Book{}, err
 	}
@@ -585,6 +613,7 @@ func (s *Store) ListBooksForMetadata(ctx context.Context, libraryID int64, ids [
 		rows, err := s.queryContext(ctx, fmt.Sprintf(`
 SELECT id, library_id, title, author, series, series_index, format, rel_path, abs_path,
 	file_size, content_hash, has_cover, meta_edited, cover_edited, language, description,
+	doi, arxiv_id, pubmed_id, journal, volume, issue, pages, published_year,
 	added_at, modified_at, duplicate_of
 FROM books WHERE id IN (%s) ORDER BY id ASC`, placeholders), args...)
 		if err != nil {
@@ -603,6 +632,7 @@ FROM books WHERE id IN (%s) ORDER BY id ASC`, placeholders), args...)
 	rows, err := s.queryContext(ctx, `
 SELECT id, library_id, title, author, series, series_index, format, rel_path, abs_path,
 	file_size, content_hash, has_cover, meta_edited, cover_edited, language, description,
+	doi, arxiv_id, pubmed_id, journal, volume, issue, pages, published_year,
 	added_at, modified_at, duplicate_of
 FROM books`+clause+` ORDER BY id ASC`, args...)
 	if err != nil {
@@ -622,7 +652,9 @@ func scanMetadataBooks(rows *sql.Rows) ([]models.Book, error) {
 		if err := rows.Scan(
 			&b.ID, &b.LibraryID, &b.Title, &b.Author, &b.Series, &b.SeriesIndex, &b.Format,
 			&b.RelPath, &b.AbsPath, &b.FileSize, &b.ContentHash, &hasCover, &metaEdited,
-			&coverEdited, &b.Language, &b.Description, &added, &modified, &dup,
+			&coverEdited, &b.Language, &b.Description,
+			&b.DOI, &b.ArxivID, &b.PubmedID, &b.Journal, &b.Volume, &b.Issue, &b.Pages, &b.PublishedYear,
+			&added, &modified, &dup,
 		); err != nil {
 			return nil, err
 		}

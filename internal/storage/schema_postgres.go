@@ -1,7 +1,7 @@
 package storage
 
 // schemaPostgres is the full Athenaeum schema for a fresh PostgreSQL database
-// (equivalent to SQLite user_version 24 plus tsvector FTS).
+// (equivalent to SQLite user_version 25 plus tsvector FTS).
 const schemaPostgres = `
 CREATE TABLE IF NOT EXISTS schema_version (
 	version INTEGER NOT NULL
@@ -31,6 +31,14 @@ CREATE TABLE IF NOT EXISTS books (
 	has_cover        INTEGER NOT NULL DEFAULT 0,
 	language         TEXT    NOT NULL DEFAULT '',
 	description      TEXT    NOT NULL DEFAULT '',
+	doi              TEXT    NOT NULL DEFAULT '',
+	arxiv_id         TEXT    NOT NULL DEFAULT '',
+	pubmed_id        TEXT    NOT NULL DEFAULT '',
+	journal          TEXT    NOT NULL DEFAULT '',
+	volume           TEXT    NOT NULL DEFAULT '',
+	issue            TEXT    NOT NULL DEFAULT '',
+	pages            TEXT    NOT NULL DEFAULT '',
+	published_year   INTEGER NOT NULL DEFAULT 0,
 	mtime            BIGINT  NOT NULL DEFAULT 0,
 	added_at         BIGINT  NOT NULL,
 	modified_at      BIGINT  NOT NULL,
@@ -44,7 +52,11 @@ CREATE TABLE IF NOT EXISTS books (
 		setweight(to_tsvector('simple', coalesce(title, '')), 'A') ||
 		setweight(to_tsvector('simple', coalesce(author, '')), 'B') ||
 		setweight(to_tsvector('simple', coalesce(series, '')), 'C') ||
-		setweight(to_tsvector('simple', coalesce(description, '')), 'D')
+		setweight(to_tsvector('simple', coalesce(description, '')), 'D') ||
+		setweight(to_tsvector('simple', coalesce(doi, '')), 'A') ||
+		setweight(to_tsvector('simple', coalesce(arxiv_id, '')), 'A') ||
+		setweight(to_tsvector('simple', coalesce(pubmed_id, '')), 'A') ||
+		setweight(to_tsvector('simple', coalesce(journal, '')), 'C')
 	) STORED,
 	UNIQUE (library_id, rel_path)
 );
@@ -55,6 +67,9 @@ CREATE INDEX IF NOT EXISTS idx_books_format ON books(format);
 CREATE INDEX IF NOT EXISTS idx_books_added ON books(added_at);
 CREATE INDEX IF NOT EXISTS idx_books_series ON books(series);
 CREATE INDEX IF NOT EXISTS idx_books_content_hash ON books(content_hash);
+CREATE INDEX IF NOT EXISTS idx_books_doi ON books(doi);
+CREATE INDEX IF NOT EXISTS idx_books_arxiv_id ON books(arxiv_id);
+CREATE INDEX IF NOT EXISTS idx_books_pubmed_id ON books(pubmed_id);
 CREATE INDEX IF NOT EXISTS idx_books_visible_library_added ON books(library_id, added_at DESC) WHERE hidden = 0;
 CREATE INDEX IF NOT EXISTS idx_books_search_tsv ON books USING GIN (search_tsv);
 

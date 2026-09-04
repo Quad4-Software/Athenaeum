@@ -34,7 +34,8 @@
     "scanning": "Scan en cours...",
     "settings": "Paramètres",
     "shelfAuto": "auto",
-    "shelfSmart": "smart"
+    "shelfSmart": "smart",
+    "papers": "Papers"
   },
   "search": {
     "placeholder": "Rechercher un titre, un auteur ou une série...",
@@ -129,7 +130,11 @@
       "libraryFallback": "Bibliothèque",
       "collectionFallback": "Collection",
       "clearAll": "Tout effacer"
-    }
+    },
+    "importBibtex": "Import BibTeX",
+    "importBibtexHint": "Match .bib entries to existing PDFs by DOI, arXiv, PMID, or title",
+    "importBibtexDone": "BibTeX import: {updated} updated, {matched} matched, {unmatched} unmatched",
+    "importBibtexFailed": "BibTeX import failed"
   },
   "book": {
     "moreActions": "Plus d'actions",
@@ -178,7 +183,20 @@
     "offlineCaching": "Mise en cache {pct}%",
     "offlineStarted": "Téléchargement hors ligne démarré",
     "offlineCleared": "Copie hors ligne supprimée",
-    "offlineFailed": "Échec du cache hors ligne"
+    "offlineFailed": "Échec du cache hors ligne",
+    "journal": "Journal",
+    "year": "Year",
+    "volume": "Volume",
+    "issue": "Issue",
+    "pages": "Pages",
+    "doi": "DOI",
+    "arxiv": "arXiv",
+    "pubmed": "PubMed",
+    "citation": "Citation",
+    "downloadBibtex": "Download BibTeX",
+    "copyBibtex": "Copy BibTeX",
+    "bibtexCopied": "BibTeX copied",
+    "bibtexFailed": "Failed to get BibTeX"
   },
   "confirm": {
     "confirm": "Confirmer",

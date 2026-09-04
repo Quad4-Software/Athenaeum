@@ -34,7 +34,8 @@
     "scanning": "Сканирование...",
     "settings": "Настройки",
     "shelfAuto": "авто",
-    "shelfSmart": "умный"
+    "shelfSmart": "умный",
+    "papers": "Papers"
   },
   "search": {
     "placeholder": "Поиск заголовка, автор или серия...",
@@ -129,7 +130,11 @@
       "libraryFallback": "Библиотека",
       "collectionFallback": "Сборник",
       "clearAll": "Все очистить."
-    }
+    },
+    "importBibtex": "Import BibTeX",
+    "importBibtexHint": "Match .bib entries to existing PDFs by DOI, arXiv, PMID, or title",
+    "importBibtexDone": "BibTeX import: {updated} updated, {matched} matched, {unmatched} unmatched",
+    "importBibtexFailed": "BibTeX import failed"
   },
   "book": {
     "moreActions": "Больше действий",
@@ -178,7 +183,20 @@
     "offlineCaching": "Складка {pct}%",
     "offlineStarted": "Загрузка началась",
     "offlineCleared": "Удаление офлайн-копии",
-    "offlineFailed": "Не удалось сохранить cache в сети"
+    "offlineFailed": "Не удалось сохранить cache в сети",
+    "journal": "Journal",
+    "year": "Year",
+    "volume": "Volume",
+    "issue": "Issue",
+    "pages": "Pages",
+    "doi": "DOI",
+    "arxiv": "arXiv",
+    "pubmed": "PubMed",
+    "citation": "Citation",
+    "downloadBibtex": "Download BibTeX",
+    "copyBibtex": "Copy BibTeX",
+    "bibtexCopied": "BibTeX copied",
+    "bibtexFailed": "Failed to get BibTeX"
   },
   "confirm": {
     "confirm": "Подтвердить",

@@ -54,16 +54,26 @@ Example create body:
 
 ## Metadata
 
-Admins and users with `edit_metadata` can edit titles, authors, series, and
-covers from the book page or `PUT /api/books/{id}`. Covers support upload,
-URL import, and delete.
+Admins and users with `edit_metadata` can edit titles, authors, series, citation
+fields, and covers from the book page or `PUT /api/books/{id}`. Covers support
+upload, URL import, and delete.
+
+Citation fields (DOI, arXiv ID, PubMed ID, journal, volume, issue, pages, year)
+mark an item as a research paper. Filter the library with `?format=papers`.
+Sidecar `{basename}.bib` or `metadata.bib` next to a PDF is read on scan.
 
 External metadata search and apply:
 
-- `POST /api/books/{id}/metadata/search`
+- `POST /api/books/{id}/metadata/search` (title, author, ISBN, ASIN, DOI, arXiv, PMID)
 - `POST /api/books/{id}/metadata/apply`
 - Bulk match: `POST /api/library/metadata/match` plus status endpoint
-- Providers: `GET /api/metadata/providers`
+- Providers: `GET /api/metadata/providers` (Google Books, Open Library, Audnexus, Crossref, arXiv, PubMed)
+
+BibTeX:
+
+- Export one book: `GET /api/books/{id}/bibtex`
+- Export papers (or `?ids=`): `GET /api/books/bibtex`
+- Import against existing files: `POST /api/library/bibtex/import` (JSON `{ "bibtex": "..." }` or raw `.bib` body)
 
 Optional format conversion: `POST /api/books/{id}/convert?target=...`.
 

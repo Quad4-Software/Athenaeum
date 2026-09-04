@@ -2,8 +2,10 @@
   import {
     BookOpen,
     CloudOff,
+    Copy,
     Download,
     FileOutput,
+    FileText,
     Headphones,
     Link2,
     MoreVertical,
@@ -64,6 +66,7 @@
   let menuOpen = $state(false);
   let menuX = $state(0);
   let menuY = $state(0);
+  let bibtexBusy = $state(false);
 
   let isFavorite = $derived(book ? favorites.isFavorite(book.id) : false);
   let progressPercent = $derived(progress?.percent ?? 0);
@@ -223,6 +226,61 @@
     }
   }
 
+  function hasCitation(b: Book): boolean {
+    return Boolean(b.doi || b.arxivId || b.pubmedId || b.journal || b.publishedYear);
+  }
+
+  function citationVolumeLine(b: Book): string {
+    const parts: string[] = [];
+    if (b.volume) parts.push(`${i18n.t("book.volume")} ${b.volume}`);
+    if (b.issue) parts.push(`${i18n.t("book.issue")} ${b.issue}`);
+    if (b.pages) parts.push(`${i18n.t("book.pages")} ${b.pages}`);
+    return parts.join(", ");
+  }
+
+  async function fetchBibTeX(): Promise<string | null> {
+    if (!book) return null;
+    try {
+      return await api.getBibTeX(book.id);
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : i18n.t("book.bibtexFailed"));
+      return null;
+    }
+  }
+
+  async function copyBibTeX() {
+    if (!book || bibtexBusy) return;
+    bibtexBusy = true;
+    try {
+      const text = await fetchBibTeX();
+      if (!text) return;
+      await navigator.clipboard.writeText(text);
+      toast.success(i18n.t("book.bibtexCopied"));
+    } catch {
+      toast.error(i18n.t("book.bibtexFailed"));
+    } finally {
+      bibtexBusy = false;
+    }
+  }
+
+  async function downloadBibTeX() {
+    if (!book || bibtexBusy) return;
+    bibtexBusy = true;
+    try {
+      const text = await fetchBibTeX();
+      if (!text) return;
+      const blob = new Blob([text], { type: "application/x-bibtex" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${book.title.replace(/[^\w.-]+/g, "_").slice(0, 80) || "citation"}.bib`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      bibtexBusy = false;
+    }
+  }
+
   async function toggleOffline() {
     if (!book || isAudioFormat(book.format)) return;
     offlineBusy = true;
@@ -351,6 +409,28 @@
                       },
                     ]
                   : []),
+              ]
+            : []),
+          ...(hasCitation(book)
+            ? [
+                {
+                  id: "copy-bibtex",
+                  label: i18n.t("book.copyBibtex"),
+                  icon: Copy,
+                  onclick: () => {
+                    closeMenu();
+                    void copyBibTeX();
+                  },
+                },
+                {
+                  id: "download-bibtex",
+                  label: i18n.t("book.downloadBibtex"),
+                  icon: FileText,
+                  onclick: () => {
+                    closeMenu();
+                    void downloadBibTeX();
+                  },
+                },
               ]
             : []),
           {
@@ -676,6 +756,86 @@
                   {c.name}
                 </button>
               {/each}
+            </div>
+          </div>
+        {/if}
+
+        {#if hasCitation(book)}
+          <div class="mt-6 space-y-2">
+            <p class="text-sm font-medium text-fg">{i18n.t("book.citation")}</p>
+            {#if book.journal}
+              <p class="text-sm text-muted">
+                <span class="text-subtle">{i18n.t("book.journal")}:</span>
+                {book.journal}
+              </p>
+            {/if}
+            {#if book.publishedYear}
+              <p class="text-sm text-muted">
+                <span class="text-subtle">{i18n.t("book.year")}:</span>
+                {book.publishedYear}
+              </p>
+            {/if}
+            {#if citationVolumeLine(book)}
+              <p class="text-sm text-muted">{citationVolumeLine(book)}</p>
+            {/if}
+            {#if book.doi}
+              <p class="text-sm text-muted">
+                <span class="text-subtle">{i18n.t("book.doi")}:</span>
+                <a
+                  class="text-primary underline-offset-2 hover:underline"
+                  href={`https://doi.org/${book.doi}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {book.doi}
+                </a>
+              </p>
+            {/if}
+            {#if book.arxivId}
+              <p class="text-sm text-muted">
+                <span class="text-subtle">{i18n.t("book.arxiv")}:</span>
+                <a
+                  class="text-primary underline-offset-2 hover:underline"
+                  href={`https://arxiv.org/abs/${book.arxivId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {book.arxivId}
+                </a>
+              </p>
+            {/if}
+            {#if book.pubmedId}
+              <p class="text-sm text-muted">
+                <span class="text-subtle">{i18n.t("book.pubmed")}:</span>
+                <a
+                  class="text-primary underline-offset-2 hover:underline"
+                  href={`https://pubmed.ncbi.nlm.nih.gov/${book.pubmedId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {book.pubmedId}
+                </a>
+              </p>
+            {/if}
+            <div class="flex flex-wrap gap-2 pt-1">
+              <Button
+                variant="ghost"
+                class="min-h-10 ring-1 ring-border text-xs"
+                loading={bibtexBusy}
+                onclick={() => void copyBibTeX()}
+              >
+                <Copy size={14} />
+                {i18n.t("book.copyBibtex")}
+              </Button>
+              <Button
+                variant="ghost"
+                class="min-h-10 ring-1 ring-border text-xs"
+                loading={bibtexBusy}
+                onclick={() => void downloadBibTeX()}
+              >
+                <FileText size={14} />
+                {i18n.t("book.downloadBibtex")}
+              </Button>
             </div>
           </div>
         {/if}

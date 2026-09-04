@@ -367,6 +367,13 @@ func (s *Scanner) process(ctx context.Context, fs libfs.LibraryFS, j job, indexe
 		meta := parsePDF(parsePath)
 		book.Title = meta.Title
 		book.Author = meta.Author
+		if meta.Description != "" {
+			book.Description = meta.Description
+		}
+		book.DOI = meta.DOI
+		book.ArxivID = meta.ArxivID
+		book.PubmedID = meta.PubmedID
+		book.Journal = meta.Journal
 		coverData = meta.CoverData
 		book.HasCover = len(coverData) > 0
 	case models.FormatMOBI, models.FormatAZW3, models.FormatAZW:
@@ -409,6 +416,7 @@ func (s *Scanner) process(ctx context.Context, fs libfs.LibraryFS, j job, indexe
 	}
 	applyFilenameMeta(book, parseFilenameMeta(j.relPath))
 	enrichBookMetadata(ctx, book, isbn, asin)
+	enrichScholarlyMetadata(ctx, book)
 	normalizeBookText(book, j.relPath)
 
 	if book.Title == "" {

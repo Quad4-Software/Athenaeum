@@ -63,6 +63,7 @@ func (s *Server) registerAPI(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/books/{id}/chapters", s.handleGetChapters)
 
 	s.registerBookEditRoutes(mux)
+	s.registerBibTeXRoutes(mux)
 	s.registerMetadataJobRoutes(mux)
 	s.registerSystemRoutes(mux)
 	s.registerSettingsRoutes(mux)

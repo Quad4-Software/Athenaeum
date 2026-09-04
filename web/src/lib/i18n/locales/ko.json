@@ -34,7 +34,8 @@
     "scanning": "스캔 중...",
     "settings": "설정",
     "shelfAuto": "자동",
-    "shelfSmart": "똑똑한"
+    "shelfSmart": "똑똑한",
+    "papers": "Papers"
   },
   "search": {
     "placeholder": "제목, 작가 또는 시리즈 검색...",
@@ -129,7 +130,11 @@
       "libraryFallback": "도서관",
       "collectionFallback": "컬렉션",
       "clearAll": "모두 지우기"
-    }
+    },
+    "importBibtex": "Import BibTeX",
+    "importBibtexHint": "Match .bib entries to existing PDFs by DOI, arXiv, PMID, or title",
+    "importBibtexDone": "BibTeX import: {updated} updated, {matched} matched, {unmatched} unmatched",
+    "importBibtexFailed": "BibTeX import failed"
   },
   "book": {
     "moreActions": "추가 작업",
@@ -178,7 +183,20 @@
     "offlineCaching": "{pct}% 캐싱 중",
     "offlineStarted": "오프라인 다운로드가 시작되었습니다.",
     "offlineCleared": "오프라인 사본이 삭제됨",
-    "offlineFailed": "오프라인 캐시 실패"
+    "offlineFailed": "오프라인 캐시 실패",
+    "journal": "Journal",
+    "year": "Year",
+    "volume": "Volume",
+    "issue": "Issue",
+    "pages": "Pages",
+    "doi": "DOI",
+    "arxiv": "arXiv",
+    "pubmed": "PubMed",
+    "citation": "Citation",
+    "downloadBibtex": "Download BibTeX",
+    "copyBibtex": "Copy BibTeX",
+    "bibtexCopied": "BibTeX copied",
+    "bibtexFailed": "Failed to get BibTeX"
   },
   "confirm": {
     "confirm": "확인",

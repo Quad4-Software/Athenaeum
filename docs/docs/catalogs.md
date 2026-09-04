@@ -20,6 +20,7 @@ the same credentials as the web UI, or an API key).
 | `/opds/search?q=` | Search feed |
 | `/opds/comics` | Comics-oriented feed |
 | `/opds/kindle` | Kindle-friendly feed |
+| `/opds/papers` | Research papers (DOI / arXiv / PMID) |
 
 Feeds include cover thumbnails, per-user library filtering, and reading
 progress in entry summaries where available. Point KOReader, Pluto, or similar

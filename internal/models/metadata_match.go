@@ -14,6 +14,9 @@ type MetadataSearchQuery struct {
 	Author    string   `json:"author"`
 	ISBN      string   `json:"isbn"`
 	ASIN      string   `json:"asin"`
+	DOI       string   `json:"doi,omitempty"`
+	ArxivID   string   `json:"arxivId,omitempty"`
+	PubmedID  string   `json:"pubmedId,omitempty"`
 	Providers []string `json:"providers,omitempty"`
 }
 
@@ -31,6 +34,13 @@ type MetadataMatch struct {
 	ASIN          string  `json:"asin,omitempty"`
 	CoverURL      string  `json:"coverUrl,omitempty"`
 	PublishedYear int     `json:"publishedYear,omitempty"`
+	DOI           string  `json:"doi,omitempty"`
+	ArxivID       string  `json:"arxivId,omitempty"`
+	PubmedID      string  `json:"pubmedId,omitempty"`
+	Journal       string  `json:"journal,omitempty"`
+	Volume        string  `json:"volume,omitempty"`
+	Issue         string  `json:"issue,omitempty"`
+	Pages         string  `json:"pages,omitempty"`
 }
 
 // MetadataSearchResult lists matches from one or more providers.

@@ -12,9 +12,15 @@ import (
 )
 
 type pdfMeta struct {
-	Title     string
-	Author    string
-	CoverData []byte
+	Title       string
+	Author      string
+	Description string
+	DOI         string
+	ArxivID     string
+	PubmedID    string
+	Journal     string
+	Keywords    string
+	CoverData   []byte
 }
 
 var (
@@ -47,6 +53,7 @@ func parsePDF(filePath string) pdfMeta {
 	if meta.Title == "" {
 		meta.Title = fallback.Title
 	}
+	applyPDFScholarlyIDs(&meta, data)
 	meta.CoverData = extractPDFCoverFromFile(filePath)
 	return meta
 }
@@ -63,6 +70,7 @@ func pdfInfoFromFile(filePath string, fallback pdfMeta) pdfMeta {
 	if meta.Title == "" {
 		meta.Title = fallback.Title
 	}
+	applyPDFScholarlyIDs(&meta, data)
 	return meta
 }
 
@@ -301,6 +309,7 @@ func pdfInfoFromPDF(data []byte) pdfMeta {
 	if meta.Title == "" && meta.Author == "" {
 		applyPDFInfoHex(&meta, pdfHexRe.FindAllSubmatch(tail, -1))
 	}
+	applyPDFXMP(&meta, data)
 	return meta
 }
 
@@ -319,6 +328,14 @@ func applyPDFInfoMatches(meta *pdfMeta, matches [][][]byte) {
 		case "Author":
 			if meta.Author == "" {
 				meta.Author = val
+			}
+		case "Subject":
+			if meta.Description == "" {
+				meta.Description = val
+			}
+		case "Keywords":
+			if meta.Keywords == "" {
+				meta.Keywords = val
 			}
 		}
 	}
@@ -340,6 +357,92 @@ func applyPDFInfoHex(meta *pdfMeta, matches [][][]byte) {
 			if meta.Author == "" {
 				meta.Author = val
 			}
+		case "Subject":
+			if meta.Description == "" {
+				meta.Description = val
+			}
+		case "Keywords":
+			if meta.Keywords == "" {
+				meta.Keywords = val
+			}
+		}
+	}
+}
+
+var (
+	xmpTitleRe       = regexp.MustCompile(`(?is)<dc:title[^>]*>.*?<rdf:li[^>]*>([^<]+)</rdf:li>`)
+	xmpCreatorRe     = regexp.MustCompile(`(?is)<dc:creator[^>]*>.*?<rdf:li[^>]*>([^<]+)</rdf:li>`)
+	xmpDescRe        = regexp.MustCompile(`(?is)<dc:description[^>]*>.*?<rdf:li[^>]*>([^<]+)</rdf:li>`)
+	xmpDOIPrismRe    = regexp.MustCompile(`(?is)<prism:doi>([^<]+)</prism:doi>`)
+	xmpIdentifierRe  = regexp.MustCompile(`(?is)<dc:identifier[^>]*>(?:<rdf:li[^>]*>)?([^<]+)`)
+	xmpSimpleTitleRe = regexp.MustCompile(`(?is)<dc:title>([^<]+)</dc:title>`)
+)
+
+func applyPDFXMP(meta *pdfMeta, data []byte) {
+	text := string(data)
+	if meta.Title == "" {
+		if m := xmpTitleRe.FindStringSubmatch(text); len(m) > 1 {
+			meta.Title = strings.TrimSpace(m[1])
+		} else if m := xmpSimpleTitleRe.FindStringSubmatch(text); len(m) > 1 {
+			meta.Title = strings.TrimSpace(m[1])
+		}
+	}
+	if meta.Author == "" {
+		if m := xmpCreatorRe.FindStringSubmatch(text); len(m) > 1 {
+			meta.Author = strings.TrimSpace(m[1])
+		}
+	}
+	if meta.Description == "" {
+		if m := xmpDescRe.FindStringSubmatch(text); len(m) > 1 {
+			meta.Description = strings.TrimSpace(m[1])
+		}
+	}
+	if meta.DOI == "" {
+		if m := xmpDOIPrismRe.FindStringSubmatch(text); len(m) > 1 {
+			meta.DOI = NormalizeDOI(m[1])
+		}
+	}
+	if meta.DOI == "" || meta.ArxivID == "" {
+		for _, m := range xmpIdentifierRe.FindAllStringSubmatch(text, -1) {
+			if len(m) < 2 {
+				continue
+			}
+			id := strings.TrimSpace(m[1])
+			if meta.DOI == "" {
+				if d := NormalizeDOI(id); d != "" {
+					meta.DOI = d
+				}
+			}
+			if meta.ArxivID == "" {
+				if a := NormalizeArxivID(id); a != "" {
+					meta.ArxivID = a
+				}
+			}
+		}
+	}
+}
+
+func applyPDFScholarlyIDs(meta *pdfMeta, data []byte) {
+	// Prefer metadata regions over raw binary to reduce false-positive DOIs.
+	var regions []string
+	for _, region := range metadataScanRegions(data) {
+		regions = append(regions, string(region))
+	}
+	if meta.Keywords != "" {
+		regions = append(regions, meta.Keywords)
+	}
+	if meta.Description != "" {
+		regions = append(regions, meta.Description)
+	}
+	for _, text := range regions {
+		if meta.DOI == "" {
+			meta.DOI = findDOIInText(text)
+		}
+		if meta.ArxivID == "" {
+			meta.ArxivID = findArxivInText(text)
+		}
+		if meta.DOI != "" && meta.ArxivID != "" {
+			return
 		}
 	}
 }

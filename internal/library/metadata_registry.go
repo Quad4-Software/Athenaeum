@@ -10,10 +10,13 @@ import (
 
 // MetadataSearchInput carries normalized search terms for a provider.
 type MetadataSearchInput struct {
-	Title  string
-	Author string
-	ISBN   string
-	ASIN   string
+	Title    string
+	Author   string
+	ISBN     string
+	ASIN     string
+	DOI      string
+	ArxivID  string
+	PubmedID string
 }
 
 // MetadataProviderDef registers one external metadata source.
@@ -65,6 +68,36 @@ func init() {
 				return []models.MetadataMatch{m}
 			}
 			return nil
+		},
+	})
+	RegisterMetadataProvider(MetadataProviderDef{
+		Info: models.MetadataProvider{
+			ID:          "crossref",
+			Label:       "Crossref",
+			Description: "Journal articles and scholarly works by DOI",
+		},
+		Search: func(ctx context.Context, s *metadataSearcher, in MetadataSearchInput) []models.MetadataMatch {
+			return s.searchCrossref(ctx, in)
+		},
+	})
+	RegisterMetadataProvider(MetadataProviderDef{
+		Info: models.MetadataProvider{
+			ID:          "arxiv",
+			Label:       "arXiv",
+			Description: "Preprints by arXiv ID or title",
+		},
+		Search: func(ctx context.Context, s *metadataSearcher, in MetadataSearchInput) []models.MetadataMatch {
+			return s.searchArxiv(ctx, in)
+		},
+	})
+	RegisterMetadataProvider(MetadataProviderDef{
+		Info: models.MetadataProvider{
+			ID:          "pubmed",
+			Label:       "PubMed",
+			Description: "Medical and life-science literature by PMID or title",
+		},
+		Search: func(ctx context.Context, s *metadataSearcher, in MetadataSearchInput) []models.MetadataMatch {
+			return s.searchPubmed(ctx, in)
 		},
 	})
 }
