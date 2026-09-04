@@ -448,7 +448,8 @@ export async function handleDemoRequest(
   }
 
   if (
-    (urlPath === opURL("POST__api_library_scan") || urlPath.match(/^\/api\/libraries\/\d+\/scan$/)) &&
+    (urlPath === opURL("POST__api_library_scan") ||
+      urlPath.match(/^\/api\/libraries\/\d+\/scan$/)) &&
     method === "POST"
   ) {
     return jsonResponse({ started: false });
@@ -499,7 +500,8 @@ export async function handleDemoRequest(
     return jsonResponse(libs);
   }
 
-  if (urlPath === opURL("GET__api_collections") && method === "GET") return jsonResponse(collections());
+  if (urlPath === opURL("GET__api_collections") && method === "GET")
+    return jsonResponse(collections());
 
   if (urlPath === opURL("GET__api_favorites") && method === "GET") {
     return jsonResponse({ ids: [...favorites] });

@@ -191,10 +191,9 @@ export const booksApi = {
     }),
 
   removeBookTag: (bookId: number, tagId: number) =>
-    request<{ ok: boolean }>(
-      opURL("DELETE__api_books__id__tags__tagId", { id: bookId, tagId }),
-      { method: "DELETE" },
-    ),
+    request<{ ok: boolean }>(opURL("DELETE__api_books__id__tags__tagId", { id: bookId, tagId }), {
+      method: "DELETE",
+    }),
 
   getRating: (bookId: number) =>
     request<BookRating>(opURL("GET__api_books__id__rating", { id: bookId })),

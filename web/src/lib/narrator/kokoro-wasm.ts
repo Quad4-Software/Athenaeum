@@ -1,6 +1,11 @@
 import type { NarratorEngine, NarratorVoice, SpeakOptions, SpeakResult } from "./types";
 
-import { KOKORO_LOCAL_MODEL_PATH, KOKORO_MODEL_ID, KOKORO_ORT_PATH } from "./kokoro-paths";
+import {
+  KOKORO_LOCAL_MODEL_PATH,
+  KOKORO_MODEL_ID,
+  KOKORO_ORT_MJS,
+  KOKORO_ORT_WASM,
+} from "./kokoro-paths";
 import { UTTERANCE_HARD_MAX } from "./text";
 
 const DEFAULT_VOICE = "af_heart";
@@ -36,13 +41,24 @@ type KokoroModule = {
       },
     ): Promise<KokoroTTS>;
   };
-  env: { wasmPaths: string | Record<string, string> };
+  env: {
+    wasmPaths: string | { mjs?: string; wasm?: string };
+  };
 };
 
 type TransformersEnv = {
   allowLocalModels: boolean;
   allowRemoteModels: boolean;
   localModelPath: string;
+  backends?: {
+    onnx?: {
+      wasm?: {
+        wasmPaths?: string | { mjs?: string; wasm?: string };
+        numThreads?: number;
+        proxy?: boolean;
+      };
+    };
+  };
 };
 
 let pipelinePromise: Promise<KokoroTTS> | null = null;
@@ -73,14 +89,31 @@ export function onKokoroWasmLoading(listener: (value: boolean) => void): () => v
   };
 }
 
+function ortWasmPaths(): { mjs: string; wasm: string } {
+  return { mjs: KOKORO_ORT_MJS, wasm: KOKORO_ORT_WASM };
+}
+
 async function configureLocalRuntime(kokoroEnv: KokoroModule["env"]): Promise<void> {
   const { env: transformersEnv } = (await import("@huggingface/transformers")) as {
     env: TransformersEnv;
   };
+
+  // Serve weights from the embedded /models tree only (no Hub fetch).
   transformersEnv.allowLocalModels = true;
   transformersEnv.allowRemoteModels = false;
   transformersEnv.localModelPath = KOKORO_LOCAL_MODEL_PATH;
-  kokoroEnv.wasmPaths = KOKORO_ORT_PATH;
+
+  const paths = ortWasmPaths();
+  // Absolute file URLs (not a directory prefix) avoid ORT guessing hashed Vite names.
+  kokoroEnv.wasmPaths = paths;
+  if (transformersEnv.backends?.onnx?.wasm) {
+    transformersEnv.backends.onnx.wasm.wasmPaths = paths;
+    transformersEnv.backends.onnx.wasm.proxy = false;
+    // Threaded WASM needs cross-origin isolation (COOP/COEP). Without it, force 1 thread.
+    if (typeof crossOriginIsolated === "undefined" || !crossOriginIsolated) {
+      transformersEnv.backends.onnx.wasm.numThreads = 1;
+    }
+  }
 }
 
 async function createPipeline(): Promise<KokoroTTS> {
@@ -88,23 +121,9 @@ async function createPipeline(): Promise<KokoroTTS> {
   const { KokoroTTS, env } = mod;
   await configureLocalRuntime(env);
 
-  const canWebGPU =
-    typeof navigator !== "undefined" &&
-    "gpu" in navigator &&
-    typeof (navigator as Navigator & { gpu?: unknown }).gpu !== "undefined";
-
-  // Full builds embed q8 (model_quantized.onnx) only. No Hub fetch.
-  if (canWebGPU) {
-    try {
-      return await KokoroTTS.from_pretrained(KOKORO_MODEL_ID, {
-        dtype: "q8",
-        device: "webgpu",
-      });
-    } catch {
-      // Fall through to WASM (no SharedArrayBuffer / COOP-COEP required).
-    }
-  }
-
+  // Embedded build ships model_quantized.onnx (q8). That dtype targets the WASM EP.
+  // Trying WebGPU+q8 first often throws (e.g. "No available adapters") and can leave
+  // transformers.js unable to open a later WASM session (poisoned wasmInitPromise).
   return await KokoroTTS.from_pretrained(KOKORO_MODEL_ID, {
     dtype: "q8",
     device: "wasm",
@@ -120,6 +139,7 @@ function ensurePipeline(): Promise<KokoroTTS> {
     const pending = createPipeline()
       .catch((err) => {
         pipelinePromise = null;
+        console.error("[kokoro] model init failed", err);
         throw err;
       })
       .finally(() => {
@@ -133,6 +153,12 @@ function ensurePipeline(): Promise<KokoroTTS> {
 /** Warm the model (first call loads embedded weights). Safe to call repeatedly. */
 export function preloadKokoroWasm(): Promise<void> {
   return ensurePipeline().then(() => undefined);
+}
+
+/** Drop a failed/cached pipeline so the next speak retries init. */
+export function resetKokoroWasm(): void {
+  pipelinePromise = null;
+  setLoading(false);
 }
 
 function clampSpeed(rate: number): number {
@@ -228,6 +254,7 @@ export function createKokoroWasmEngine(): NarratorEngine {
               finish("cancelled");
               return;
             }
+            console.error("[kokoro] speak failed", err);
             finish("error");
           }
         })();

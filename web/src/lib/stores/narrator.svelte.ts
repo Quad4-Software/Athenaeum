@@ -5,6 +5,7 @@ import {
   isKokoroWasmAvailable,
   onKokoroWasmLoading,
   preloadKokoroWasm,
+  resetKokoroWasm,
 } from "$lib/narrator/kokoro";
 import type { NarratorEngine, NarratorProvider, NarratorVoice } from "$lib/narrator/types";
 import { toast } from "$lib/stores/toast.svelte";
@@ -194,6 +195,7 @@ class NarratorStore {
       })
       .catch(() => {
         clearTimeout(timer);
+        resetKokoroWasm();
         this.kokoroReady = null;
         if (toastId != null) toast.done(toastId, "Kokoro failed to load", "error");
         else toast.error("Kokoro failed to load");

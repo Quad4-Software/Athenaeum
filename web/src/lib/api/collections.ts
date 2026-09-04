@@ -21,10 +21,9 @@ export const collectionsApi = {
     request<void>(opURL("DELETE__api_collections__id", { id }), { method: "DELETE" }),
 
   addToCollection: (collectionId: number, bookId: number) =>
-    request<void>(
-      opURL("POST__api_collections__id__books__bookId", { id: collectionId, bookId }),
-      { method: "POST" },
-    ),
+    request<void>(opURL("POST__api_collections__id__books__bookId", { id: collectionId, bookId }), {
+      method: "POST",
+    }),
 
   removeFromCollection: (collectionId: number, bookId: number) =>
     request<void>(

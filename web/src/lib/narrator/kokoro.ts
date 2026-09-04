@@ -7,6 +7,7 @@ export {
   isKokoroWasmLoading,
   onKokoroWasmLoading,
   preloadKokoroWasm,
+  resetKokoroWasm,
   KNOWN_VOICES,
 } from "./kokoro-wasm";
 

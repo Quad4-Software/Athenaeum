@@ -250,8 +250,7 @@ export const authApi = {
       body: JSON.stringify({ email }),
     }),
 
-  getInviteMeta: (token: string) =>
-    request<InviteMeta>(opURL("GET__api_invite__token", { token })),
+  getInviteMeta: (token: string) => request<InviteMeta>(opURL("GET__api_invite__token", { token })),
 
   acceptInvite: (token: string, body: { username?: string; password?: string }) =>
     request<Record<string, unknown>>(opURL("POST__api_invite__token__accept", { token }), {

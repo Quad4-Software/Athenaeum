@@ -9,7 +9,16 @@ import { i18nApi } from "./i18n";
 import { apiOp, apiPath, apiOperations } from "./generated/paths";
 import { opURL } from "./op";
 
-export { ApiError, restoreSession, ensureCsrf, clearCsrfCache, apiOp, apiPath, apiOperations, opURL };
+export {
+  ApiError,
+  restoreSession,
+  ensureCsrf,
+  clearCsrfCache,
+  apiOp,
+  apiPath,
+  apiOperations,
+  opURL,
+};
 
 export const api = {
   health: () => request<HealthResponse>(opURL("GET__api_health")),

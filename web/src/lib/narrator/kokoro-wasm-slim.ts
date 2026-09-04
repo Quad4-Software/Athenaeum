@@ -36,6 +36,9 @@ export function preloadKokoroWasm(): Promise<void> {
   return Promise.resolve();
 }
 
+/** No-op. Slim builds have nothing to reset. */
+export function resetKokoroWasm(): void {}
+
 /** Engine that always fails speak. Present so imports stay typed. */
 export function createKokoroWasmEngine(): NarratorEngine {
   return {
