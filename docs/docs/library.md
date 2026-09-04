@@ -102,6 +102,10 @@ Open an EPUB and use narration to listen while you read.
   Settings -> Administration -> Narration (TTS)
   (`http://kokoro:8880` on the Compose network, or `http://127.0.0.1:8880`
   from the host). Works with full and slim binaries.
+- **CSP:** the default policy allows Hugging Face hosts so the browser can
+  download ONNX models. If you set a custom `cspPolicy`, include
+  `https://huggingface.co`, `https://*.huggingface.co`, and `https://*.hf.co`
+  in `connect-src`.
 
 Admin/API endpoints: `GET/PUT /api/admin/tts`, `POST /api/admin/tts/test`,
 `GET /api/tts/status`, `GET /api/tts/voices`, `POST /api/tts/synthesize`.

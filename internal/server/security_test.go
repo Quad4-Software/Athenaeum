@@ -53,4 +53,7 @@ func TestSecurityHeadersSPABlocksFraming(t *testing.T) {
 	if !strings.Contains(csp, "script-src 'self' 'wasm-unsafe-eval'") {
 		t.Fatalf("spa CSP = %q, want script-src wasm-unsafe-eval for PDF.js ICC", csp)
 	}
+	if !strings.Contains(csp, "https://huggingface.co") || !strings.Contains(csp, "https://*.huggingface.co") {
+		t.Fatalf("spa CSP = %q, want Hugging Face hosts for Kokoro WASM models", csp)
+	}
 }

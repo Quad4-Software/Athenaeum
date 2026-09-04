@@ -99,7 +99,7 @@ and metrics via Settings -> Administration -> Server or
 | metricsAuth | Require Basic Auth on `/metrics` |
 | trustedProxies | Comma-separated IPs/CIDRs that may send X-Forwarded-* headers |
 | corsEnabled / corsOrigins | CORS for cross-origin API access |
-| cspEnabled / cspPolicy | Content-Security-Policy header (empty = default) |
+| cspEnabled / cspPolicy | Content-Security-Policy header (empty = default, which allows Hugging Face hosts for in-browser Kokoro models) |
 | autoScanEnabled / autoScanIntervalSec | Background library rescan (min 60s) |
 
 ## Webhooks

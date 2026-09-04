@@ -21,7 +21,8 @@ strictDepBuilds: true
 strictPeerDependencies: true
 trustPolicy: no-downgrade
 verifyDepsBeforeRun: install
-pmOnFail: error
+# Warn on packageManager mismatch so local pnpm 11.x can build when CI pins 11.17.0.
+pmOnFail: warn
 
 # Packages whose publisher history trips trustPolicy on fresh resolve.
 # Review periodically. Prefer removing once maintainers stabilize ownership.
