@@ -228,84 +228,34 @@ jobs:
           MUTATION_MCOVER: "40"
         run: bash scripts/mutation-go.sh
 
+  targets:
+    name: Build targets
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      include: ${{ steps.gen.outputs.include }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Matrix from platforms.sh
+        id: gen
+        run: |
+          {
+            echo "include<<EOF"
+            bash scripts/platforms.sh gha-include
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
   go-build:
     name: Build (${{ matrix.name }})
+    needs: targets
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: linux-amd64
-            goos: linux
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: linux-arm64
-            goos: linux
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: linux-armv6
-            goos: linux
-            goarch: arm
-            goarm: "6"
-            suffix: armv6
-          - name: linux-armv7
-            goos: linux
-            goarch: arm
-            goarm: "7"
-            suffix: armv7
-          - name: linux-riscv64
-            goos: linux
-            goarch: riscv64
-            goarm: ""
-            suffix: riscv64
-          - name: darwin-amd64
-            goos: darwin
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: darwin-arm64
-            goos: darwin
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: windows-amd64
-            goos: windows
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: windows-arm64
-            goos: windows
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: freebsd-amd64
-            goos: freebsd
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: freebsd-arm64
-            goos: freebsd
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: openbsd-amd64
-            goos: openbsd
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: openbsd-arm64
-            goos: openbsd
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: netbsd-amd64
-            goos: netbsd
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
+        include: ${{ fromJSON(needs.targets.outputs.include) }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -321,14 +271,12 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
-          CGO_ENABLED: "0"
-          SUFFIX: ${{ matrix.suffix }}
-        run: |
-          out="bin/athenaeum-${GOOS}-${SUFFIX}"
-          if [[ "${GOOS}" == "windows" ]]; then out="${out}.exe"; fi
-          mkdir -p bin
-          go build -mod=vendor -trimpath -ldflags "-s -w" -o "${out}" ./cmd/athenaeum
-          ls -la "${out}"
+          NAME_STYLE: ci
+          EMBED_VERSION: "0"
+          CHECKSUM: "0"
+          OUT_DIR: bin
+          VERSION: ci
+        run: bash scripts/build-one.sh
 
   self-check:
     name: Self-check (${{ matrix.name }})

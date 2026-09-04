@@ -2,6 +2,7 @@
 # Publishes a unique GitHub Release tag (nightly-YYYYMMDD-HHMMSS-<sha>) and
 # GHCR :nightly image. Unique tags never move (immutable-release safe).
 # Draft -> attach assets -> publish. Actions are SHA-pinned (same as release.yml).
+# Platform matrix and binary naming live in scripts/platforms.sh (single source).
 name: Nightly
 
 on:
@@ -41,6 +42,7 @@ jobs:
       date: ${{ steps.meta.outputs.date }}
       stamp: ${{ steps.meta.outputs.stamp }}
       tag: ${{ steps.meta.outputs.tag }}
+      include: ${{ steps.matrix.outputs.include }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -78,6 +80,15 @@ jobs:
           fi
           echo "should_run=${should_run}" >> "${GITHUB_OUTPUT}"
 
+      - name: Matrix from platforms.sh
+        id: matrix
+        run: |
+          {
+            echo "include<<EOF"
+            bash scripts/platforms.sh gha-include
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
   build:
     name: Build (${{ matrix.name }})
     needs: prepare
@@ -87,77 +98,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: linux-amd64
-            goos: linux
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: linux-arm64
-            goos: linux
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: linux-armv6
-            goos: linux
-            goarch: arm
-            goarm: "6"
-            suffix: armv6
-          - name: linux-armv7
-            goos: linux
-            goarch: arm
-            goarm: "7"
-            suffix: armv7
-          - name: linux-riscv64
-            goos: linux
-            goarch: riscv64
-            goarm: ""
-            suffix: riscv64
-          - name: darwin-amd64
-            goos: darwin
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: darwin-arm64
-            goos: darwin
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: windows-amd64
-            goos: windows
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: windows-arm64
-            goos: windows
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: freebsd-amd64
-            goos: freebsd
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: freebsd-arm64
-            goos: freebsd
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: openbsd-amd64
-            goos: openbsd
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: openbsd-arm64
-            goos: openbsd
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: netbsd-amd64
-            goos: netbsd
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
+        include: ${{ fromJSON(needs.prepare.outputs.include) }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -194,18 +135,10 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
-          CGO_ENABLED: "0"
           VERSION: ${{ needs.prepare.outputs.version }}
-          SUFFIX: ${{ matrix.suffix }}
-        run: |
-          out="athenaeum-slim-${VERSION}-${GOOS}-${SUFFIX}"
-          if [[ "${GOOS}" == "windows" ]]; then out="${out}.exe"; fi
-          go build -mod=vendor -trimpath \
-            -ldflags "-s -w -X athenaeum/internal/version.Version=${VERSION} -X athenaeum/internal/version.WebVersion=${VERSION}" \
-            -o "${out}" ./cmd/athenaeum
-          mkdir -p dist
-          mv "${out}" dist/
-          (cd dist && sha256sum "$(basename "${out}")" > "$(basename "${out}").sha256")
+          SLIM: "1"
+          OUT_DIR: dist
+        run: bash scripts/build-one.sh
 
       - name: Build full frontend
         working-directory: web
@@ -218,18 +151,9 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
-          CGO_ENABLED: "0"
           VERSION: ${{ needs.prepare.outputs.version }}
-          SUFFIX: ${{ matrix.suffix }}
-        run: |
-          out="athenaeum-${VERSION}-${GOOS}-${SUFFIX}"
-          if [[ "${GOOS}" == "windows" ]]; then out="${out}.exe"; fi
-          go build -mod=vendor -trimpath \
-            -ldflags "-s -w -X athenaeum/internal/version.Version=${VERSION} -X athenaeum/internal/version.WebVersion=${VERSION}" \
-            -o "${out}" ./cmd/athenaeum
-          mkdir -p dist
-          mv "${out}" dist/
-          (cd dist && sha256sum "$(basename "${out}")" > "$(basename "${out}").sha256")
+          OUT_DIR: dist
+        run: bash scripts/build-one.sh
 
       - name: Upload binary
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

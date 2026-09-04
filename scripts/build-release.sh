@@ -10,26 +10,9 @@ source "${ROOT}/scripts/platforms.sh"
 
 VERSION="${VERSION:-dev}"
 OUT_DIR="${OUT_DIR:-${ROOT}/dist}"
-mkdir -p "${OUT_DIR}"
+export ROOT VERSION OUT_DIR
 
-LDFLAGS="-s -w -X athenaeum/internal/version.Version=${VERSION} -X athenaeum/internal/version.WebVersion=${VERSION}"
-
-while read -r goos goarch goarm suffix; do
+while read -r goos goarch goarm _suffix; do
   [[ -z "${goos}" || "${goos}" =~ ^# ]] && continue
-  out="$(platforms_artifact_name "${VERSION}" "${goos}" "${goarch}" "${goarm}")"
-  echo "building ${out}"
-  env_args=(CGO_ENABLED=0 "GOOS=${goos}" "GOARCH=${goarch}")
-  if [[ "${goarm}" != "-" ]]; then
-    env_args+=("GOARM=${goarm}")
-  fi
-  env "${env_args[@]}" go build -mod=vendor -trimpath -ldflags "${LDFLAGS}" \
-    -o "${OUT_DIR}/${out}" "${ROOT}/cmd/athenaeum"
-  (
-    cd "${OUT_DIR}"
-    if command -v sha256sum >/dev/null 2>&1; then
-      sha256sum "${out}" > "${out}.sha256"
-    elif command -v shasum >/dev/null 2>&1; then
-      shasum -a 256 "${out}" > "${out}.sha256"
-    fi
-  )
+  GOOS="${goos}" GOARCH="${goarch}" GOARM="${goarm}" platforms_build_one
 done < <(platforms_list)

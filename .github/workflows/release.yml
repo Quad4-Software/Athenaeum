@@ -4,6 +4,8 @@
 # Immutable releases (repo setting): assets and the Git tag lock on publish.
 # Always create a draft, attach every asset, then publish. Never move or reuse
 # a published tag. See https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases
+#
+# Platform matrix and binary naming live in scripts/platforms.sh (single source).
 name: Release
 
 on:
@@ -35,84 +37,34 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  targets:
+    name: Release targets
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      include: ${{ steps.gen.outputs.include }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Matrix from platforms.sh
+        id: gen
+        run: |
+          {
+            echo "include<<EOF"
+            bash scripts/platforms.sh gha-include
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
   build:
     name: Build (${{ matrix.name }})
+    needs: targets
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: linux-amd64
-            goos: linux
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: linux-arm64
-            goos: linux
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: linux-armv6
-            goos: linux
-            goarch: arm
-            goarm: "6"
-            suffix: armv6
-          - name: linux-armv7
-            goos: linux
-            goarch: arm
-            goarm: "7"
-            suffix: armv7
-          - name: linux-riscv64
-            goos: linux
-            goarch: riscv64
-            goarm: ""
-            suffix: riscv64
-          - name: darwin-amd64
-            goos: darwin
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: darwin-arm64
-            goos: darwin
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: windows-amd64
-            goos: windows
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: windows-arm64
-            goos: windows
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: freebsd-amd64
-            goos: freebsd
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: freebsd-arm64
-            goos: freebsd
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: openbsd-amd64
-            goos: openbsd
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
-          - name: openbsd-arm64
-            goos: openbsd
-            goarch: arm64
-            goarm: ""
-            suffix: arm64
-          - name: netbsd-amd64
-            goos: netbsd
-            goarch: amd64
-            goarm: ""
-            suffix: amd64
+        include: ${{ fromJSON(needs.targets.outputs.include) }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -147,10 +99,7 @@ jobs:
         env:
           REF_NAME: ${{ github.ref_name }}
           INPUT_TAG: ${{ inputs.tag }}
-        run: |
-          ver="${INPUT_TAG:-${REF_NAME}}"
-          ver="${ver#v}"
-          echo "version=${ver}" >> "${GITHUB_OUTPUT}"
+        run: bash scripts/ci-release-meta.sh
 
       - name: Build slim frontend
         working-directory: web
@@ -161,18 +110,10 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
-          CGO_ENABLED: "0"
           VERSION: ${{ steps.meta.outputs.version }}
-          SUFFIX: ${{ matrix.suffix }}
-        run: |
-          out="athenaeum-slim-${VERSION}-${GOOS}-${SUFFIX}"
-          if [[ "${GOOS}" == "windows" ]]; then out="${out}.exe"; fi
-          go build -mod=vendor -trimpath \
-            -ldflags "-s -w -X athenaeum/internal/version.Version=${VERSION} -X athenaeum/internal/version.WebVersion=${VERSION}" \
-            -o "${out}" ./cmd/athenaeum
-          mkdir -p dist
-          mv "${out}" dist/
-          (cd dist && sha256sum "$(basename "${out}")" > "$(basename "${out}").sha256")
+          SLIM: "1"
+          OUT_DIR: dist
+        run: bash scripts/build-one.sh
 
       - name: Build full frontend
         working-directory: web
@@ -185,18 +126,9 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
-          CGO_ENABLED: "0"
           VERSION: ${{ steps.meta.outputs.version }}
-          SUFFIX: ${{ matrix.suffix }}
-        run: |
-          out="athenaeum-${VERSION}-${GOOS}-${SUFFIX}"
-          if [[ "${GOOS}" == "windows" ]]; then out="${out}.exe"; fi
-          go build -mod=vendor -trimpath \
-            -ldflags "-s -w -X athenaeum/internal/version.Version=${VERSION} -X athenaeum/internal/version.WebVersion=${VERSION}" \
-            -o "${out}" ./cmd/athenaeum
-          mkdir -p dist
-          mv "${out}" dist/
-          (cd dist && sha256sum "$(basename "${out}")" > "$(basename "${out}").sha256")
+          OUT_DIR: dist
+        run: bash scripts/build-one.sh
 
       - name: Upload binary
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -236,11 +168,7 @@ jobs:
         env:
           REF_NAME: ${{ github.ref_name }}
           INPUT_TAG: ${{ inputs.tag }}
-        run: |
-          ver="${INPUT_TAG:-${REF_NAME}}"
-          ver="${ver#v}"
-          echo "version=${ver}" >> "${GITHUB_OUTPUT}"
-          echo "tag=v${ver}" >> "${GITHUB_OUTPUT}"
+        run: bash scripts/ci-release-meta.sh
 
       - name: Log in to GHCR
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -255,9 +183,9 @@ jobs:
         with:
           images: ${{ steps.image.outputs.name }}
           tags: |
-            type=semver,pattern={{version}},value=${{ steps.ver.outputs.tag }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.ver.outputs.tag }}
-            type=raw,value=latest,enable=${{ startsWith(steps.ver.outputs.tag, 'v') && !contains(steps.ver.outputs.tag, '-') }}
+            type=semver,pattern={{version}},value=${{ steps.ver.outputs.image_tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.ver.outputs.image_tag }}
+            type=raw,value=latest,enable=${{ startsWith(steps.ver.outputs.image_tag, 'v') && !contains(steps.ver.outputs.image_tag, '-') }}
             type=sha,prefix=sha-,format=short
 
       - name: Set up QEMU
@@ -313,14 +241,7 @@ jobs:
         env:
           REF_NAME: ${{ github.ref_name }}
           INPUT_TAG: ${{ inputs.tag }}
-        run: |
-          tag="${INPUT_TAG:-${REF_NAME}}"
-          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
-          if [[ "${tag}" == *-* ]]; then
-            echo "prerelease=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "prerelease=false" >> "${GITHUB_OUTPUT}"
-          fi
+        run: bash scripts/ci-release-meta.sh
 
       - name: Guard published immutable release
         env:
