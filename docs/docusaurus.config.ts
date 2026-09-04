@@ -5,11 +5,11 @@ import type * as Preset from '@docusaurus/preset-classic';
 const githubRepo =
   process.env.GITHUB_REPOSITORY ??
   process.env.DOCUSAURUS_GITHUB_REPO ??
-  'ivan/reader';
+  'Quad4-Software/Athenaeum';
 const [organizationName, projectName] = githubRepo.split('/');
-const baseUrl =
-  process.env.DOCUSAURUS_BASE_URL ??
-  (process.env.CI ? `/${projectName}/` : '/');
+// Custom domain serves at the site root. Project Pages path (/repo/) is opt-in via env.
+const baseUrl = process.env.DOCUSAURUS_BASE_URL ?? '/';
+const siteUrl = process.env.DOCUSAURUS_URL ?? 'https://athenaeum.quad4.io';
 const githubUrl = `https://github.com/${githubRepo}`;
 const demoHref = 'pathname:///demo/';
 
@@ -22,7 +22,7 @@ const config: Config = {
     v4: true,
   },
 
-  url: process.env.DOCUSAURUS_URL ?? `https://${organizationName}.github.io`,
+  url: siteUrl,
   baseUrl,
   organizationName,
   projectName,
@@ -48,7 +48,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
-          editUrl: `${githubUrl}/tree/main/docs/docs/`,
+          editUrl: `${githubUrl}/tree/master/docs/docs/`,
           showLastUpdateTime: false,
         },
         blog: false,

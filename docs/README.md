@@ -51,12 +51,13 @@ task docs:serve   # preview production build
 
 ## GitHub Pages
 
+Site URL: https://athenaeum.quad4.io (`docs/static/CNAME`).
 `.github/workflows/pages.yml` builds this site and embeds the offline SPA under
-`/demo` for the live demo link. Enable **Settings -> Pages -> GitHub Actions**
-on the repository.
+`/demo`. Enable **Settings -> Pages -> GitHub Actions** and set the custom
+domain to `athenaeum.quad4.io` (DNS CNAME to the Pages host).
 
-| Variable | Purpose |
-| -------- | ------- |
-| `DOCUSAURUS_URL` | Canonical site origin |
-| `DOCUSAURUS_BASE_URL` | Path prefix (for example `/reader/`) |
-| `GITHUB_REPOSITORY` | `owner/repo` for edit links and navbar |
+| Variable | Purpose | Production |
+| -------- | ------- | ---------- |
+| `DOCUSAURUS_URL` | Canonical site origin | `https://athenaeum.quad4.io` |
+| `DOCUSAURUS_BASE_URL` | Path prefix | `/` |
+| `GITHUB_REPOSITORY` | `owner/repo` for edit links and navbar | from Actions |

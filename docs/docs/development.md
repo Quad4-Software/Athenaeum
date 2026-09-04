@@ -109,7 +109,7 @@ Workflows live under .github/workflows/ (actions pinned to full commit SHAs):
 | codeql.yml | push / PR / weekly / manual | CodeQL for Go and JavaScript/TypeScript |
 | release.yml | v* tags / manual | Multi-arch binaries + GitHub Release (SBOM + NOTICE), multi-arch image to GHCR (`linux/amd64`, `arm64`). Draft -> attach assets -> publish for [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases). |
 | nightly.yml | schedule / manual | Unique `nightly-*` prerelease tags (never moves a tag) + GHCR `:nightly` |
-| pages.yml | push (docs/web) / manual | Docs site + offline demo -> GitHub Pages |
+| pages.yml | push (docs/web) / manual | Docs + offline demo -> GitHub Pages at https://athenaeum.quad4.io |
 
 Default GITHUB_TOKEN permissions are read-only. Jobs elevate only what they
 need (security-events, packages, pages, contents / attestations for releases).

@@ -48,8 +48,8 @@ jobs:
         env:
           CI: true
           GITHUB_REPOSITORY: ${{ github.repository }}
-          DOCUSAURUS_BASE_URL: /${{ github.event.repository.name }}/
-          DOCUSAURUS_URL: https://${{ github.repository_owner }}.github.io
+          DOCUSAURUS_BASE_URL: /
+          DOCUSAURUS_URL: https://athenaeum.quad4.io
         run: |
           pnpm install --frozen-lockfile
           pnpm build
@@ -65,9 +65,14 @@ jobs:
           rm -rf docs/build/demo
           mkdir -p docs/build/demo
           cp -a site/. docs/build/demo/
-          # Ensure demo assets resolve under project Pages base path
           if [ -f docs/build/demo/index.html ]; then
             echo "demo index present"
+          fi
+          if [ -f docs/build/CNAME ]; then
+            echo "CNAME=$(cat docs/build/CNAME)"
+          else
+            echo "::error::docs/build/CNAME missing (expected athenaeum.quad4.io)"
+            exit 1
           fi
 
       - name: Upload Pages artifact
