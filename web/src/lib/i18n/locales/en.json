@@ -275,7 +275,7 @@
     "provider": "Narration engine",
     "providerBrowser": "Browser",
     "providerKokoro": "Kokoro",
-    "kokoroLoading": "Loading Kokoro model (first time may take a while)…",
+    "kokoroLoading": "Loading Kokoro model…",
     "noVoices": "No voices available",
     "errUnavailable": "Speech synthesis is not available in this browser",
     "errEmpty": "No readable text on this page",

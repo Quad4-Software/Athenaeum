@@ -1,5 +1,9 @@
 # Build multi-arch binaries, publish a GitHub Release, and push to GHCR.
 # Triggered by version tags (v*) or manual dispatch. Actions are SHA-pinned.
+#
+# Immutable releases (repo setting): assets and the Git tag lock on publish.
+# Always create a draft, attach every asset, then publish. Never move or reuse
+# a published tag. See https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases
 name: Release
 
 on:
@@ -8,7 +12,10 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing tag to rebuild (for example v0.1.0). Leave empty to use the push tag.
+        description: >-
+          Existing tag to finish (must be unpublished or still a draft).
+          Published immutable releases cannot gain assets or move tags.
+          Leave empty on a tag push.
         required: false
         type: string
       push_image:
@@ -169,7 +176,9 @@ jobs:
 
       - name: Build full frontend
         working-directory: web
-        run: pnpm build:fast
+        run: |
+          bash ../scripts/fetch-kokoro-models.sh
+          pnpm build:fast
 
       - name: Cross-compile full
         env:
@@ -284,6 +293,9 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      # Release attestations for immutable publishes (GitHub-generated).
+      attestations: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -304,6 +316,30 @@ jobs:
         run: |
           tag="${INPUT_TAG:-${REF_NAME}}"
           echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          if [[ "${tag}" == *-* ]]; then
+            echo "prerelease=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "prerelease=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Guard published immutable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "No existing release for ${TAG}; will create a draft."
+            exit 0
+          fi
+          draft="$(gh release view "${TAG}" --json isDraft -q .isDraft)"
+          if [[ "${draft}" != "true" ]]; then
+            echo "::error::Release ${TAG} is already published."
+            echo "Immutable releases cannot add/replace assets or move tags."
+            echo "Push a new version tag instead of rebuilding ${TAG}."
+            exit 1
+          fi
+          echo "Reusing draft release ${TAG}."
 
       - name: Generate SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
@@ -327,20 +363,19 @@ jobs:
             echo "Generated at release time alongside athenaeum-sbom.spdx.json."
           } > dist/NOTICE.txt
 
-      # Immutable releases lock assets once published. Prereleases publish
-      # immediately, so create those as drafts, upload assets, then publish.
-      - name: Create release
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+      # Draft -> attach all assets -> publish (immutable-release safe).
+      - name: Create draft release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
           name: Athenaeum ${{ steps.tag.outputs.tag }}
-          draft: ${{ contains(steps.tag.outputs.tag, '-') }}
-          prerelease: ${{ contains(steps.tag.outputs.tag, '-') }}
+          draft: true
+          prerelease: ${{ steps.tag.outputs.prerelease == 'true' }}
+          make_latest: ${{ steps.tag.outputs.prerelease == 'true' && 'false' || 'true' }}
           generate_release_notes: true
           files: dist/*
 
-      - name: Publish prerelease
-        if: contains(steps.tag.outputs.tag, '-')
+      - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}

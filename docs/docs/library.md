@@ -94,18 +94,15 @@ offline/first paint.
 Open an EPUB and use narration to listen while you read.
 
 - **Default:** in-browser Kokoro TTS when WebAssembly is available (WebGPU with
-  WASM fallback). The full release binary embeds that runtime; slim builds
-  (`athenaeum-slim-*` / `task build:slim`) omit it.
+  WASM fallback). The full release binary embeds the ONNX runtime, q8 weights,
+  and voices (~110+ MiB extra vs slim). Slim builds (`athenaeum-slim-*` /
+  `task build:slim`) omit that stack.
 - **Fallback:** the browser SpeechSynthesis API.
 - **Optional sidecar:** run Kokoro next to Athenaeum with
   `docker compose --profile kokoro`, then set the base URL under
   Settings -> Administration -> Narration (TTS)
   (`http://kokoro:8880` on the Compose network, or `http://127.0.0.1:8880`
   from the host). Works with full and slim binaries.
-- **CSP:** the default policy allows Hugging Face hosts so the browser can
-  download ONNX models. If you set a custom `cspPolicy`, include
-  `https://huggingface.co`, `https://*.huggingface.co`, and `https://*.hf.co`
-  in `connect-src`.
 
 Admin/API endpoints: `GET/PUT /api/admin/tts`, `POST /api/admin/tts/test`,
 `GET /api/tts/status`, `GET /api/tts/voices`, `POST /api/tts/synthesize`.

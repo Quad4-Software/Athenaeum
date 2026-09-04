@@ -23,7 +23,7 @@ func TestSPAAccessibleWithoutAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, path := range []string{"/", "/login", "/assets/", "/favicon.ico"} {
+	for _, path := range []string{"/", "/login", "/assets/", "/favicon.ico", "/manifest.webmanifest"} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
 		req.Header.Set("Accept", "text/html")
 		rec := httptest.NewRecorder()

@@ -2,11 +2,15 @@
 
 FROM node:26-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS web
 WORKDIR /src/web
-RUN npm install -g pnpm@11.17.0
+RUN apk add --no-cache curl \
+  && npm install -g pnpm@11.17.0
 COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile --config.dangerouslyAllowAllBuilds=true
 COPY web/ ./
-RUN pnpm build:fast
+COPY scripts/fetch-kokoro-models.sh /usr/local/bin/fetch-kokoro-models.sh
+ENV KOKORO_MODEL_DIR=/src/web/vendor/kokoro-model/Kokoro-82M-v1.0-ONNX
+RUN bash /usr/local/bin/fetch-kokoro-models.sh \
+  && pnpm build:fast
 
 FROM golang:1.26-alpine@sha256:28d89ee9cc0ff9fec75c82ca201e6bf7fdf9a679d4b7b24dfa04f2bb766bb468 AS go
 WORKDIR /src

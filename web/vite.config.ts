@@ -1,13 +1,20 @@
 /// <reference types="vitest/config" />
 import { cpSync, createReadStream, existsSync, mkdirSync, statSync } from "node:fs";
-import { extname, join, normalize, resolve } from "node:path";
+import { createRequire } from "node:module";
+import { dirname, extname, join, normalize, resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import viteCompression from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
 import { brand } from "./src/lib/brand/config.js";
+import {
+  KOKORO_MODEL_ID,
+  KOKORO_VOICE_HF_PREFIX,
+  KOKORO_VOICE_LOCAL_PREFIX,
+} from "./src/lib/narrator/kokoro-paths.ts";
 
+const require = createRequire(import.meta.url);
 const rootDir = import.meta.dirname;
 const isDemoBuild =
   process.env.VITE_DEMO === "1" ||
@@ -17,10 +24,24 @@ const isSlimBuild =
   process.env.VITE_SLIM === "1" ||
   process.env.VITE_SLIM === "true" ||
   process.env.VITE_SLIM === "yes";
+/** Full Kokoro embed is for production binaries only (not slim, not Pages demo). */
+const omitKokoroAssets = isSlimBuild || isDemoBuild;
 const pdfJsRoot = resolve(rootDir, "node_modules/pdfjs-dist");
 const kokoroWasmEntry = resolve(rootDir, "src/lib/narrator/kokoro-wasm.ts");
 const kokoroWasmSlim = resolve(rootDir, "src/lib/narrator/kokoro-wasm-slim.ts");
+const kokoroModelRoot = resolve(rootDir, "vendor/kokoro-model", KOKORO_MODEL_ID);
 const pdfJsDirs = ["wasm", "cmaps", "standard_fonts", "iccs"] as const;
+
+function packageDir(name: string): string {
+  let dir = dirname(require.resolve(name));
+  while (dir !== rootDir && dir !== dirname(dir)) {
+    if (existsSync(join(dir, "package.json"))) {
+      return dir;
+    }
+    dir = dirname(dir);
+  }
+  throw new Error(`could not locate package root for ${name}`);
+}
 
 const pdfMimeTypes: Record<string, string> = {
   ".wasm": "application/wasm",
@@ -47,7 +68,7 @@ function slimKokoroPlugin(): Plugin {
     name: "slim-kokoro",
     enforce: "pre",
     resolveId(id, importer) {
-      if (!isSlimBuild) return null;
+      if (!omitKokoroAssets) return null;
       if (id === kokoroWasmEntry || id === kokoroWasmSlim) {
         return kokoroWasmSlim;
       }
@@ -94,6 +115,111 @@ function pdfJsAssetsPlugin(): Plugin {
   };
 }
 
+const kokoroAssetMime: Record<string, string> = {
+  ".wasm": "application/wasm",
+  ".mjs": "text/javascript",
+  ".js": "application/javascript",
+  ".json": "application/json",
+  ".onnx": "application/octet-stream",
+  ".bin": "application/octet-stream",
+};
+
+function assertKokoroModelPresent() {
+  const onnx = join(kokoroModelRoot, "onnx", "model_quantized.onnx");
+  if (!existsSync(onnx) || !statSync(onnx).isFile()) {
+    throw new Error(`Kokoro model missing at ${onnx}. Run: bash scripts/fetch-kokoro-models.sh`);
+  }
+}
+
+function copyKokoroAssets(destRoot: string) {
+  assertKokoroModelPresent();
+  const transformersDist = join(packageDir("@huggingface/transformers"), "dist");
+  const voicesSrc = join(packageDir("kokoro-js"), "voices");
+  const modelDest = join(destRoot, "models", KOKORO_MODEL_ID);
+  const ortDest = join(destRoot, "ort");
+
+  mkdirSync(join(modelDest, "onnx"), { recursive: true });
+  mkdirSync(ortDest, { recursive: true });
+  cpSync(kokoroModelRoot, modelDest, { recursive: true });
+  if (existsSync(voicesSrc)) {
+    cpSync(voicesSrc, join(modelDest, "voices"), { recursive: true });
+  }
+  for (const name of ["ort-wasm-simd-threaded.jsep.mjs", "ort-wasm-simd-threaded.jsep.wasm"]) {
+    const src = join(transformersDist, name);
+    if (!existsSync(src)) {
+      throw new Error(`ONNX Runtime asset missing: ${src}`);
+    }
+    cpSync(src, join(ortDest, name));
+  }
+}
+
+/** Self-host Kokoro weights + ORT; rewrite HF voice URLs in kokoro-js. */
+function kokoroAssetsPlugin(): Plugin {
+  return {
+    name: "kokoro-assets",
+    enforce: "pre",
+    transform(code, id) {
+      if (omitKokoroAssets) return null;
+      if (!id.includes("kokoro-js") && !id.includes("/kokoro/")) return null;
+      if (!code.includes(KOKORO_VOICE_HF_PREFIX)) return null;
+      return {
+        code: code.replaceAll(KOKORO_VOICE_HF_PREFIX, KOKORO_VOICE_LOCAL_PREFIX),
+        map: null,
+      };
+    },
+    configureServer(server) {
+      if (omitKokoroAssets) return;
+      server.middlewares.use((req, res, next) => {
+        const url = req.url ?? "";
+        let file: string;
+        if (url.startsWith("/ort/")) {
+          const rel = decodeURIComponent(url.slice("/ort/".length).split("?")[0] ?? "");
+          const root = join(packageDir("@huggingface/transformers"), "dist");
+          file = normalize(join(root, rel));
+          if (!file.startsWith(root)) {
+            next();
+            return;
+          }
+        } else if (url.startsWith(`/models/${KOKORO_MODEL_ID}/`)) {
+          const rel = decodeURIComponent(
+            url.slice(`/models/${KOKORO_MODEL_ID}/`.length).split("?")[0] ?? "",
+          );
+          if (rel.startsWith("voices/")) {
+            const root = join(packageDir("kokoro-js"), "voices");
+            file = normalize(join(root, rel.slice("voices/".length)));
+            if (!file.startsWith(root)) {
+              next();
+              return;
+            }
+          } else {
+            file = normalize(join(kokoroModelRoot, rel));
+            if (!file.startsWith(kokoroModelRoot)) {
+              next();
+              return;
+            }
+          }
+        } else {
+          next();
+          return;
+        }
+        if (!existsSync(file) || !statSync(file).isFile()) {
+          next();
+          return;
+        }
+        const ext = extname(file).toLowerCase();
+        res.setHeader("Content-Type", kokoroAssetMime[ext] ?? "application/octet-stream");
+        createReadStream(file).pipe(res);
+      });
+    },
+    closeBundle() {
+      if (omitKokoroAssets) return;
+      copyKokoroAssets(
+        isDemoBuild ? resolve(rootDir, "../site") : resolve(rootDir, "../internal/assets/dist"),
+      );
+    },
+  };
+}
+
 // The production bundle is written directly into the Go embed package so
 // the binary stays self-contained. Demo builds (VITE_DEMO=1) write a static
 // SPA under ../site for GitHub Pages and similar hosts.
@@ -104,6 +230,7 @@ export default defineConfig({
     tailwindcss(),
     slimKokoroPlugin(),
     pdfJsAssetsPlugin(),
+    kokoroAssetsPlugin(),
     VitePWA({
       registerType: "prompt",
       includeAssets: [
@@ -151,6 +278,8 @@ export default defineConfig({
           "**/ort-*.js",
           "**/ort-*.wasm",
           "**/*ort-wasm*",
+          "**/models/**",
+          "**/ort/**",
           // Reader / captcha / TTS payloads are route-loaded, not shell.
           "**/pdf-*.js",
           "**/pdf.worker*",
@@ -210,6 +339,17 @@ export default defineConfig({
               },
             },
           },
+          {
+            urlPattern: /\/(?:models|ort)\//,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "kokoro-weights",
+              expiration: {
+                maxEntries: 64,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+            },
+          },
         ],
       },
       devOptions: {
@@ -218,13 +358,22 @@ export default defineConfig({
     }),
     viteCompression({
       algorithms: ["gzip", "brotliCompress"],
-      exclude: [/\.(br|gz)$/, /sw\.js$/, /workbox-.*\.js$/, /manifest\.webmanifest$/],
+      exclude: [
+        /\.(br|gz)$/,
+        /sw\.js$/,
+        /workbox-.*\.js$/,
+        /manifest\.webmanifest$/,
+        /\.onnx$/,
+        /\.bin$/,
+        /\/models\//,
+        /\/ort\/.*\.wasm$/,
+      ],
     }),
   ],
   resolve: {
     alias: {
       $lib: resolve(rootDir, "src/lib"),
-      ...(isSlimBuild ? { [kokoroWasmEntry]: kokoroWasmSlim } : {}),
+      ...(omitKokoroAssets ? { [kokoroWasmEntry]: kokoroWasmSlim } : {}),
     },
     // Svelte 5 exports map "browser" to the client runtime; without it Vite picks
     // the SSR stub and mount() throws lifecycle_function_unavailable in dev.
@@ -244,7 +393,7 @@ export default defineConfig({
           if (id.includes("pdfjs-dist")) return "pdf";
           if (id.includes("epubjs")) return "epub";
           if (
-            !isSlimBuild &&
+            !omitKokoroAssets &&
             (id.includes("kokoro-js") ||
               id.includes("@huggingface/transformers") ||
               id.includes("onnxruntime"))

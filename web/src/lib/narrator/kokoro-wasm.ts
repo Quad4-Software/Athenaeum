@@ -1,8 +1,8 @@
 import type { NarratorEngine, NarratorVoice, SpeakOptions, SpeakResult } from "./types";
 
+import { KOKORO_LOCAL_MODEL_PATH, KOKORO_MODEL_ID, KOKORO_ORT_PATH } from "./kokoro-paths";
 import { UTTERANCE_HARD_MAX } from "./text";
 
-const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
 const DEFAULT_VOICE = "af_heart";
 const MAX_TEXT = UTTERANCE_HARD_MAX;
 
@@ -36,6 +36,13 @@ type KokoroModule = {
       },
     ): Promise<KokoroTTS>;
   };
+  env: { wasmPaths: string | Record<string, string> };
+};
+
+type TransformersEnv = {
+  allowLocalModels: boolean;
+  allowRemoteModels: boolean;
+  localModelPath: string;
 };
 
 let pipelinePromise: Promise<KokoroTTS> | null = null;
@@ -57,7 +64,7 @@ export function isKokoroWasmLoading(): boolean {
   return loading;
 }
 
-/** Subscribe to model download / init loading state. Returns unsubscribe. */
+/** Subscribe to model init loading state. Returns unsubscribe. */
 export function onKokoroWasmLoading(listener: (value: boolean) => void): () => void {
   loadingListeners.add(listener);
   listener(loading);
@@ -66,27 +73,39 @@ export function onKokoroWasmLoading(listener: (value: boolean) => void): () => v
   };
 }
 
+async function configureLocalRuntime(kokoroEnv: KokoroModule["env"]): Promise<void> {
+  const { env: transformersEnv } = (await import("@huggingface/transformers")) as {
+    env: TransformersEnv;
+  };
+  transformersEnv.allowLocalModels = true;
+  transformersEnv.allowRemoteModels = false;
+  transformersEnv.localModelPath = KOKORO_LOCAL_MODEL_PATH;
+  kokoroEnv.wasmPaths = KOKORO_ORT_PATH;
+}
+
 async function createPipeline(): Promise<KokoroTTS> {
   const mod = (await import("kokoro-js")) as KokoroModule;
-  const { KokoroTTS } = mod;
+  const { KokoroTTS, env } = mod;
+  await configureLocalRuntime(env);
 
   const canWebGPU =
     typeof navigator !== "undefined" &&
     "gpu" in navigator &&
     typeof (navigator as Navigator & { gpu?: unknown }).gpu !== "undefined";
 
+  // Full builds embed q8 (model_quantized.onnx) only. No Hub fetch.
   if (canWebGPU) {
     try {
-      return await KokoroTTS.from_pretrained(MODEL_ID, {
-        dtype: "fp32",
+      return await KokoroTTS.from_pretrained(KOKORO_MODEL_ID, {
+        dtype: "q8",
         device: "webgpu",
       });
     } catch {
-      // Fall through to WASM/q8 (no SharedArrayBuffer / COOP-COEP required).
+      // Fall through to WASM (no SharedArrayBuffer / COOP-COEP required).
     }
   }
 
-  return await KokoroTTS.from_pretrained(MODEL_ID, {
+  return await KokoroTTS.from_pretrained(KOKORO_MODEL_ID, {
     dtype: "q8",
     device: "wasm",
   });
@@ -111,7 +130,7 @@ function ensurePipeline(): Promise<KokoroTTS> {
   return pipelinePromise;
 }
 
-/** Warm the model (first call downloads weights). Safe to call repeatedly. */
+/** Warm the model (first call loads embedded weights). Safe to call repeatedly. */
 export function preloadKokoroWasm(): Promise<void> {
   return ensurePipeline().then(() => undefined);
 }

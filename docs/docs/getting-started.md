@@ -65,7 +65,7 @@ chmod +x athenaeum
 
 Linux (amd64/arm64/armv6/armv7/riscv64), macOS, Windows, FreeBSD, OpenBSD, and
 NetBSD builds are published on release tags. Each release also ships a **slim**
-binary (`athenaeum-slim-*`) that omits in-browser Kokoro WASM (about 20+ MiB
+binary (`athenaeum-slim-*`) that omits in-browser Kokoro (about 110+ MiB
 smaller). Slim still supports browser speech and the optional Kokoro sidecar.
 Multi-arch images also go to GHCR.
 

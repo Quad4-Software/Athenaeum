@@ -1,5 +1,6 @@
 dist
 node_modules
+vendor
 pnpm-lock.yaml
 coverage
 .lighthouseci

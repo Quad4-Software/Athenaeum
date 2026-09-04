@@ -157,7 +157,10 @@ func setCache(w http.ResponseWriter, name string) {
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		return
 	}
-	if strings.HasPrefix(name, "assets/") {
+	if strings.HasPrefix(name, "assets/") ||
+		strings.HasPrefix(name, "pdfjs/") ||
+		strings.HasPrefix(name, "models/") ||
+		strings.HasPrefix(name, "ort/") {
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 		return
 	}

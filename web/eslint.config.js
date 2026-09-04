@@ -46,6 +46,7 @@ export default ts.config(
     ignores: [
       "dist/",
       "node_modules/",
+      "vendor/",
       "coverage/",
       "playwright-report/",
       "test-results/",

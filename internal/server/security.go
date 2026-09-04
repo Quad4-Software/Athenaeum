@@ -7,8 +7,8 @@ import (
 	"athenaeum/internal/telemetry"
 )
 
-// defaultCSP covers the SPA plus browser Kokoro TTS (ONNX weights from Hugging Face).
-const defaultCSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data: https://covers.openlibrary.org https://books.google.com https://*.googleusercontent.com; font-src 'self' blob: data:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co; media-src 'self' blob:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+// defaultCSP covers the SPA. In-browser Kokoro loads weights and ORT from same origin.
+const defaultCSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data: https://covers.openlibrary.org https://books.google.com https://*.googleusercontent.com; font-src 'self' blob: data:; connect-src 'self'; media-src 'self' blob:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 const embeddableCSP = "frame-ancestors 'self'"
 

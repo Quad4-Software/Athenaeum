@@ -22,7 +22,8 @@ description: Readers, narration, library tools, auth, OPDS, and operations.
 
 - Listen to EPUBs with **in-browser Kokoro TTS** (ONNX Runtime Web: WebGPU with
   WASM fallback) when WebAssembly is available. The full release binary embeds
-  that runtime; the **slim** binary (`athenaeum-slim-*`) leaves it out.
+  the runtime, q8 weights, and voices; the **slim** binary (`athenaeum-slim-*`)
+  leaves that stack out.
 - Fall back to the browser **SpeechSynthesis** voice if needed.
 - Optional **Kokoro sidecar** for server-side TTS
   (`docker compose --profile kokoro`). Works with full and slim binaries.

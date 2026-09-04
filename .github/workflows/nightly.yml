@@ -1,7 +1,7 @@
 # Nightly prerelease builds from master/main.
 # Publishes a unique GitHub Release tag (nightly-YYYYMMDD-HHMMSS-<sha>) and
-# GHCR :nightly image. Unique tags avoid protected-tag force-update rules.
-# Actions are SHA-pinned (same pins as release.yml).
+# GHCR :nightly image. Unique tags never move (immutable-release safe).
+# Draft -> attach assets -> publish. Actions are SHA-pinned (same as release.yml).
 name: Nightly
 
 on:
@@ -209,7 +209,9 @@ jobs:
 
       - name: Build full frontend
         working-directory: web
-        run: pnpm build:fast
+        run: |
+          bash ../scripts/fetch-kokoro-models.sh
+          pnpm build:fast
 
       - name: Cross-compile full
         env:
@@ -313,6 +315,8 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      attestations: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -349,10 +353,9 @@ jobs:
             echo "Release tag: ${{ needs.prepare.outputs.tag }}."
           } > dist/NOTICE.txt
 
-      # Immutable releases lock assets once published. Prereleases publish
-      # immediately, so create as draft, upload assets, then publish.
-      - name: Create nightly release
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+      # Unique nightly-* tags; draft -> assets -> publish for immutable releases.
+      - name: Create nightly draft release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
           target_commitish: ${{ github.sha }}

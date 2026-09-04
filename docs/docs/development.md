@@ -13,7 +13,8 @@ task hooks:install    # lefthook pre-commit / pre-push (or: lefthook install)
 task doctor           # toolchain, optional tools, ports
 task dev              # Vite :5173 + Go live reload (air) on :8080
 task build            # frontend + single binary -> ./bin/athenaeum
-task build:slim       # same without in-browser Kokoro WASM -> ./bin/athenaeum-slim
+task build:slim       # same without in-browser Kokoro -> ./bin/athenaeum-slim
+# Full web builds download q8 ONNX weights via scripts/fetch-kokoro-models.sh
 task run              # build then run local server
 task demo             # Go server with --demo seeded library
 task reset:data       # wipe ./data
@@ -106,9 +107,18 @@ Workflows live under .github/workflows/ (actions pinned to full commit SHAs):
 | -------- | ------- | ------------ |
 | ci.yml | push / PR / manual | Lint (gofmt, golangci-lint, eslint, prettier, svelte-check), Go tests, fuzz, coverage gate, cross-compile (Linux/macOS/Windows/BSD/armv6/armv7/riscv64), `--self-check` on native + QEMU arches, Vitest + coverage, govulncheck, pnpm audit, gosec, CodeQL, multi-arch Docker + container self-check, Lighthouse, Playwright, generate check |
 | codeql.yml | push / PR / weekly / manual | CodeQL for Go and JavaScript/TypeScript |
-| release.yml | v* tags / manual | Multi-arch single binaries + GitHub Release (SBOM + license report), multi-arch image to GHCR (`linux/amd64`, `arm64`) |
+| release.yml | v* tags / manual | Multi-arch binaries + GitHub Release (SBOM + NOTICE), multi-arch image to GHCR (`linux/amd64`, `arm64`). Draft -> attach assets -> publish for [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases). |
+| nightly.yml | schedule / manual | Unique `nightly-*` prerelease tags (never moves a tag) + GHCR `:nightly` |
 | pages.yml | push (docs/web) / manual | Docs site + offline demo -> GitHub Pages |
 
 Default GITHUB_TOKEN permissions are read-only. Jobs elevate only what they
-need (security-events, packages, pages, contents: write for releases).
+need (security-events, packages, pages, contents / attestations for releases).
 Dependabot keeps Actions, Go modules, and web/ npm deps updated weekly.
+
+### Immutable releases
+
+This repo enables GitHub immutable releases. After a release is published, its
+assets and Git tag cannot change. Release and nightly workflows always create a
+draft, upload every asset, then publish. Do not force-move `v*` tags or rebuild
+a published tag. Cut a new version instead. Verify with
+`gh release verify <tag>` when needed.

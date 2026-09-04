@@ -77,6 +77,10 @@ Install app in Chromium). A service worker precaches hashed assets, fetches
 you deploy a new version, users see a Reload / Later banner instead of stale
 cached UI.
 
+Athenaeum serves `/manifest.webmanifest`, `/sw.js`, and `/assets/` without a
+session. If a reverse proxy adds login in front of the app, allow anonymous GET
+for those paths or the install prompt and service worker will fail with 401.
+
 ## Local profiling (pprof)
 
 For development, start with `--pprof 127.0.0.1:6060` or `ATHENAEUM_PPROF`.
@@ -99,7 +103,7 @@ and metrics via Settings -> Administration -> Server or
 | metricsAuth | Require Basic Auth on `/metrics` |
 | trustedProxies | Comma-separated IPs/CIDRs that may send X-Forwarded-* headers |
 | corsEnabled / corsOrigins | CORS for cross-origin API access |
-| cspEnabled / cspPolicy | Content-Security-Policy header (empty = default, which allows Hugging Face hosts for in-browser Kokoro models) |
+| cspEnabled / cspPolicy | Content-Security-Policy header (empty = default) |
 | autoScanEnabled / autoScanIntervalSec | Background library rescan (min 60s) |
 
 ## Webhooks

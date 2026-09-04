@@ -30,6 +30,8 @@ web/coverage/
 internal/assets/dist/index.html
 internal/assets/dist/assets/
 internal/assets/dist/pdfjs/
+internal/assets/dist/models/
+internal/assets/dist/ort/
 internal/assets/dist/sw.js
 internal/assets/dist/workbox-*.js
 internal/assets/dist/registerSW.js
@@ -65,6 +67,9 @@ web/reports/
 
 # Offline demo SPA build (task build:demo / embedded under docs Pages /demo)
 /site/
+
+# Kokoro ONNX weights (~90 MiB). Fetched by scripts/fetch-kokoro-models.sh before full web builds.
+web/vendor/kokoro-model/
 
 # Docusaurus (also ignored via docs/.gitignore)
 /docs/node_modules/
