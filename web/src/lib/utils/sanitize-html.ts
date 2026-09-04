@@ -74,12 +74,10 @@ function isSafeHref(href: string): boolean {
 
 function isSafeImgSrc(src: string): boolean {
   const v = stripHrefNoise(src);
-  return (
-    v.startsWith("http://") ||
-    v.startsWith("https://") ||
-    v.startsWith("data:image/") ||
-    v.startsWith("/")
-  );
+  if (v.startsWith("http://") || v.startsWith("https://") || v.startsWith("/")) {
+    return true;
+  }
+  return /^data:image\/(png|jpe?g|gif|webp|avif)[;,]/.test(v);
 }
 
 function sanitizeNode(node: Node, allowedTags: Set<string>): void {
@@ -129,10 +127,19 @@ function sanitizeNode(node: Node, allowedTags: Set<string>): void {
   }
 }
 
+function escapeText(raw: string): string {
+  return raw
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function runSanitize(input: string, allowedTags: Set<string>): string {
   const raw = input.trim();
   if (!raw) return "";
-  if (typeof DOMParser === "undefined") return raw.replace(/<[^>]+>/g, "");
+  // Incomplete tag-stripping regexes can leave <script. Escape instead.
+  if (typeof DOMParser === "undefined") return escapeText(raw);
   const doc = new DOMParser().parseFromString(raw, "text/html");
   sanitizeNode(doc.body, allowedTags);
   return doc.body.innerHTML.trim();

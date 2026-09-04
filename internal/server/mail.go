@@ -24,10 +24,19 @@ func sendSMTPText(cfg models.SMTPSettings, to, subject, body string) error {
 	if !cfg.Enabled || cfg.Host == "" {
 		return fmt.Errorf("smtp is not configured")
 	}
+	to = sanitizeHeaderValue(to)
+	subject = sanitizeHeaderValue(subject)
+	// Keep LF line breaks in the body. Strip CR/NUL so they cannot smuggle headers.
+	body = strings.ReplaceAll(body, "\r", "")
+	body = strings.ReplaceAll(body, "\x00", "")
+	if to == "" {
+		return fmt.Errorf("invalid recipient")
+	}
 	from := cfg.FromAddr
 	if from == "" {
 		from = cfg.Username
 	}
+	from = sanitizeHeaderValue(from)
 	msg := buildMIMEText(from, to, subject, body)
 	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 	var auth smtp.Auth

@@ -8,11 +8,11 @@
  */
 import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, relative, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "node:http";
 import { createReadStream, existsSync, statSync } from "node:fs";
-import { extname, join, normalize } from "node:path";
+import { extname, join } from "node:path";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("../web/node_modules/@playwright/test");
@@ -33,19 +33,28 @@ const mime = {
   ".webmanifest": "application/manifest+json",
 };
 
+function pathUnderRoot(root, candidate) {
+  const rootAbs = resolve(root);
+  const targetAbs = resolve(candidate);
+  const rel = relative(rootAbs, targetAbs);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+}
+
 function startStaticServer(dir, port) {
   return new Promise((resolvePromise, reject) => {
+    const rootAbs = resolve(dir);
     const server = createServer((req, res) => {
       const urlPath = decodeURIComponent((req.url ?? "/").split("?")[0] || "/");
-      let filePath = normalize(join(dir, urlPath === "/" ? "index.html" : urlPath));
-      if (!filePath.startsWith(dir)) {
+      const requested = urlPath === "/" ? "index.html" : urlPath.replace(/^\/+/, "");
+      let filePath = resolve(rootAbs, requested);
+      if (!pathUnderRoot(rootAbs, filePath)) {
         res.writeHead(403).end();
         return;
       }
       if (!existsSync(filePath) || !statSync(filePath).isFile()) {
-        filePath = join(dir, "index.html");
+        filePath = resolve(rootAbs, "index.html");
       }
-      if (!existsSync(filePath)) {
+      if (!pathUnderRoot(rootAbs, filePath) || !existsSync(filePath)) {
         res.writeHead(404).end("missing demo build (run pnpm build:demo)");
         return;
       }

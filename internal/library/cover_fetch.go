@@ -18,11 +18,12 @@ func FetchCoverImage(ctx context.Context, rawURL string) ([]byte, error) {
 	if rawURL == "" {
 		return nil, fmt.Errorf("empty cover url")
 	}
-	if _, err := ValidateOutboundURL(rawURL); err != nil {
+	u, err := ValidateOutboundURL(rawURL)
+	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, err
 	}

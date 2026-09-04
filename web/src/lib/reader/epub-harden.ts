@@ -49,10 +49,11 @@ function stripHostileNodes(doc: Document): void {
         if (name.startsWith("on") || name === "srcdoc") {
           el.removeAttribute(attr.name);
         }
-        if (
-          (name === "href" || name === "src" || name === "xlink:href") &&
-          isUnsafeURL(attr.value)
-        ) {
+        if (name === "href" || name === "xlink:href") {
+          if (isUnsafeURL(attr.value, false)) {
+            el.removeAttribute(attr.name);
+          }
+        } else if (name === "src" && isUnsafeURL(attr.value, true)) {
           el.removeAttribute(attr.name);
         }
       }
@@ -67,7 +68,7 @@ function shouldDropLink(el: Element): boolean {
   const rel = (el.getAttribute("rel") ?? "").toLowerCase();
   if (rel.includes("stylesheet") || rel.includes("preload") || rel.includes("canonical")) {
     const href = el.getAttribute("href") ?? "";
-    return isUnsafeURL(href);
+    return isUnsafeURL(href, false);
   }
   return true;
 }
@@ -89,14 +90,19 @@ function stripURLNoise(raw: string): string {
   return out;
 }
 
-function isUnsafeURL(raw: string): boolean {
+const SAFE_DATA_IMAGE = /^data:image\/(png|jpe?g|gif|webp|avif)[;,]/;
+
+function isUnsafeURL(raw: string, allowDataImage: boolean): boolean {
   const v = stripURLNoise(raw);
-  return (
-    v.startsWith("javascript:") ||
-    v.startsWith("vbscript:") ||
-    v.startsWith("data:text/html") ||
-    v.startsWith("data:application/xhtml")
-  );
+  if (v.startsWith("javascript:") || v.startsWith("vbscript:")) {
+    return true;
+  }
+  // Block every data: URL except a narrow image allowlist for src.
+  // data:text/html and data:image/svg+xml can execute script in readers.
+  if (v.startsWith("data:")) {
+    return !(allowDataImage && SAFE_DATA_IMAGE.test(v));
+  }
+  return false;
 }
 
 function hardenAnchors(doc: Document): void {

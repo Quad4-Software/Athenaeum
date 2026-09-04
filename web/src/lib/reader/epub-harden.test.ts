@@ -22,6 +22,23 @@ describe("hardenEpubDocument", () => {
     expect(doc.body.textContent).toContain("Hi");
   });
 
+  it("strips data: HTML and SVG payloads from href/src", () => {
+    const doc = new DOMParser().parseFromString(
+      `<html><body>
+        <a href="data:text/html,<script>alert(1)</script>">x</a>
+        <a href="data:image/svg+xml,<svg onload=alert(1)>">y</a>
+        <img src="data:image/svg+xml,<svg onload=alert(1)>">
+        <img src="data:image/png;base64,aaa">
+      </body></html>`,
+      "text/html",
+    );
+    hardenEpubDocument(doc);
+    expect(doc.querySelector("a[href]")?.getAttribute("href") ?? null).toBeNull();
+    expect(doc.querySelectorAll("a[href]").length).toBe(0);
+    expect(doc.querySelector('img[src^="data:image/svg"]')).toBeNull();
+    expect(doc.querySelector('img[src^="data:image/png"]')).not.toBeNull();
+  });
+
   it("strips on* handlers without removing the element", () => {
     const doc = new DOMParser().parseFromString(
       `<html><head></head><body><p onclick="alert(1)" onload="evil()">ok</p></body></html>`,
