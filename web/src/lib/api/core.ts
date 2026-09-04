@@ -3,7 +3,14 @@ import { connectivity } from "$lib/stores/connectivity.svelte";
 import { captureApiError } from "$lib/telemetry/sentry";
 import { brand } from "$lib/brand";
 import { AUTH_SILENT_401, AUTH_SILENT_403, notifyUnauthorized, notifyForbidden } from "./session";
+import {
+  clearProxyGateReloadGuard,
+  isProxyGateRecovering,
+  maybeRecoverProxyGate,
+} from "./proxy-gate";
 import { isDemoMode } from "$lib/demo/mode";
+
+const GATEWAY_AUTH_MESSAGE = "gateway authentication required";
 
 /**
  * ApiError carries the HTTP status alongside a human-readable message so
@@ -42,6 +49,9 @@ export async function ensureCsrf(): Promise<string> {
   if (!csrfReady) {
     csrfReady = fetch("/api/auth/csrf", { credentials: "same-origin" })
       .then(async (res) => {
+        if (maybeRecoverProxyGate(res)) {
+          throw new ApiError(401, GATEWAY_AUTH_MESSAGE);
+        }
         if (!res.ok) throw new ApiError(res.status, "failed to fetch csrf token");
         let bodyToken = "";
         try {
@@ -84,6 +94,10 @@ async function tryRefresh(): Promise<boolean> {
         credentials: "same-origin",
         headers: { Accept: "application/json", [CSRF_HEADER]: csrf },
       });
+      if (maybeRecoverProxyGate(res)) {
+        clearCsrfCache();
+        return false;
+      }
       if (!res.ok) {
         clearCsrfCache();
       }
@@ -192,10 +206,16 @@ async function requestWithRetry<T>(
   }
 
   if (res.status === 401) {
+    if (maybeRecoverProxyGate(res) || isProxyGateRecovering()) {
+      throw new ApiError(401, GATEWAY_AUTH_MESSAGE);
+    }
     const base = apiPath(path);
     if (!authRetried && base !== "/api/auth/refresh" && base !== "/api/auth/login") {
       const refreshed = await tryRefresh();
       if (refreshed) return requestWithRetry(path, init, true, attempt);
+      if (isProxyGateRecovering()) {
+        throw new ApiError(401, GATEWAY_AUTH_MESSAGE);
+      }
     }
     if (!AUTH_SILENT_401.has(base)) {
       notifyUnauthorized("session_expired");
@@ -224,6 +244,7 @@ async function requestWithRetry<T>(
     captureApiError(apiPath(path), res.status, message);
     throw new ApiError(res.status, message);
   }
+  clearProxyGateReloadGuard();
   connectivity.markReachable();
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;

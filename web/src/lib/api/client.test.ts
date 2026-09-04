@@ -1,12 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api, ApiError } from "./client";
 import { onUnauthorized } from "./session";
+import { _resetProxyGateForTests } from "./proxy-gate";
 
-function mockFetch(body: unknown, status = 200) {
+function mockFetch(body: unknown, status = 200, contentType = "application/json") {
+  const headers = new Headers({ "content-type": contentType });
   const fn = vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
     status,
     statusText: "",
+    headers,
     json: async () => body,
   } as Response);
   vi.stubGlobal("fetch", fn);
@@ -15,6 +18,8 @@ function mockFetch(body: unknown, status = 200) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  _resetProxyGateForTests();
+  sessionStorage.clear();
 });
 
 describe("api client", () => {
@@ -62,11 +67,13 @@ describe("api client", () => {
       "fetch",
       vi.fn().mockImplementation((path: string, _init?: RequestInit) => {
         calls++;
+        const headers = new Headers({ "content-type": "application/json" });
         if (path === "/api/auth/refresh") {
           return Promise.resolve({
             ok: true,
             status: 200,
             statusText: "",
+            headers,
             json: async () => ({}),
           } as Response);
         }
@@ -75,6 +82,7 @@ describe("api client", () => {
             ok: false,
             status: 401,
             statusText: "Unauthorized",
+            headers,
             json: async () => ({ error: "authentication required" }),
           } as Response);
         }
@@ -82,6 +90,7 @@ describe("api client", () => {
           ok: true,
           status: 200,
           statusText: "",
+          headers,
           json: async () => ({ items: [], total: 0, limit: 60, offset: 0 }),
         } as Response);
       }),
@@ -100,11 +109,13 @@ describe("api client", () => {
       "fetch",
       vi.fn().mockImplementation((path: string) => {
         calls++;
+        const headers = new Headers({ "content-type": "application/json" });
         if (path === "/api/auth/refresh") {
           return Promise.resolve({
             ok: false,
             status: 401,
             statusText: "Unauthorized",
+            headers,
             json: async () => ({ error: "authentication required" }),
           } as Response);
         }
@@ -112,6 +123,7 @@ describe("api client", () => {
           ok: false,
           status: 401,
           statusText: "Unauthorized",
+          headers,
           json: async () => ({ error: "authentication required" }),
         } as Response);
       }),
@@ -128,11 +140,13 @@ describe("api client", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockImplementation((path: string) => {
+        const headers = new Headers({ "content-type": "application/json" });
         if (path === "/api/auth/refresh") {
           return Promise.resolve({
             ok: true,
             status: 200,
             statusText: "",
+            headers,
             json: async () => ({}),
           } as Response);
         }
@@ -140,6 +154,7 @@ describe("api client", () => {
           ok: false,
           status: 401,
           statusText: "Unauthorized",
+          headers,
           json: async () => ({ error: "authentication required" }),
         } as Response);
       }),
@@ -158,6 +173,7 @@ describe("api client", () => {
         ok: false,
         status: 401,
         statusText: "Unauthorized",
+        headers: new Headers({ "content-type": "application/json" }),
         json: async () => ({ error: "authentication required" }),
       } as Response),
     );
@@ -172,11 +188,13 @@ describe("api client", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockImplementation((path: string) => {
+        const headers = new Headers({ "content-type": "application/json" });
         if (path === "/api/auth/refresh") {
           return Promise.resolve({
             ok: false,
             status: 401,
             statusText: "Unauthorized",
+            headers,
             json: async () => ({ error: "authentication required" }),
           } as Response);
         }
@@ -184,6 +202,7 @@ describe("api client", () => {
           ok: false,
           status: 401,
           statusText: "Unauthorized",
+          headers,
           json: async () => ({ error: "authentication required" }),
         } as Response);
       }),
@@ -194,5 +213,32 @@ describe("api client", () => {
       ApiError,
     );
     expect(handler).toHaveBeenCalledWith("session_expired");
+  });
+
+  it("reloads on HTML 401 from a reverse proxy instead of soft login redirect", async () => {
+    const handler = vi.fn();
+    onUnauthorized(handler);
+    const reload = vi.fn();
+    vi.stubGlobal("location", { reload });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+        headers: new Headers({ "content-type": "text/html; charset=utf-8" }),
+        json: async () => {
+          throw new Error("not json");
+        },
+      } as Response),
+    );
+
+    await expect(api.listBooks()).rejects.toMatchObject({
+      name: "ApiError",
+      status: 401,
+      message: "gateway authentication required",
+    });
+    expect(handler).not.toHaveBeenCalled();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });
