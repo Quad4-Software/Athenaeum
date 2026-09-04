@@ -7,6 +7,7 @@ import (
 
 	"athenaeum/internal/auth"
 	"athenaeum/internal/models"
+	"athenaeum/internal/storage"
 )
 
 type registerRequest struct {
@@ -96,8 +97,12 @@ func (s *Server) handleAuthSetupPost(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
-	id, err := s.store.CreateUser(r.Context(), req.Username, hash, true)
+	id, err := s.store.CreateInitialAdmin(r.Context(), req.Username, hash)
 	if err != nil {
+		if errors.Is(err, storage.ErrConflict) {
+			writeError(w, http.StatusConflict, errors.New("setup already completed"))
+			return
+		}
 		writeError(w, http.StatusConflict, errUsernameTaken)
 		return
 	}

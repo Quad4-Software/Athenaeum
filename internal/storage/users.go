@@ -33,6 +33,26 @@ func (s *Store) invalidateAuthRequired() {
 	s.authRequired.Store(nil)
 }
 
+// CreateInitialAdmin inserts the first admin account only when no users exist.
+// The WHERE COUNT guard is atomic per statement so concurrent setup posts cannot
+// both succeed.
+func (s *Store) CreateInitialAdmin(ctx context.Context, username, passwordHash string) (int64, error) {
+	id, err := s.insertID(ctx, `
+INSERT INTO users (username, password_hash, is_admin, permissions, created_at)
+SELECT ?,?,?,?,?
+WHERE (SELECT COUNT(*) FROM users)=0
+RETURNING id`,
+		username, passwordHash, 1, models.AllPermissions, time.Now().Unix())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, ErrConflict
+		}
+		return 0, err
+	}
+	s.invalidateAuthRequired()
+	return id, nil
+}
+
 // CreateUser inserts a new account and returns its id.
 func (s *Store) CreateUser(ctx context.Context, username, passwordHash string, admin bool) (int64, error) {
 	perms := models.DefaultUserPermissions

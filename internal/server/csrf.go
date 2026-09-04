@@ -48,6 +48,15 @@ func validateCSRF(r *http.Request) error {
 }
 
 func (s *Server) usesExternalAuth(r *http.Request) bool {
+	// Browser sessions authenticate via cookies. Never skip CSRF when a
+	// session or refresh cookie is present, even if the request also
+	// carries a fake Basic or API-key shaped header (CSRF bypass).
+	if c, err := r.Cookie(auth.SessionCookie); err == nil && c.Value != "" {
+		return false
+	}
+	if c, err := r.Cookie(auth.RefreshCookie); err == nil && c.Value != "" {
+		return false
+	}
 	if strings.HasPrefix(r.Header.Get("Authorization"), "Basic ") {
 		return true
 	}

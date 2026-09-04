@@ -472,7 +472,13 @@
     "passwordReqDigit": "包括一个数字",
     "passwordReqSymbol": "包括一个符号",
     "passwordReqDiversity": "至少使用 {n} 字符类型",
-    "passwordReqDiversityOrLong": "使用 {n}+ 字符或混合字母大小写、数字和符号"
+    "passwordReqDiversityOrLong": "使用 {n}+ 字符或混合字母大小写、数字和符号",
+    "oidcFailed": "Single sign-on failed. Try again.",
+    "oidcAccessDenied": "Single sign-on was denied.",
+    "oidcStateInvalid": "Single sign-on session expired. Start again.",
+    "oidcProviderError": "Identity provider is unavailable or misconfigured.",
+    "oidcAccountError": "Could not link or create your account via SSO.",
+    "oidcSessionError": "Signed in with SSO but could not create a session."
   },
   "error": {
     "unauthorizedTitle": "需要登录",

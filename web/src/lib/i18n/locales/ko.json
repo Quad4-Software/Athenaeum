@@ -472,7 +472,13 @@
     "passwordReqDigit": "숫자를 포함하세요",
     "passwordReqSymbol": "기호 포함",
     "passwordReqDiversity": "최소한 {n} 문자 유형을 사용하세요.",
-    "passwordReqDiversityOrLong": "{n}+ 문자를 사용하거나 대소문자, 숫자, 기호를 혼합하세요."
+    "passwordReqDiversityOrLong": "{n}+ 문자를 사용하거나 대소문자, 숫자, 기호를 혼합하세요.",
+    "oidcFailed": "Single sign-on failed. Try again.",
+    "oidcAccessDenied": "Single sign-on was denied.",
+    "oidcStateInvalid": "Single sign-on session expired. Start again.",
+    "oidcProviderError": "Identity provider is unavailable or misconfigured.",
+    "oidcAccountError": "Could not link or create your account via SSO.",
+    "oidcSessionError": "Signed in with SSO but could not create a session."
   },
   "error": {
     "unauthorizedTitle": "로그인이 필요합니다",

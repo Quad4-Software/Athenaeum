@@ -189,52 +189,52 @@ func (s *Server) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	stateCookie, err := r.Cookie(oidcStateCookie)
 	if err != nil || stateCookie.Value == "" {
-		s.oidcErrorRedirect(w, r, "invalid state")
+		s.oidcErrorRedirect(w, r, "invalid_state")
 		return
 	}
 	http.SetCookie(w, s.clearOIDCStateCookie(r))
 	parts := strings.SplitN(stateCookie.Value, ":", 2)
 	if len(parts) != 2 || parts[0] != r.URL.Query().Get("state") {
-		s.oidcErrorRedirect(w, r, "state mismatch")
+		s.oidcErrorRedirect(w, r, "state_mismatch")
 		return
 	}
 	nonce := parts[1]
 
 	cfg, secret, err := s.oidcRuntimeConfig(r.Context())
 	if err != nil {
-		s.oidcErrorRedirect(w, r, err.Error())
+		s.oidcErrorRedirect(w, r, "config_error")
 		return
 	}
 	provider, oauthCfg, err := auth.OIDCProvider(r.Context(), cfg.IssuerURL, cfg.ClientID, secret, cfg.AuthorizeURL, cfg.TokenURL)
 	if err != nil {
-		s.oidcErrorRedirect(w, r, err.Error())
+		s.oidcErrorRedirect(w, r, "provider_error")
 		return
 	}
 	oauthCfg.RedirectURL = s.requestBaseURL(r) + "/auth/oidc/callback"
 
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		s.oidcErrorRedirect(w, r, "missing code")
+		s.oidcErrorRedirect(w, r, "missing_code")
 		return
 	}
 	oauth2Token, err := oauthCfg.Exchange(r.Context(), code)
 	if err != nil {
-		s.oidcErrorRedirect(w, r, "token exchange failed")
+		s.oidcErrorRedirect(w, r, "token_exchange_failed")
 		return
 	}
 	rawID, ok := oauth2Token.Extra("id_token").(string)
 	if !ok || rawID == "" {
-		s.oidcErrorRedirect(w, r, "missing id token")
+		s.oidcErrorRedirect(w, r, "missing_id_token")
 		return
 	}
 	verifier := provider.Verifier(&oidc.Config{ClientID: cfg.ClientID})
 	idToken, err := verifier.Verify(r.Context(), rawID)
 	if err != nil {
-		s.oidcErrorRedirect(w, r, "invalid id token")
+		s.oidcErrorRedirect(w, r, "invalid_id_token")
 		return
 	}
 	if idToken.Nonce != nonce {
-		s.oidcErrorRedirect(w, r, "nonce mismatch")
+		s.oidcErrorRedirect(w, r, "nonce_mismatch")
 		return
 	}
 
@@ -246,11 +246,11 @@ func (s *Server) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
 		Name              string `json:"name"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
-		s.oidcErrorRedirect(w, r, "invalid claims")
+		s.oidcErrorRedirect(w, r, "invalid_claims")
 		return
 	}
 	if claims.Sub == "" {
-		s.oidcErrorRedirect(w, r, "missing subject")
+		s.oidcErrorRedirect(w, r, "missing_subject")
 		return
 	}
 
@@ -260,12 +260,12 @@ func (s *Server) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
 	emailVerified := claims.EmailVerified == nil || *claims.EmailVerified
 	u, err := s.resolveOIDCUser(r.Context(), cfg, claims.Sub, claims.Email, claims.PreferredUsername, claims.Name, isAdminGroup, emailVerified)
 	if err != nil {
-		s.oidcErrorRedirect(w, r, err.Error())
+		s.oidcErrorRedirect(w, r, "account_error")
 		return
 	}
 	s.completePendingInvite(w, r, u, claims.Email, emailVerified)
 	if err := s.issueAuthTokens(w, r, u.ID, "oidc"); err != nil {
-		s.oidcErrorRedirect(w, r, "session error")
+		s.oidcErrorRedirect(w, r, "session_error")
 		return
 	}
 	s.logAudit(r, u.ID, u.Username, 0, "", "auth.login", "oidc")
@@ -508,10 +508,63 @@ func (s *Server) oidcRuntimeConfig(ctx context.Context) (models.OIDCConfig, stri
 	return cfg, cfg.ClientSecret, nil
 }
 
-func (s *Server) oidcErrorRedirect(w http.ResponseWriter, r *http.Request, msg string) {
+func (s *Server) oidcErrorRedirect(w http.ResponseWriter, r *http.Request, code string) {
 	q := url.Values{}
-	q.Set("oidc_error", msg)
+	q.Set("oidc_error", sanitizeOIDCErrorCode(code))
 	http.Redirect(w, r, "/login?"+q.Encode(), http.StatusFound)
+}
+
+var oidcErrorCodes = map[string]struct{}{
+	"access_denied":          {},
+	"invalid_state":          {},
+	"state_mismatch":         {},
+	"config_error":           {},
+	"provider_error":         {},
+	"missing_code":           {},
+	"token_exchange_failed":  {},
+	"missing_id_token":       {},
+	"invalid_id_token":       {},
+	"nonce_mismatch":         {},
+	"invalid_claims":         {},
+	"missing_subject":        {},
+	"account_error":          {},
+	"session_error":          {},
+	"login_required":         {},
+	"interaction_required":   {},
+	"consent_required":       {},
+	"temporarily_unavailable": {},
+}
+
+func sanitizeOIDCErrorCode(code string) string {
+	code = strings.TrimSpace(strings.ToLower(code))
+	code = strings.ReplaceAll(code, " ", "_")
+	if _, ok := oidcErrorCodes[code]; ok {
+		return code
+	}
+	// Legacy / human messages from older call sites.
+	switch code {
+	case "invalid state":
+		return "invalid_state"
+	case "state mismatch":
+		return "state_mismatch"
+	case "missing code":
+		return "missing_code"
+	case "token exchange failed":
+		return "token_exchange_failed"
+	case "missing id token":
+		return "missing_id_token"
+	case "invalid id token":
+		return "invalid_id_token"
+	case "nonce mismatch":
+		return "nonce_mismatch"
+	case "invalid claims":
+		return "invalid_claims"
+	case "missing subject":
+		return "missing_subject"
+	case "session error":
+		return "session_error"
+	}
+	return "provider_error"
 }
 
 func (s *Server) oidcStateCookieValue(r *http.Request, value string) *http.Cookie {

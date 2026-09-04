@@ -472,7 +472,13 @@
     "passwordReqDigit": "incluir un dígito",
     "passwordReqSymbol": "Incluir un símbolo",
     "passwordReqDiversity": "Utilice al menos tipos de caracteres {n}",
-    "passwordReqDiversityOrLong": "Utilice caracteres {n}+ o mezcle letras, dígitos y símbolos"
+    "passwordReqDiversityOrLong": "Utilice caracteres {n}+ o mezcle letras, dígitos y símbolos",
+    "oidcFailed": "Single sign-on failed. Try again.",
+    "oidcAccessDenied": "Single sign-on was denied.",
+    "oidcStateInvalid": "Single sign-on session expired. Start again.",
+    "oidcProviderError": "Identity provider is unavailable or misconfigured.",
+    "oidcAccountError": "Could not link or create your account via SSO.",
+    "oidcSessionError": "Signed in with SSO but could not create a session."
   },
   "error": {
     "unauthorizedTitle": "Es necesario iniciar sesión",

@@ -472,7 +472,13 @@
     "passwordReqDigit": "数字を含める",
     "passwordReqSymbol": "記号を含める",
     "passwordReqDiversity": "少なくとも {n} 文字タイプを使用してください",
-    "passwordReqDiversityOrLong": "{n}+ 文字を使用するか、大文字と小文字、数字、記号を組み合わせて使用します"
+    "passwordReqDiversityOrLong": "{n}+ 文字を使用するか、大文字と小文字、数字、記号を組み合わせて使用します",
+    "oidcFailed": "Single sign-on failed. Try again.",
+    "oidcAccessDenied": "Single sign-on was denied.",
+    "oidcStateInvalid": "Single sign-on session expired. Start again.",
+    "oidcProviderError": "Identity provider is unavailable or misconfigured.",
+    "oidcAccountError": "Could not link or create your account via SSO.",
+    "oidcSessionError": "Signed in with SSO but could not create a session."
   },
   "error": {
     "unauthorizedTitle": "サインインが必要です",

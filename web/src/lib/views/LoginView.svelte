@@ -55,6 +55,27 @@
     }
   });
 
+  function oidcErrorMessage(code: string): string {
+    const key = code.trim().toLowerCase().replace(/\s+/g, "_");
+    switch (key) {
+      case "access_denied":
+        return i18n.t("auth.oidcAccessDenied");
+      case "invalid_state":
+      case "state_mismatch":
+      case "nonce_mismatch":
+        return i18n.t("auth.oidcStateInvalid");
+      case "config_error":
+      case "provider_error":
+        return i18n.t("auth.oidcProviderError");
+      case "account_error":
+        return i18n.t("auth.oidcAccountError");
+      case "session_error":
+        return i18n.t("auth.oidcSessionError");
+      default:
+        return i18n.t("auth.oidcFailed");
+    }
+  }
+
   function loginRedirectPath(): string {
     if (typeof window === "undefined") return "/";
     const next = new URLSearchParams(window.location.search).get("next");
@@ -66,7 +87,7 @@
     const params = new URLSearchParams(window.location.search);
     const oidcError = params.get("oidc_error");
     if (oidcError) {
-      error = oidcError;
+      error = oidcErrorMessage(oidcError);
       router.navigate("/login", true);
       return;
     }

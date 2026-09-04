@@ -290,9 +290,10 @@ func TestOIDCCookieHelpers(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	srv.oidcErrorRedirect(rec, req, "boom")
-	if rec.Code != http.StatusFound || !strings.Contains(rec.Header().Get("Location"), "oidc_error=boom") {
-		t.Fatalf("redirect status=%d loc=%s", rec.Code, rec.Header().Get("Location"))
+	srv.oidcErrorRedirect(rec, req, "<script>alert(1)</script>")
+	loc := rec.Header().Get("Location")
+	if rec.Code != http.StatusFound || !strings.Contains(loc, "oidc_error=provider_error") || strings.Contains(loc, "<script") {
+		t.Fatalf("redirect status=%d loc=%s", rec.Code, loc)
 	}
 
 	_, _, err := srv.oidcRuntimeConfig(context.Background())
