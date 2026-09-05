@@ -79,7 +79,7 @@
     "altcha": "^3.2.2",
     "epubjs": "^0.3.93",
     "kokoro-js": "^1.2.1",
-    "pdfjs-dist": "^6.2.108",
+    "pdfjs-dist": "^6.3.289",
     "qrcode": "^1.5.4",
     "workbox-window": "^7.4.1"
   }
