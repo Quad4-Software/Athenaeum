@@ -131,9 +131,19 @@ function assertKokoroModelPresent() {
   }
 }
 
+function ortAssetPath(name: string): string {
+  const candidates = [
+    join(packageDir("@huggingface/transformers"), "dist", name),
+    join(packageDir("onnxruntime-web"), "dist", name),
+  ];
+  for (const src of candidates) {
+    if (existsSync(src)) return src;
+  }
+  throw new Error(`ONNX Runtime asset missing: ${name} (tried ${candidates.join(", ")})`);
+}
+
 function copyKokoroAssets(destRoot: string) {
   assertKokoroModelPresent();
-  const transformersDist = join(packageDir("@huggingface/transformers"), "dist");
   const voicesSrc = join(packageDir("kokoro-js"), "voices");
   const modelDest = join(destRoot, "models", KOKORO_MODEL_ID);
   const ortDest = join(destRoot, "ort");
@@ -145,11 +155,7 @@ function copyKokoroAssets(destRoot: string) {
     cpSync(voicesSrc, join(modelDest, "voices"), { recursive: true });
   }
   for (const name of ["ort-wasm-simd-threaded.jsep.mjs", "ort-wasm-simd-threaded.jsep.wasm"]) {
-    const src = join(transformersDist, name);
-    if (!existsSync(src)) {
-      throw new Error(`ONNX Runtime asset missing: ${src}`);
-    }
-    cpSync(src, join(ortDest, name));
+    cpSync(ortAssetPath(name), join(ortDest, name));
   }
 }
 
@@ -174,9 +180,13 @@ function kokoroAssetsPlugin(): Plugin {
         let file: string;
         if (url.startsWith("/ort/")) {
           const rel = decodeURIComponent(url.slice("/ort/".length).split("?")[0] ?? "");
-          const root = join(packageDir("@huggingface/transformers"), "dist");
-          file = normalize(join(root, rel));
-          if (!file.startsWith(root)) {
+          if (rel.includes("..") || rel.includes("/") || rel.includes("\\")) {
+            next();
+            return;
+          }
+          try {
+            file = ortAssetPath(rel);
+          } catch {
             next();
             return;
           }
