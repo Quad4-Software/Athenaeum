@@ -157,10 +157,26 @@ func (w *Watcher) flush(ctx context.Context) {
 	w.mu.Lock()
 	pending := w.pending
 	w.pending = make(map[int64]struct{})
-	w.mu.Unlock()
-	if len(pending) == 0 || w.scanner.Scanning() {
+	scanning := w.scanner.Scanning()
+	if len(pending) == 0 {
+		w.mu.Unlock()
 		return
 	}
+	if scanning {
+		// Keep work queued while a scan is already running.
+		for id := range pending {
+			w.pending[id] = struct{}{}
+		}
+		if w.timer != nil {
+			w.timer.Stop()
+		}
+		w.timer = time.AfterFunc(w.debounce, func() {
+			w.flush(ctx)
+		})
+		w.mu.Unlock()
+		return
+	}
+	w.mu.Unlock()
 	for libID := range pending {
 		if ctx.Err() != nil {
 			return
