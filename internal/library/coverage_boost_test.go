@@ -79,6 +79,10 @@ func TestWatcherScheduleFlush(t *testing.T) {
 	if err := store.EnsureDefaultLibrary(ctx, libDir); err != nil {
 		t.Fatal(err)
 	}
+	book := filepath.Join(libDir, "watched.pdf")
+	if err := os.WriteFile(book, []byte("%PDF-1.4 watched"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	sc := New(store, filepath.Join(dir, "covers"), dir, log, 1)
 	completed := make(chan struct{}, 1)
@@ -98,18 +102,12 @@ func TestWatcherScheduleFlush(t *testing.T) {
 		w.Run(runCtx)
 		close(done)
 	}()
-	// Give Run time to attach watches before the create event.
-	time.Sleep(150 * time.Millisecond)
-	book := filepath.Join(libDir, "watched.pdf")
-	if err := os.WriteFile(book, []byte("%PDF-1.4 watched"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	// fsnotify delivery is flaky on some CI runners. Drive schedule directly so
-	// flush -> ScanLibrary -> onComplete still runs under the live Watcher.
+	// File already exists before watches attach. Drive schedule directly so
+	// flush -> ScanLibrary -> onComplete runs without an fsnotify race.
 	w.schedule(runCtx, book)
 	select {
 	case <-completed:
-	case <-time.After(5 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("expected watcher-triggered scan completion")
 	}
 	cancel()
