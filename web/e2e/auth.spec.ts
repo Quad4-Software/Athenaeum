@@ -21,7 +21,8 @@ async function ensureAdmin(request: APIRequestContext) {
     },
     data: { username: E2E_USER, password: E2E_PASS },
   });
-  expect(create.status()).toBe(201);
+  // 201 created; 409 when another parallel worker already finished setup
+  expect([201, 409]).toContain(create.status());
 }
 
 async function gotoLogin(page: Page, request: APIRequestContext) {
