@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
-import { E2E_PASS, E2E_USER, ensureAdmin } from "./helpers";
+import { ensureAdmin } from "./helpers";
 
 async function gotoLogin(page: Page, request: APIRequestContext) {
   await ensureAdmin(request);
