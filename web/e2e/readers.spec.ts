@@ -1,27 +1,5 @@
-import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
-
-const E2E_USER = "e2eadmin";
-const E2E_PASS = "E2e-Admin-Pass1!";
-
-async function ensureAdmin(request: APIRequestContext) {
-  const setupRes = await request.get("/api/auth/setup");
-  expect(setupRes.ok()).toBeTruthy();
-  const setup = await setupRes.json();
-  if (!setup.needed) return;
-
-  const csrfRes = await request.get("/api/auth/csrf");
-  expect(csrfRes.ok()).toBeTruthy();
-  const csrf = (await csrfRes.json()).csrfToken as string;
-
-  const create = await request.post("/api/auth/setup", {
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRF-Token": csrf,
-    },
-    data: { username: E2E_USER, password: E2E_PASS },
-  });
-  expect(create.status()).toBe(201);
-}
+import { test, expect, type Page } from "@playwright/test";
+import { E2E_PASS, E2E_USER, ensureAdmin } from "./helpers";
 
 async function signIn(page: Page) {
   await page.goto("/login");
