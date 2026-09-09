@@ -436,6 +436,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    fsModuleCache: true,
     setupFiles: ["./vitest-setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,svelte.ts}"],
     coverage: {
