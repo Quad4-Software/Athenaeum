@@ -427,7 +427,7 @@
   cursor: default;
 }
 
-.transport-play :global(.play-offset) {
+.transport-play .play-offset {
   margin-left: 2px;
 }
 
@@ -467,11 +467,11 @@
   box-shadow: none;
 }
 
-.toolbar-item--active :global(.toolbar-icon) {
+.toolbar-item--active .toolbar-icon {
   color: inherit;
 }
 
-.toolbar-item :global(.toolbar-icon) {
+.toolbar-item .toolbar-icon {
   color: var(--color-muted);
   flex-shrink: 0;
 }
