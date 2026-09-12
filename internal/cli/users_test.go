@@ -201,6 +201,20 @@ func TestRunUsersHelpAndUnknown(t *testing.T) {
 	}
 }
 
+func TestRunUsersColorFlags(t *testing.T) {
+	_, dir := testCLIStore(t)
+	for _, extra := range [][]string{
+		{"--no-color"},
+		{"--color", "never"},
+		{"--color=always"},
+	} {
+		args := append([]string{"ls", "--data", dir}, extra...)
+		if err := RunUsers(args); err != nil {
+			t.Fatalf("%v: %v", extra, err)
+		}
+	}
+}
+
 func TestRunUsersCRUD(t *testing.T) {
 	_, dir := testCLIStore(t)
 

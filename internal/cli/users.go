@@ -25,6 +25,7 @@ import (
 // RunUsers dispatches `athenaeum users` subcommands.
 func RunUsers(args []string) error {
 	applyUsersColor(args)
+	args = stripColorFlags(args)
 	configurePasswordPolicyFromEnv()
 	if len(args) == 0 {
 		printUsersHelp(os.Stdout)
@@ -77,6 +78,26 @@ func applyUsersColor(args []string) {
 		mode = term.ModeNever
 	}
 	term.Apply(mode)
+}
+
+// stripColorFlags drops --color/--no-color from args so per-command flag
+// sets (which do not define them) still parse cleanly. applyUsersColor has
+// already consumed the mode.
+func stripColorFlags(args []string) []string {
+	out := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		switch {
+		case a == "--no-color", strings.HasPrefix(a, "--color="):
+			continue
+		case a == "--color":
+			i++
+			continue
+		default:
+			out = append(out, a)
+		}
+	}
+	return out
 }
 
 func printUsersHelp(w io.Writer) {
