@@ -3538,6 +3538,47 @@
         ]
       }
     },
+    "/api/me/reading-sessions": {
+      "get": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Your reading sessions, newest first",
+        "description": "Auth: required",
+        "operationId": "GET__api_me_reading_sessions",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/openapi.json": {
       "get": {
         "tags": [

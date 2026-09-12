@@ -10,6 +10,10 @@ import (
 	"athenaeum/internal/storage"
 )
 
+// defaultSessionListLimit is the page size for GET /api/me/reading-sessions
+// when no limit query is given.
+const defaultSessionListLimit = 20
+
 func (s *Server) registerBookmarkRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/books/{id}/bookmarks", s.handleListBookmarks)
 	mux.HandleFunc("POST /api/books/{id}/bookmarks", s.handleCreateBookmark)
@@ -19,6 +23,7 @@ func (s *Server) registerBookmarkRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/books/{id}/highlights/{highlightId}", s.handleDeleteHighlight)
 	mux.HandleFunc("POST /api/books/{id}/reading-time", s.handleAddReadingTime)
 	mux.HandleFunc("GET /api/stats/reading", s.handleReadingStats)
+	mux.HandleFunc("GET /api/me/reading-sessions", s.handleListReadingSessions)
 }
 
 func (s *Server) handleListBookmarks(w http.ResponseWriter, r *http.Request) {
@@ -184,6 +189,17 @@ func (s *Server) handleAddReadingTime(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (s *Server) handleListReadingSessions(w http.ResponseWriter, r *http.Request) {
+	userID := UserIDFromContext(r.Context())
+	limit := atoiDefault(r.URL.Query().Get("limit"), defaultSessionListLimit)
+	sessions, err := s.store.ListReadingSessions(r.Context(), userID, limit)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sessions)
 }
 
 func (s *Server) handleReadingStats(w http.ResponseWriter, r *http.Request) {

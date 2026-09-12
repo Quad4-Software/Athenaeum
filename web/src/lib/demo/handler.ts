@@ -513,6 +513,9 @@ export async function handleDemoRequest(
       booksInProgress: [...progress.values()].filter((p) => p.percent > 0 && p.percent < 1).length,
       booksCompleted: [...progress.values()].filter((p) => p.percent >= 1).length,
       currentStreakDays: 3,
+      sessions7d: 2,
+      seconds7d: 5_400,
+      seconds30d: 12_600,
     };
     return jsonResponse(body);
   }

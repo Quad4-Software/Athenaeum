@@ -98,6 +98,10 @@ func (s *Store) DeleteHighlight(ctx context.Context, userID, id int64) error {
 }
 
 func (s *Store) AddReadSeconds(ctx context.Context, userID, bookID int64, seconds int64) error {
+	return s.addReadSecondsAt(ctx, userID, bookID, seconds, time.Now().Unix())
+}
+
+func (s *Store) addReadSecondsAt(ctx context.Context, userID, bookID, seconds, now int64) error {
 	if seconds <= 0 {
 		return nil
 	}
@@ -107,8 +111,11 @@ VALUES (?,?,'',0,?,?)
 ON CONFLICT(user_id, book_id) DO UPDATE SET
 	read_seconds = progress.read_seconds + excluded.read_seconds,
 	updated_at = excluded.updated_at`,
-		userID, bookID, seconds, time.Now().Unix())
-	return err
+		userID, bookID, seconds, now)
+	if err != nil {
+		return err
+	}
+	return s.recordSession(ctx, userID, bookID, seconds, now)
 }
 
 func (s *Store) ReadingStats(ctx context.Context, userID int64) (models.ReadingStats, error) {
@@ -123,6 +130,7 @@ SELECT COUNT(*) FROM progress WHERE user_id=? AND percent > 0 AND percent < 0.98
 	_ = s.queryRowContext(ctx, `
 SELECT COUNT(*) FROM progress WHERE user_id=? AND percent >= 0.98`, userID).Scan(&st.BooksCompleted)
 	st.CurrentStreak = s.readingStreakDays(ctx, userID)
+	st.Sessions7d, st.Seconds7d, st.Seconds30d = s.recentSessionStats(ctx, userID)
 	return st, nil
 }
 

@@ -540,11 +540,23 @@ export interface ReaderPrefs {
   updatedAt?: number;
 }
 
+export interface ReadingSession {
+  id: number;
+  bookId: number;
+  title: string;
+  startedAt: string;
+  endedAt: string;
+  seconds: number;
+}
+
 export interface ReadingStats {
   totalReadSeconds: number;
   booksInProgress: number;
   booksCompleted: number;
   currentStreakDays: number;
+  sessions7d: number;
+  seconds7d: number;
+  seconds30d: number;
 }
 
 export interface SMTPSettingsPublic {

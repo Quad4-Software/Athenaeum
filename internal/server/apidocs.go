@@ -97,6 +97,7 @@ func apiDocumentation() APIDoc {
 					{Method: "GET", Path: "/api/books/{id}/chapters", Summary: "Audiobook chapters", Auth: "required"},
 					{Method: "GET", Path: "/api/books/{id}/progress", Summary: "Reading progress", Auth: "required"},
 					{Method: "PUT", Path: "/api/books/{id}/progress", Summary: "Save progress", Auth: "required", Body: `{"location","percent"}`},
+					{Method: "GET", Path: "/api/me/reading-sessions", Summary: "Your reading sessions, newest first", Auth: "required", Query: "limit"},
 					{Method: "PUT", Path: "/api/books/{id}/favorite", Summary: "Toggle favorite", Auth: "required", Body: `{"favorite":true}`},
 					{Method: "GET", Path: "/api/series", Summary: "Series with counts", Auth: "required", Query: "library"},
 					{Method: "GET", Path: "/api/authors", Summary: "Authors with counts", Auth: "required", Query: "library"},

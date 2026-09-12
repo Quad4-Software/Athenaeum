@@ -546,8 +546,10 @@ FROM progress WHERE user_id=?`, userID).
 	return st, nil
 }
 
-// SaveProgress stores reading progress for a user and book.
+// SaveProgress stores reading progress for a user and book. A positive
+// ReadSeconds delta is also recorded as reading session time.
 func (s *Store) SaveProgress(ctx context.Context, userID int64, p models.Progress) error {
+	now := time.Now().Unix()
 	_, err := s.execContext(ctx, `
 INSERT INTO progress (user_id, book_id, location, percent, read_seconds, updated_at)
 VALUES (?,?,?,?,COALESCE(?,0),?)
@@ -556,8 +558,11 @@ ON CONFLICT(user_id, book_id) DO UPDATE SET
 	percent=excluded.percent,
 	read_seconds=CASE WHEN excluded.read_seconds > 0 THEN progress.read_seconds + excluded.read_seconds ELSE progress.read_seconds END,
 	updated_at=excluded.updated_at`,
-		userID, p.BookID, p.Location, p.Percent, p.ReadSeconds, time.Now().Unix())
-	return err
+		userID, p.BookID, p.Location, p.Percent, p.ReadSeconds, now)
+	if err != nil {
+		return err
+	}
+	return s.recordSession(ctx, userID, p.BookID, p.ReadSeconds, now)
 }
 
 // GetProgress returns stored progress for a user and book.

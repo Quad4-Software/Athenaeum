@@ -33,4 +33,15 @@ CREATE TABLE IF NOT EXISTS progress (
 	percent    REAL    NOT NULL DEFAULT 0,
 	updated_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS reading_sessions (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id    INTEGER NOT NULL,
+	book_id    INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+	started_at INTEGER NOT NULL,
+	ended_at   INTEGER NOT NULL,
+	seconds    INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_reading_sessions_user_ended ON reading_sessions(user_id, ended_at);
+CREATE INDEX IF NOT EXISTS idx_reading_sessions_book ON reading_sessions(book_id);
 `

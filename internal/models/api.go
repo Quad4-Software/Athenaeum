@@ -51,6 +51,7 @@ func APITypes() []any {
 		PocketIDSettingsPublic{},
 		Progress{},
 		ReaderPrefs{},
+		ReadingSession{},
 		ReadingStats{},
 		SMTPSettingsPublic{},
 		ScanStatus{},

@@ -103,6 +103,7 @@ export const apiOperations = [
   { id: "POST__api_library_scan", method: "POST", path: "/api/library/scan", summary: "Background rescan all" },
   { id: "GET__api_library_scan_status", method: "GET", path: "/api/library/scan/status", summary: "Live scan progress" },
   { id: "GET__api_library_stats", method: "GET", path: "/api/library/stats", summary: "Counts and flags" },
+  { id: "GET__api_me_reading_sessions", method: "GET", path: "/api/me/reading-sessions", summary: "Your reading sessions, newest first" },
   { id: "GET__api_openapi_json", method: "GET", path: "/api/openapi.json", summary: "OpenAPI 3.0 specification" },
   { id: "GET__api_series", method: "GET", path: "/api/series", summary: "Series with counts" },
   { id: "GET__api_system_stats", method: "GET", path: "/api/system/stats", summary: "Host CPU/memory/disk and version" },
