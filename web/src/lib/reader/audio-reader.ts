@@ -130,6 +130,7 @@ export interface AudioKeyHandlers {
 
 /** Space toggles play. Arrows seek by skip interval. Returns true when handled. */
 export function handleAudioKeys(event: KeyboardEvent, handlers: AudioKeyHandlers): boolean {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return false;
   if (isTypingTarget(event.target)) return false;
 
   if (event.key === " " || event.code === "Space") {
@@ -138,10 +139,12 @@ export function handleAudioKeys(event: KeyboardEvent, handlers: AudioKeyHandlers
     return true;
   }
   if (event.key === "ArrowLeft") {
+    event.preventDefault();
     handlers.seekBy(-handlers.skipSeconds);
     return true;
   }
   if (event.key === "ArrowRight") {
+    event.preventDefault();
     handlers.seekBy(handlers.skipSeconds);
     return true;
   }

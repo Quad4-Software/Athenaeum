@@ -158,19 +158,41 @@ describe("handleAudioKeys", () => {
     const togglePlay = vi.fn();
     const seekBy = vi.fn();
 
-    handleAudioKeys(new KeyboardEvent("keydown", { key: "ArrowLeft" }), {
-      togglePlay,
-      seekBy,
-      skipSeconds: 30,
-    });
-    handleAudioKeys(new KeyboardEvent("keydown", { key: "ArrowRight" }), {
-      togglePlay,
-      seekBy,
-      skipSeconds: 30,
-    });
+    const left = new KeyboardEvent("keydown", { key: "ArrowLeft", cancelable: true });
+    const right = new KeyboardEvent("keydown", { key: "ArrowRight", cancelable: true });
+    handleAudioKeys(left, { togglePlay, seekBy, skipSeconds: 30 });
+    handleAudioKeys(right, { togglePlay, seekBy, skipSeconds: 30 });
 
     expect(seekBy).toHaveBeenNthCalledWith(1, -30);
     expect(seekBy).toHaveBeenNthCalledWith(2, 30);
+    expect(left.defaultPrevented).toBe(true);
+    expect(right.defaultPrevented).toBe(true);
+    expect(togglePlay).not.toHaveBeenCalled();
+  });
+
+  it("ignores keys held with modifiers", () => {
+    const togglePlay = vi.fn();
+    const seekBy = vi.fn();
+    const handlers = { togglePlay, seekBy, skipSeconds: 15 };
+
+    for (const init of [
+      { key: " ", code: "Space", ctrlKey: true },
+      { key: " ", code: "Space", metaKey: true },
+      { key: "ArrowRight", altKey: true },
+      { key: "ArrowLeft", ctrlKey: true },
+    ]) {
+      expect(handleAudioKeys(new KeyboardEvent("keydown", init), handlers)).toBe(false);
+    }
+    expect(togglePlay).not.toHaveBeenCalled();
+    expect(seekBy).not.toHaveBeenCalled();
+  });
+
+  it("ignores already-handled events", () => {
+    const togglePlay = vi.fn();
+    const event = new KeyboardEvent("keydown", { key: " ", cancelable: true });
+    event.preventDefault();
+
+    expect(handleAudioKeys(event, { togglePlay, seekBy: vi.fn(), skipSeconds: 15 })).toBe(false);
     expect(togglePlay).not.toHaveBeenCalled();
   });
 

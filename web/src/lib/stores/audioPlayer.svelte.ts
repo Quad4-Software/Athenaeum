@@ -1,6 +1,7 @@
 import { api } from "$lib/api/client";
 import type { AudiobookTrack, Book, Chapter } from "$lib/api/types";
 import { audioCache, type AudioCacheStatus } from "$lib/audio/cache";
+import { AUDIO_RATE_DEFAULT, clampAudioRate } from "$lib/audio/options";
 import {
   bindMediaSession,
   setMediaPlaybackState,
@@ -25,11 +26,11 @@ const RATE_KEY = storageKey("audio-rate");
 const SKIP_KEY = storageKey("audio-skip");
 
 class AudioPlayerStore {
-  #rateState = new PersistedState<number>(RATE_KEY, 1, {
+  #rateState = new PersistedState<number>(RATE_KEY, AUDIO_RATE_DEFAULT, {
     serializer: {
-      // Stored as a bare number string, not JSON.
+      // Stored as a bare number string, not JSON. Clamped to the speeds the UI offers.
       serialize: (value) => String(value),
-      deserialize: (value) => Number(value) || 1,
+      deserialize: (value) => clampAudioRate(Number(value)),
     },
   });
   #skipState = new PersistedState<number>(SKIP_KEY, 10, {
@@ -408,8 +409,9 @@ class AudioPlayerStore {
   }
 
   setRate(next: number) {
-    this.rate = next;
-    if (this.audio) this.audio.playbackRate = next;
+    const rate = clampAudioRate(next);
+    this.rate = rate;
+    if (this.audio) this.audio.playbackRate = rate;
     this.reportProgress(true);
   }
 
