@@ -216,6 +216,7 @@
       {@const Reader = ComicReader}
       <Reader
         bookId={book.id}
+        readingDirection={book.readingDirection}
         initialPage={progress.location ? Number(progress.location) || 0 : 0}
         onProgress={onComicProgress}
       />

@@ -16,6 +16,7 @@ import {
   epubNarrationParagraphs,
   epubPageKeyHandlers,
   epubPercentFromCfi,
+  epubProgressPercent,
   epubSpreadWidthClass,
   EPUB_MAX_FONT,
   EPUB_MIN_FONT,
@@ -98,6 +99,18 @@ describe("epubPercentFromCfi", () => {
         throw new Error("missing");
       }, "cfi"),
     ).toBe(0);
+  });
+});
+
+describe("epubProgressPercent", () => {
+  it("snaps to 1 at the end of the book", () => {
+    expect(epubProgressPercent(0.97, true)).toBe(1);
+    expect(epubProgressPercent(0.99, true)).toBe(1);
+  });
+
+  it("passes mid-book percentages through", () => {
+    expect(epubProgressPercent(0.97, false)).toBe(0.97);
+    expect(epubProgressPercent(1, false)).toBe(1);
   });
 });
 

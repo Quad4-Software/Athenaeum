@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Search, CornerDownLeft } from "@lucide/svelte";
+  import { History, Search, CornerDownLeft, Trash2 } from "@lucide/svelte";
   import { Command, Dialog } from "bits-ui";
   import { api } from "$lib/api/client";
   import { router } from "$lib/router.svelte";
@@ -10,13 +10,19 @@
   import { formatChord, isMacPlatform } from "$lib/commands/chords";
   import { listRecentBooks, rememberBook } from "$lib/commands/recent";
   import type { RecentBook } from "$lib/commands/recent";
+  import {
+    clearRecentSearches,
+    listRecentSearches,
+    rememberSearch,
+  } from "$lib/commands/search-history";
   import { runCommand, visibleCommands } from "$lib/commands/registry";
   import type { CommandDef } from "$lib/commands/types";
   import type { Book } from "$lib/api/types";
 
   type CommandRow = { kind: "command"; id: string; command: CommandDef; title: string };
   type BookRow = { kind: "book"; id: string; book: RecentBook; title: string };
-  type PaletteRow = CommandRow | BookRow;
+  type SearchRow = { kind: "search"; id: string; query: string; title: string };
+  type PaletteRow = CommandRow | BookRow | SearchRow;
 
   let bookHits = $state<Book[]>([]);
   let searching = $state(false);
@@ -37,6 +43,16 @@
       id: `cmd:${command.id}`,
       command,
       title: i18n.t(command.titleKey),
+    }));
+  });
+
+  let searchRows = $derived.by((): SearchRow[] => {
+    if (query.trim()) return [];
+    return listRecentSearches().map((q) => ({
+      kind: "search" as const,
+      id: `search:${q}`,
+      query: q,
+      title: q,
     }));
   });
 
@@ -84,7 +100,13 @@
   }
 
   async function activate(row: PaletteRow) {
+    if (row.kind === "search") {
+      // Picking a past query fills the input, which reruns the search effect.
+      commandPalette.query = row.query;
+      return;
+    }
     if (row.kind === "book") {
+      rememberSearch(query);
       rememberBook({
         id: row.book.id,
         title: row.book.title,
@@ -133,6 +155,36 @@
             <Command.Empty class="palette-empty">
               {searching ? i18n.t("common.loading") : i18n.t("commands.noResults")}
             </Command.Empty>
+
+            {#if searchRows.length > 0}
+              <Command.Group value="searches">
+                <Command.GroupHeading class="palette-section">
+                  {i18n.t("commands.sectionSearches")}
+                </Command.GroupHeading>
+                {#each searchRows as row (row.id)}
+                  <Command.Item
+                    class="palette-row"
+                    value={row.id}
+                    onSelect={() => void activate(row)}
+                  >
+                    <History size={14} class="shrink-0 text-subtle" />
+                    <span class="min-w-0 flex-1 truncate text-left text-sm text-fg">
+                      {row.title}
+                    </span>
+                  </Command.Item>
+                {/each}
+                <Command.Item
+                  class="palette-row"
+                  value="searches:clear"
+                  onSelect={clearRecentSearches}
+                >
+                  <Trash2 size={14} class="shrink-0 text-subtle" />
+                  <span class="min-w-0 flex-1 text-left text-sm text-muted">
+                    {i18n.t("commands.clearSearches")}
+                  </span>
+                </Command.Item>
+              </Command.Group>
+            {/if}
 
             {#if bookRows.length > 0}
               <Command.Group value="books">

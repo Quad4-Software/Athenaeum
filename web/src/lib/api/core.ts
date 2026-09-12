@@ -265,6 +265,8 @@ export function buildQuery(params: BookQueryParams): string {
   if (params.collection != null) q.set("collection", String(params.collection));
   if (params.favorites) q.set("favorites", "1");
   if (params.inProgress) q.set("inProgress", "1");
+  if (params.tag) q.set("tag", params.tag);
+  if (params.letter) q.set("letter", params.letter);
   if (params.limit != null) q.set("limit", String(params.limit));
   if (params.offset != null) q.set("offset", String(params.offset));
   const s = q.toString();

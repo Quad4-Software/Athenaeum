@@ -1,8 +1,10 @@
 <script lang="ts">
   import { BookOpen, FileText, RefreshCw, Search, Star } from "@lucide/svelte";
   import { SvelteSet } from "svelte/reactivity";
+  import AlphabetStrip from "$lib/components/AlphabetStrip.svelte";
   import BookGrid from "$lib/components/BookGrid.svelte";
   import BrowseHeader from "$lib/components/BrowseHeader.svelte";
+  import CoverSizeControl from "$lib/components/CoverSizeControl.svelte";
   import ContinueRail from "$lib/components/ContinueRail.svelte";
   import Button from "$lib/components/Button.svelte";
   import EmptyState from "$lib/components/EmptyState.svelte";
@@ -228,6 +230,12 @@
   {/if}
 
   <FilterChips />
+
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+    <AlphabetStrip />
+    <CoverSizeControl />
+  </div>
+
   {#if library.error}
     <div
       class="flex flex-col items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-fg"

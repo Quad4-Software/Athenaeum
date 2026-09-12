@@ -61,6 +61,7 @@
     epubNarrationParagraphs,
     epubPageKeyHandlers,
     epubPercentFromCfi,
+    epubProgressPercent,
     EPUB_SHORTCUT_ITEMS,
     errorMessage,
     loadAndPaintEpubHighlights,
@@ -375,12 +376,18 @@
       })
       .catch(() => undefined);
 
-    r.on("relocated", (location: { start: { cfi: string; index: number } }) => {
+    r.on("relocated", (location: { start: { cfi: string; index: number }; atEnd?: boolean }) => {
       currentCfi = location.start.cfi;
       preloadEpubSpineSections(book, location.start.index);
       onProgress?.(
         location.start.cfi,
-        epubPercentFromCfi((value) => book.locations.percentageFromCfi(value), location.start.cfi),
+        epubProgressPercent(
+          epubPercentFromCfi(
+            (value) => book.locations.percentageFromCfi(value),
+            location.start.cfi,
+          ),
+          location.atEnd === true,
+        ),
       );
     });
 

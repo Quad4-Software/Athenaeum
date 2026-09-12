@@ -49,7 +49,10 @@ export function isPaperBook(book: { doi?: string; arxivId?: string; pubmedId?: s
 // contract is tighter than the Go type (string enums) or where the client
 // sends partial payloads the Go struct marks as required.
 
-export type Book = Omit<gen.Book, "format"> & { format: BookFormat };
+export type Book = Omit<gen.Book, "format"> & {
+  format: BookFormat;
+  readingDirection?: "rtl" | "ltr" | "";
+};
 
 export type BookPage = Omit<gen.BookPage, "items"> & { items: Book[] };
 
@@ -160,6 +163,7 @@ export interface BookQueryParams {
   favorites?: boolean;
   inProgress?: boolean;
   tag?: string;
+  letter?: string;
   limit?: number;
   offset?: number;
 }

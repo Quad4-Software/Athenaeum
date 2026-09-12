@@ -41,6 +41,12 @@
         clear: () => library.setSeries(""),
       });
     }
+    if (library.letterFilter) {
+      out.push({
+        label: i18n.t("library.filters.letter", { letter: library.letterFilter }),
+        clear: () => library.setLetter(""),
+      });
+    }
     if (library.tagFilter) {
       out.push({
         label: `#${library.tagFilter}`,

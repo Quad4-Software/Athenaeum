@@ -8,6 +8,7 @@
   import { toast } from "$lib/stores/toast.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
   import { ApiError } from "$lib/api/client";
+  import { confirmNameMatches } from "$lib/utils/confirm-name";
   import type { LibraryS3Input } from "$lib/api/types";
   import LibraryUploadsSection from "./LibraryUploadsSection.svelte";
 
@@ -25,6 +26,7 @@
   let editBackend = $state<BackendKind>("local");
   let editS3 = $state(emptyS3());
   let confirmDeleteId = $state<number | null>(null);
+  let deleteNameInput = $state("");
   let libSaving = $state(false);
   let browseOpen = $state(false);
   let browseTarget = $state<"add" | "edit">("add");
@@ -80,6 +82,7 @@
       await libraries.remove(id);
       if (library.libraryFilter === id) library.setLibrary(null);
       confirmDeleteId = null;
+      deleteNameInput = "";
       toast.info(i18n.t("settings.mounts.removed"));
       void library.refresh();
     } catch (e) {
@@ -107,6 +110,7 @@
       };
     }
     confirmDeleteId = null;
+    deleteNameInput = "";
   }
 
   function cancelEdit() {
@@ -341,20 +345,38 @@
                 Removes this mount and all {lib.bookCount} indexed books from the catalog. Files on disk
                 are not deleted.
               </p>
+              <label
+                class="mt-3 block text-xs font-medium text-fg"
+                for="library-delete-name-{lib.id}"
+              >
+                {i18n.t("settings.mounts.deleteTypeConfirm", { name: lib.name })}
+              </label>
+              <input
+                id="library-delete-name-{lib.id}"
+                type="text"
+                class="field-input mt-1"
+                bind:value={deleteNameInput}
+                autocomplete="off"
+                spellcheck="false"
+              />
               <div class="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   class="btn btn-primary text-xs !bg-danger hover:!bg-danger"
+                  disabled={!confirmNameMatches(deleteNameInput, lib.name)}
                   onclick={() => removeLibrary(lib.id)}
                 >
-                  Delete
+                  {i18n.t("confirm.delete")}
                 </button>
                 <button
                   type="button"
                   class="btn btn-ghost text-xs ring-1 ring-border"
-                  onclick={() => (confirmDeleteId = null)}
+                  onclick={() => {
+                    confirmDeleteId = null;
+                    deleteNameInput = "";
+                  }}
                 >
-                  Cancel
+                  {i18n.t("confirm.cancel")}
                 </button>
               </div>
             </div>
@@ -417,6 +439,7 @@
                   aria-label="Remove library"
                   onclick={() => {
                     confirmDeleteId = lib.id;
+                    deleteNameInput = "";
                     editingId = null;
                   }}
                 >

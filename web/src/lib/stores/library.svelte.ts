@@ -4,6 +4,7 @@ import { toast } from "$lib/stores/toast.svelte";
 import { i18n } from "$lib/stores/i18n.svelte";
 import { scan } from "$lib/stores/scan.svelte";
 import type { Book, BookFormat, LibraryStats, SortKey } from "$lib/api/types";
+import { nextLetterFilter } from "$lib/utils/letter-filter";
 
 const PAGE_SIZE = 60;
 const MAX_RETAINED_BOOKS = 240;
@@ -47,6 +48,7 @@ class LibraryStore {
   favoritesFilter = $state(false);
   inProgressFilter = $state(false);
   tagFilter = $state("");
+  letterFilter = $state("");
 
   loading = $state(false);
   error = $state<string | null>(null);
@@ -85,7 +87,8 @@ class LibraryStore {
       this.libraryFilter != null ||
       this.favoritesFilter ||
       this.inProgressFilter ||
-      !!this.tagFilter
+      !!this.tagFilter ||
+      !!this.letterFilter
     );
   }
 
@@ -117,6 +120,7 @@ class LibraryStore {
       favorites: this.favoritesFilter || undefined,
       inProgress: this.inProgressFilter || undefined,
       tag: this.tagFilter || undefined,
+      letter: this.letterFilter || undefined,
       limit: PAGE_SIZE,
       offset: this.offset,
     };
@@ -274,7 +278,13 @@ class LibraryStore {
     void this.refresh({ facets: false });
   }
 
+  setLetter(letter: string) {
+    this.letterFilter = nextLetterFilter(this.letterFilter, letter);
+    void this.refresh({ facets: false });
+  }
+
   clearFilters() {
+    this.letterFilter = "";
     this.formatFilter = "";
     this.seriesFilter = "";
     this.authorFilter = "";

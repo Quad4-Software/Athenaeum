@@ -1,11 +1,37 @@
 import { describe, expect, it } from "vitest";
 import {
   comicFitClass,
+  comicRtlEnabled,
   comicSpreadPages,
   comicSpreadStart,
   nextComicPage,
   prevComicPage,
 } from "./comic-reader";
+
+describe("comicRtlEnabled", () => {
+  it("prefers an in-session user toggle over everything", () => {
+    expect(comicRtlEnabled({ sessionOverride: true, bookDirection: "ltr", prefRtl: false })).toBe(
+      true,
+    );
+    expect(comicRtlEnabled({ sessionOverride: false, bookDirection: "rtl", prefRtl: true })).toBe(
+      false,
+    );
+  });
+
+  it("lets the book-declared direction beat the global pref", () => {
+    expect(comicRtlEnabled({ sessionOverride: null, bookDirection: "rtl", prefRtl: false })).toBe(
+      true,
+    );
+    expect(comicRtlEnabled({ sessionOverride: null, bookDirection: "ltr", prefRtl: true })).toBe(
+      false,
+    );
+  });
+
+  it("falls back to the global pref without a declared direction", () => {
+    expect(comicRtlEnabled({ sessionOverride: null, bookDirection: "", prefRtl: true })).toBe(true);
+    expect(comicRtlEnabled({ sessionOverride: null, prefRtl: false })).toBe(false);
+  });
+});
 
 describe("comicFitClass", () => {
   it("maps fit modes to sizing classes", () => {

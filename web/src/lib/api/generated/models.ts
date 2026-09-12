@@ -130,6 +130,9 @@ export interface Book {
   issue?: string;
   pages?: string;
   publishedYear?: number;
+  publisher?: string;
+  ageRating?: string;
+  readingDirection?: string;
   addedAt: string;
   modifiedAt: string;
   metaEdited?: boolean;
@@ -170,6 +173,9 @@ export interface BookUpdate {
   issue?: string;
   pages?: string;
   publishedYear?: number;
+  publisher?: string;
+  ageRating?: string;
+  readingDirection?: string;
 }
 
 export interface Bookmark {

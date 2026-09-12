@@ -21,6 +21,7 @@
   import { readerGestures } from "$lib/reader/reader-touch";
   import {
     comicFitClass,
+    comicRtlEnabled,
     comicSpreadPages,
     nextComicPage,
     prevComicPage,
@@ -38,11 +39,12 @@
 
   interface Props {
     bookId: number;
+    readingDirection?: string;
     initialPage?: number;
     onProgress?: (page: number, percent: number) => void;
   }
 
-  let { bookId, initialPage = 0, onProgress }: Props = $props();
+  let { bookId, readingDirection = "", initialPage = 0, onProgress }: Props = $props();
 
   let total = $state(0);
   let page = $state(0);
@@ -65,7 +67,16 @@
 
   let fit = $derived(fitPref.current as ComicFit);
   let spreadEnabled = $derived(spreadPref.current === "1");
-  let rtl = $derived(rtlPref.current === "1");
+  // A toggle in this reading session overrides the book's declared direction;
+  // the book's direction overrides the global pref.
+  let sessionRtl = $state<boolean | null>(null);
+  let rtl = $derived(
+    comicRtlEnabled({
+      sessionOverride: sessionRtl,
+      bookDirection: readingDirection,
+      prefRtl: rtlPref.current === "1",
+    }),
+  );
 
   let spreadPages = $derived(comicSpreadPages(page, total, spreadEnabled, wide));
   let displayPages = $derived(rtl ? [...spreadPages].reverse() : spreadPages);
@@ -90,6 +101,11 @@
       ),
     ),
   );
+
+  $effect(() => {
+    void bookId;
+    sessionRtl = null;
+  });
 
   $effect(() => {
     const id = bookId;
@@ -164,7 +180,9 @@
   }
 
   function toggleRtl() {
-    rtlPref.current = rtl ? "0" : "1";
+    const next = !rtl;
+    sessionRtl = next;
+    rtlPref.current = next ? "1" : "0";
   }
 
   async function addBookmark() {

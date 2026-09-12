@@ -1,5 +1,20 @@
 export type ComicFit = "contain" | "width" | "height";
 
+/**
+ * Direction precedence: an in-session user toggle beats the book-declared
+ * direction, which beats the persisted global pref.
+ */
+export function comicRtlEnabled(input: {
+  sessionOverride: boolean | null;
+  bookDirection?: string;
+  prefRtl: boolean;
+}): boolean {
+  if (input.sessionOverride != null) return input.sessionOverride;
+  if (input.bookDirection === "rtl") return true;
+  if (input.bookDirection === "ltr") return false;
+  return input.prefRtl;
+}
+
 export function comicFitClass(fit: ComicFit): string {
   switch (fit) {
     case "width":

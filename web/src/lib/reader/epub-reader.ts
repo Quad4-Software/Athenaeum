@@ -115,6 +115,14 @@ export function epubPercentFromCfi(
   }
 }
 
+/**
+ * Progress fraction to persist. At the end of the book snap to 1 exactly:
+ * epubjs location math can stall a hair below it on the last page.
+ */
+export function epubProgressPercent(percent: number, atEnd: boolean): number {
+  return atEnd ? 1 : percent;
+}
+
 export function mergeEpubReaderPrefs(
   current: EpubDisplayPrefs,
   prefs: Record<string, unknown>,
