@@ -1,6 +1,6 @@
 # TODO
 
-- Podcasts support and transcriptions via Whisper or similar
+- Podcasts support and transcriptions via Whisper or similar (audio RSS feed export done; subscriptions and downloads still open)
 - RSS reader and aggregator, and FreshRSS support
 - Audiobookshelf support for podcasts or audiobooks
 - ZIM / Kiwix offline content (Wikipedia and other OpenZIM archives)
@@ -12,5 +12,5 @@
 - Readium-based EPUB reader with streaming (replaces epubjs)
 - Kobo device sync API
 - Book clubs (shared reading, discussions)
-- Reading session history and per-book time stats
+- Reading session history UI (sessions are recorded and served by GET /api/me/reading-sessions; needs a stats page view)
 - Reticulum-Go (https://reticulum-go.quad4.io/) for decentralization and peer-to-peer sharing

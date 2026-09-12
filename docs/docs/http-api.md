@@ -164,6 +164,7 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 | GET | /api/favorites | List favorite book IDs |
 | GET | /api/series | Series with counts |
 | GET | /api/stats/reading | User reading stats |
+| GET | /api/me/reading-sessions | Recent reading sessions |
 | GET | /api/tags | List tags |
 | POST | /api/tags | Create tag |
 
@@ -188,6 +189,21 @@ under Books, Authentication, and Admin above. Public endpoints:
 | ------ | ---- | ----------- |
 | GET | `/api/share/{token}` | Share metadata (public) |
 | GET | `/share/{token}/download` | Download attachment |
+
+## Audio feeds
+
+Feed tokens expose a library or shelf as an RSS 2.0 feed for podcast apps.
+The token in the URL is the credential; item routes re-check the feed scope
+and the owner's library access on every request.
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| GET | /api/feeds | List your audio feeds |
+| POST | /api/feeds | Create a feed token (`name`, `libraryId?`, `collectionId?`) |
+| DELETE | `/api/feeds/{id}` | Delete a feed token (admins may pass `userId`) |
+| GET | `/feed/{token}` | RSS 2.0 audio feed (public) |
+| GET | `/feed/{token}/item/{bookId}/file` | Feed item audio, HTTP Range (public) |
+| GET | `/feed/{token}/item/{bookId}/cover` | Feed item cover (public) |
 
 ## Narration (TTS)
 
