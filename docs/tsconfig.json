@@ -2,8 +2,11 @@
   // This file is not used in compilation. It is here just for a nice editor experience.
   "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
-    // Anchors the inherited "@site/*" paths to this directory.
-    "baseUrl": "."
+    // Anchors the inherited "@site/*" paths to this directory. baseUrl is
+    // required: without it the inherited baseUrl points paths at the
+    // @docusaurus/tsconfig package dir and @site/* stops resolving.
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0"
   },
   "exclude": [".docusaurus", "build"]
 }
