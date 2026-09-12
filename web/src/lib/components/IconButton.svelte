@@ -1,13 +1,9 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import type { HTMLButtonAttributes } from "svelte/elements";
 
-  interface Props {
-    type?: "button" | "submit" | "reset";
+  interface Props extends HTMLButtonAttributes {
     ariaLabel: string;
-    title?: string;
-    class?: string;
-    disabled?: boolean;
-    onclick?: (event: MouseEvent) => void;
     children: Snippet;
   }
 
@@ -19,6 +15,7 @@
     disabled = false,
     onclick,
     children,
+    ...rest
   }: Props = $props();
 </script>
 
@@ -29,6 +26,7 @@
   {title}
   {disabled}
   {onclick}
+  {...rest}
 >
   {@render children()}
 </button>

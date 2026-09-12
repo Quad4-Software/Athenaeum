@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { ChevronDown } from "@lucide/svelte";
-  import Popover from "./Popover.svelte";
-  import MenuList, { type MenuItem } from "./MenuList.svelte";
+  import { Check, ChevronDown } from "@lucide/svelte";
+  import { Select } from "bits-ui";
 
   export interface SelectOption {
     value: string;
     label: string;
     hint?: string;
+    disabled?: boolean;
   }
 
   interface Props {
@@ -31,46 +31,55 @@
     onchange,
   }: Props = $props();
 
-  let open = $state(false);
-
   let selected = $derived(options.find((o) => o.value === value));
   let display = $derived(selected?.label ?? placeholder);
-
-  let items = $derived(
-    options.map((opt): MenuItem => ({
-      id: opt.value,
-      label: opt.label,
-      hint: opt.hint,
-      active: opt.value === value,
-      onclick: () => {
-        value = opt.value;
-        onchange?.(opt.value);
-        open = false;
-      },
-    })),
-  );
 </script>
 
 <div class={className}>
   {#if label}
     <span class="select-label">{label}</span>
   {/if}
-  <Popover bind:open {minWidth} align="start">
-    {#snippet trigger(toggle)}
-      <button
-        type="button"
-        class="select-trigger"
-        {disabled}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onclick={toggle}
+  <Select.Root
+    type="single"
+    bind:value
+    {disabled}
+    items={options.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))}
+    onValueChange={(v) => onchange?.(v)}
+  >
+    <Select.Trigger class="select-trigger" aria-label={label || placeholder}>
+      <span class="select-value">{display}</span>
+      <ChevronDown size={16} class="select-chevron" />
+    </Select.Trigger>
+    <Select.Portal>
+      <Select.Content
+        class="menu-panel select-panel"
+        side="bottom"
+        align="start"
+        sideOffset={6}
+        collisionPadding={8}
+        style="min-width:{minWidth}px"
       >
-        <span class="select-value">{display}</span>
-        <ChevronDown size={16} class="select-chevron" />
-      </button>
-    {/snippet}
-    <MenuList title={label || undefined} {items} />
-  </Popover>
+        <Select.Viewport>
+          {#each options as opt (opt.value)}
+            <Select.Item
+              value={opt.value}
+              label={opt.label}
+              disabled={opt.disabled}
+              class="menu-item {opt.value === value ? 'menu-item--active' : ''}"
+            >
+              <span class="menu-item-label">{opt.label}</span>
+              {#if opt.hint}
+                <span class="menu-item-hint">{opt.hint}</span>
+              {/if}
+              {#if opt.value === value}
+                <Check size={14} class="menu-item-check" />
+              {/if}
+            </Select.Item>
+          {/each}
+        </Select.Viewport>
+      </Select.Content>
+    </Select.Portal>
+  </Select.Root>
 </div>
 
 <style>
@@ -82,7 +91,7 @@
     color: var(--color-muted);
   }
 
-  .select-trigger {
+  :global(.select-trigger) {
     display: flex;
     width: 100%;
     min-width: 10rem;
@@ -102,11 +111,11 @@
       background-color 100ms ease;
   }
 
-  .select-trigger:hover:not(:disabled) {
+  :global(.select-trigger:hover:not(:disabled)) {
     background: var(--color-surface-hover);
   }
 
-  .select-trigger:disabled {
+  :global(.select-trigger:disabled) {
     opacity: 0.55;
     cursor: default;
   }
@@ -122,5 +131,20 @@
   .select-trigger :global(.select-chevron) {
     flex-shrink: 0;
     color: var(--color-muted);
+  }
+
+  :global(.select-panel) {
+    animation: select-in 120ms ease-out;
+  }
+
+  @keyframes select-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 </style>

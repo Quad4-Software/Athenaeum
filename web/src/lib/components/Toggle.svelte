@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Switch } from "bits-ui";
+
   interface Props {
     checked?: boolean;
     disabled?: boolean;
@@ -16,12 +18,6 @@
     id = "",
     onchange,
   }: Props = $props();
-
-  function toggle() {
-    if (disabled) return;
-    checked = !checked;
-    onchange?.(checked);
-  }
 </script>
 
 <label class="toggle-row" class:toggle-row--disabled={disabled} for={id || undefined}>
@@ -33,19 +29,16 @@
       <span class="toggle-desc">{description}</span>
     {/if}
   </span>
-  <button
-    type="button"
-    role="switch"
+  <Switch.Root
     {id}
-    class="toggle"
-    class:toggle--on={checked}
-    aria-checked={checked}
-    aria-label={label || description || "Toggle"}
+    bind:checked
     {disabled}
-    onclick={toggle}
+    onCheckedChange={(v) => onchange?.(v)}
+    class="toggle"
+    aria-label={label || description || "Toggle"}
   >
-    <span class="toggle-thumb"></span>
-  </button>
+    <Switch.Thumb class="toggle-thumb" />
+  </Switch.Root>
 </label>
 
 <style>
@@ -79,7 +72,7 @@
     color: var(--color-muted);
   }
 
-  .toggle {
+  .toggle-row :global(.toggle) {
     position: relative;
     flex-shrink: 0;
     width: 2.5rem;
@@ -94,19 +87,20 @@
       border-color 120ms ease;
   }
 
-  .toggle:disabled {
+  .toggle-row :global(.toggle:disabled) {
     cursor: default;
   }
 
-  .toggle--on {
+  .toggle-row :global(.toggle[data-state="checked"]) {
     background: var(--color-primary);
     border-color: var(--color-primary);
   }
 
-  .toggle-thumb {
+  .toggle-row :global(.toggle-thumb) {
     position: absolute;
     top: 2px;
     left: 2px;
+    display: block;
     width: 1rem;
     height: 1rem;
     border-radius: 999px;
@@ -114,7 +108,7 @@
     transition: transform 120ms ease;
   }
 
-  .toggle--on .toggle-thumb {
+  .toggle-row :global(.toggle[data-state="checked"] .toggle-thumb) {
     transform: translateX(1.125rem);
     background: var(--color-primary-fg);
   }

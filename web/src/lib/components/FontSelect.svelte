@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Check, ChevronDown } from "@lucide/svelte";
-  import Popover from "./Popover.svelte";
+  import { Select } from "bits-ui";
 
   export interface FontOption {
     id: string;
@@ -31,8 +31,6 @@
     onchange,
   }: Props = $props();
 
-  let open = $state(false);
-
   let selected = $derived(options.find((o) => o.id === value) ?? options[0]);
 </script>
 
@@ -40,59 +38,59 @@
   {#if label}
     <span class="font-select-label">{label}</span>
   {/if}
-  <Popover bind:open {minWidth} align="start">
-    {#snippet trigger(toggle)}
-      <button
-        type="button"
-        class="font-select-trigger"
-        {disabled}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onclick={toggle}
-        style:font-family={selected?.family}
+  <Select.Root
+    type="single"
+    bind:value
+    {disabled}
+    items={options.map((o) => ({ value: o.id, label: o.label, disabled: o.disabled }))}
+    onValueChange={(v) => onchange?.(v)}
+  >
+    <Select.Trigger
+      class="font-select-trigger"
+      aria-label={label || "Font"}
+      style={selected?.family ? `font-family:${selected.family}` : undefined}
+    >
+      <span class="font-select-trigger-text">
+        <span class="font-select-name">{selected?.label ?? "Select…"}</span>
+        {#if selected?.sample}
+          <span class="font-select-sample">{selected.sample}</span>
+        {/if}
+      </span>
+      <ChevronDown size={16} class="font-select-chevron" />
+    </Select.Trigger>
+    <Select.Portal>
+      <Select.Content
+        class="menu-panel font-select-panel"
+        side="bottom"
+        align="start"
+        sideOffset={6}
+        collisionPadding={8}
+        style="min-width:{minWidth}px"
       >
-        <span class="font-select-trigger-text">
-          <span class="font-select-name">{selected?.label ?? "Select…"}</span>
-          {#if selected?.sample}
-            <span class="font-select-sample">{selected.sample}</span>
-          {/if}
-        </span>
-        <ChevronDown size={16} class="font-select-chevron" />
-      </button>
-    {/snippet}
-
-    <ul class="font-select-list" role="listbox" aria-label={label || "Font"}>
-      {#each options as opt (opt.id)}
-        <li role="none">
-          <button
-            type="button"
-            role="option"
-            class="font-select-option"
-            class:font-select-option--active={opt.id === value}
-            aria-selected={opt.id === value}
-            disabled={opt.disabled}
-            style:font-family={opt.family}
-            onclick={() => {
-              if (opt.disabled) return;
-              value = opt.id;
-              onchange?.(opt.id);
-              open = false;
-            }}
-          >
-            <span class="font-select-option-text">
-              <span class="font-select-name">{opt.label}</span>
-              {#if opt.sample}
-                <span class="font-select-sample">{opt.sample}</span>
+        <Select.Viewport>
+          {#each options as opt (opt.id)}
+            <Select.Item
+              value={opt.id}
+              label={opt.label}
+              disabled={opt.disabled}
+              class="font-select-option {opt.id === value ? 'font-select-option--active' : ''}"
+              style={opt.family ? `font-family:${opt.family}` : undefined}
+            >
+              <span class="font-select-option-text">
+                <span class="font-select-name">{opt.label}</span>
+                {#if opt.sample}
+                  <span class="font-select-sample">{opt.sample}</span>
+                {/if}
+              </span>
+              {#if opt.id === value}
+                <Check size={14} class="font-select-check" />
               {/if}
-            </span>
-            {#if opt.id === value}
-              <Check size={14} class="font-select-check" />
-            {/if}
-          </button>
-        </li>
-      {/each}
-    </ul>
-  </Popover>
+            </Select.Item>
+          {/each}
+        </Select.Viewport>
+      </Select.Content>
+    </Select.Portal>
+  </Select.Root>
 </div>
 
 <style>
@@ -104,7 +102,7 @@
     color: var(--color-muted);
   }
 
-  .font-select-trigger {
+  :global(.font-select-trigger) {
     display: flex;
     width: 100%;
     min-width: 12rem;
@@ -123,11 +121,11 @@
       background-color 100ms ease;
   }
 
-  .font-select-trigger:hover:not(:disabled) {
+  :global(.font-select-trigger:hover:not(:disabled)) {
     background: var(--color-surface-hover);
   }
 
-  .font-select-trigger:disabled {
+  :global(.font-select-trigger:disabled) {
     opacity: 0.55;
     cursor: default;
   }
@@ -161,15 +159,12 @@
     color: var(--color-muted);
   }
 
-  .font-select-list {
-    margin: 0;
-    padding: 0.25rem;
-    list-style: none;
+  :global(.font-select-panel) {
     max-height: min(22rem, 70vh);
-    overflow-y: auto;
+    animation: font-select-in 120ms ease-out;
   }
 
-  .font-select-option {
+  :global(.font-select-option) {
     display: flex;
     width: 100%;
     align-items: center;
@@ -181,24 +176,36 @@
     background: transparent;
     cursor: pointer;
     transition: background-color 100ms ease;
+    outline: none;
   }
 
-  .font-select-option:hover:not(:disabled) {
+  :global(.font-select-option[data-highlighted]) {
     background: var(--color-surface-hover);
   }
 
-  .font-select-option:disabled {
+  :global(.font-select-option[data-disabled]) {
     opacity: 0.45;
     cursor: default;
   }
 
-  .font-select-option--active {
+  :global(.font-select-option--active) {
     color: var(--color-primary);
     background: color-mix(in oklch, var(--color-primary) 10%, transparent);
   }
 
-  .font-select-option :global(.font-select-check) {
+  :global(.font-select-option .font-select-check) {
     flex-shrink: 0;
     color: var(--color-primary);
+  }
+
+  @keyframes font-select-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 </style>

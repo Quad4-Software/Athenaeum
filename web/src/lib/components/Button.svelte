@@ -1,18 +1,15 @@
 <script lang="ts">
   import { Loader2 } from "@lucide/svelte";
   import type { Snippet } from "svelte";
+  import type { HTMLButtonAttributes } from "svelte/elements";
 
   type Variant = "primary" | "ghost";
   type Size = "sm" | "md";
 
-  interface Props {
-    type?: "button" | "submit" | "reset";
+  interface Props extends HTMLButtonAttributes {
     variant?: Variant;
     size?: Size;
     loading?: boolean;
-    disabled?: boolean;
-    class?: string;
-    onclick?: (event: MouseEvent) => void;
     children: Snippet;
   }
 
@@ -25,6 +22,7 @@
     class: className = "",
     onclick,
     children,
+    ...rest
   }: Props = $props();
 
   let isDisabled = $derived(disabled || loading);
@@ -39,6 +37,7 @@
   disabled={isDisabled}
   aria-busy={loading}
   {onclick}
+  {...rest}
 >
   {#if loading}
     <Loader2 size={size === "sm" ? 14 : 16} class="btn-spinner" />
