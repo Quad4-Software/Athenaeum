@@ -5,6 +5,7 @@
   import Cover from "$lib/components/Cover.svelte";
   import { api, ApiError } from "$lib/api/client";
   import { toast } from "$lib/stores/toast.svelte";
+  import { i18n } from "$lib/stores/i18n.svelte";
   import {
     isAudioFormat,
     type Book,
@@ -61,8 +62,8 @@
 
   let providerHint = $derived(
     providers.length > 0
-      ? `Search ${providers.map((p) => p.label).join(", ")} and pick a match.`
-      : "Search external catalogs and pick a match.",
+      ? i18n.t("book.providerHint", { providers: providers.map((p) => p.label).join(", ") })
+      : i18n.t("book.providerHintEmpty"),
   );
 
   let needsAsin = $derived(
@@ -140,11 +141,11 @@
       !searchArxiv.trim() &&
       !searchPubmed.trim()
     ) {
-      toast.error("Enter a title, author, ISBN, ASIN, DOI, arXiv ID, or PubMed ID to search");
+      toast.error(i18n.t("book.searchNeedInput"));
       return;
     }
     if (selectedProviders.length === 0) {
-      toast.error("Select at least one metadata source");
+      toast.error(i18n.t("book.searchNeedProvider"));
       return;
     }
     searching = true;
@@ -162,10 +163,10 @@
       });
       matches = res.matches;
       if (matches.length === 0) {
-        toast.error("No matches found. Try fewer words or a different source.");
+        toast.error(i18n.t("book.searchNoMatches"));
       }
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Metadata search failed");
+      toast.error(e instanceof ApiError ? e.message : i18n.t("book.metadataSearchFailed"));
     } finally {
       searching = false;
     }
@@ -191,7 +192,7 @@
       publishedYear = String(match.publishedYear);
     }
     matchCoverUrl = match.coverUrl ?? "";
-    toast.success(`Filled from ${providerLabel(match.source)}`);
+    toast.success(i18n.t("book.filledFrom", { provider: providerLabel(match.source) }));
   }
 
   async function applyMatchNow(match: MetadataMatch) {
@@ -209,9 +210,9 @@
       matchCoverUrl = "";
       loadForm(updated);
       onsaved?.(updated);
-      toast.success("Metadata applied");
+      toast.success(i18n.t("book.metadataApplied"));
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to apply metadata");
+      toast.error(e instanceof ApiError ? e.message : i18n.t("book.metadataApplyFailed"));
     } finally {
       saving = false;
     }
@@ -220,7 +221,7 @@
   async function save(event: Event) {
     event.preventDefault();
     if (!title.trim()) {
-      toast.error("Title is required");
+      toast.error(i18n.t("book.titleRequired"));
       return;
     }
     saving = true;
@@ -250,10 +251,10 @@
       }
       loadForm(updated);
       onsaved?.(updated);
-      toast.success("Metadata saved");
+      toast.success(i18n.t("book.metadataSaved"));
       open = false;
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to save metadata");
+      toast.error(e instanceof ApiError ? e.message : i18n.t("book.metadataSaveFailed"));
     } finally {
       saving = false;
     }
@@ -270,9 +271,9 @@
       coverKey += 1;
       matchCoverUrl = "";
       onsaved?.(updated);
-      toast.success("Cover updated");
+      toast.success(i18n.t("book.coverUpdated"));
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to upload cover");
+      toast.error(e instanceof ApiError ? e.message : i18n.t("book.coverUploadFailed"));
     } finally {
       uploading = false;
     }
@@ -284,9 +285,9 @@
       const updated = await api.deleteCover(book.id);
       coverKey += 1;
       onsaved?.(updated);
-      toast.success("Cover removed");
+      toast.success(i18n.t("book.coverRemoved"));
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to remove cover");
+      toast.error(e instanceof ApiError ? e.message : i18n.t("book.coverRemoveFailed"));
     } finally {
       uploading = false;
     }

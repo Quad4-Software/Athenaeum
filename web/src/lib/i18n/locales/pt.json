@@ -35,7 +35,9 @@
     "settings": "Configurações",
     "shelfAuto": "automático",
     "shelfSmart": "inteligente",
-    "papers": "Papers"
+    "papers": "Papers",
+    "shelfFallback": "Shelf",
+    "reading": "Reading"
   },
   "search": {
     "placeholder": "Pesquise título, autor ou série...",
@@ -134,7 +136,10 @@
     "importBibtex": "Import BibTeX",
     "importBibtexHint": "Match .bib entries to existing PDFs by DOI, arXiv, PMID, or title",
     "importBibtexDone": "BibTeX import: {updated} updated, {matched} matched, {unmatched} unmatched",
-    "importBibtexFailed": "BibTeX import failed"
+    "importBibtexFailed": "BibTeX import failed",
+    "loadFailed": "Failed to load library",
+    "scanStarted": "Library scan started",
+    "scanFinished": "Library scan finished"
   },
   "book": {
     "moreActions": "Mais ações",
@@ -196,7 +201,31 @@
     "downloadBibtex": "Download BibTeX",
     "copyBibtex": "Copy BibTeX",
     "bibtexCopied": "BibTeX copied",
-    "bibtexFailed": "Failed to get BibTeX"
+    "bibtexFailed": "Failed to get BibTeX",
+    "providerHint": "Search {providers} and pick a match.",
+    "providerHintEmpty": "Search external catalogs and pick a match.",
+    "searchNeedInput": "Enter a title, author, ISBN, ASIN, DOI, arXiv ID, or PubMed ID to search",
+    "searchNeedProvider": "Select at least one metadata source",
+    "searchNoMatches": "No matches found. Try fewer words or a different source.",
+    "metadataSearchFailed": "Metadata search failed",
+    "filledFrom": "Filled from {provider}",
+    "metadataApplied": "Metadata applied",
+    "metadataApplyFailed": "Failed to apply metadata",
+    "titleRequired": "Title is required",
+    "metadataSaved": "Metadata saved",
+    "metadataSaveFailed": "Failed to save metadata",
+    "coverUpdated": "Cover updated",
+    "coverUploadFailed": "Failed to upload cover",
+    "coverRemoved": "Cover removed",
+    "coverRemoveFailed": "Failed to remove cover",
+    "addedToList": "Added to list",
+    "addToListFailed": "Failed to add",
+    "tagAddFailed": "Failed to add tag",
+    "tagRemoveFailed": "Failed to remove tag",
+    "ratingFailed": "Failed to save rating",
+    "converting": "Converting to {target}…",
+    "converted": "Converted to {target}",
+    "convertFailed": "Conversion failed"
   },
   "confirm": {
     "confirm": "Confirmar",
@@ -405,7 +434,17 @@
     "pwaInstall": "Install",
     "pwaInstalled": "Installed on this device.",
     "pwaInstalledToast": "App installed",
-    "pwaUnavailable": "Install is not available in this browser right now."
+    "pwaUnavailable": "Install is not available in this browser right now.",
+    "mounts": {
+      "removed": "Library removed",
+      "addFailed": "Failed to add library",
+      "removeFailed": "Failed to remove library",
+      "updated": "Library updated",
+      "updateFailed": "Failed to update library",
+      "s3TestOk": "S3 connection OK",
+      "s3TestFailed": "S3 test failed",
+      "scanFailed": "Scan failed"
+    }
   },
   "sort": {
     "label": "Classificar livros",
@@ -478,7 +517,14 @@
     "oidcStateInvalid": "Single sign-on session expired. Start again.",
     "oidcProviderError": "Identity provider is unavailable or misconfigured.",
     "oidcAccountError": "Could not link or create your account via SSO.",
-    "oidcSessionError": "Signed in with SSO but could not create a session."
+    "oidcSessionError": "Signed in with SSO but could not create a session.",
+    "adminCreated": "Admin account created",
+    "signedIn": "Signed in",
+    "signedOut": "Signed out",
+    "accountCreated": "Account created",
+    "loadFailed": "Failed to load session",
+    "profileUpdated": "Profile updated",
+    "passwordChanged": "Password changed"
   },
   "error": {
     "unauthorizedTitle": "É necessário fazer login",
@@ -582,7 +628,8 @@
     "fontClear": "Remover fonte personalizada",
     "fontUploaded": "Fonte personalizada carregada",
     "fontUploadFailed": "Não foi possível carregar o arquivo de fonte",
-    "fontTooLarge": "O arquivo de fonte é muito grande (máx. 4 MB)"
+    "fontTooLarge": "O arquivo de fonte é muito grande (máx. 4 MB)",
+    "close": "Close reader"
   },
   "admin": {
     "server": {

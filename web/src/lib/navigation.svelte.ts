@@ -1,26 +1,28 @@
 import { type Route } from "$lib/router.svelte";
+import { routes } from "$lib/routes";
 import { library } from "$lib/stores/library.svelte";
 import { collections } from "$lib/stores/collections.svelte";
+import { i18n } from "$lib/stores/i18n.svelte";
 import type { Crumb } from "$lib/components/Breadcrumbs.svelte";
 
 export function breadcrumbsFor(route: Route, bookTitle?: string): Crumb[] {
-  const items: Crumb[] = [{ label: "Library", href: "/" }];
+  const items: Crumb[] = [{ label: i18n.t("nav.library"), href: routes.library() }];
 
   if (route.name === "settings") {
-    items.push({ label: "Settings", href: "/settings/library" });
+    items.push({ label: i18n.t("settings.title"), href: routes.settings("library") });
     return items;
   }
 
   if (route.name === "collections") {
-    items.push({ label: "Collections" });
+    items.push({ label: i18n.t("collections.title") });
     return items;
   }
 
   if (route.name === "collection") {
-    items.push({ label: "Collections", href: "/collections" });
+    items.push({ label: i18n.t("collections.title"), href: routes.collections() });
     const id = Number(route.params.id);
     const col = collections.items.find((c) => c.id === id);
-    items.push({ label: col?.name ?? "Shelf" });
+    items.push({ label: col?.name ?? i18n.t("nav.shelfFallback") });
     return items;
   }
 
@@ -37,10 +39,10 @@ export function breadcrumbsFor(route: Route, bookTitle?: string): Crumb[] {
     if (bookTitle) {
       items.push({
         label: bookTitle,
-        href: route.name === "reader" ? `/book/${route.params.id}` : undefined,
+        href: route.name === "reader" ? routes.book(route.params.id) : undefined,
       });
     }
-    if (route.name === "reader") items.push({ label: "Reading" });
+    if (route.name === "reader") items.push({ label: i18n.t("nav.reading") });
   }
 
   return items;

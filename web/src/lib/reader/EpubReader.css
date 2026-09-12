@@ -1,4 +1,6 @@
 /* Global styles imported from EpubReader.svelte. vitePreprocess ignores style src=. */
+@reference "../../app.css";
+
 .epub-surface {
   position: relative;
   display: flex;
@@ -31,7 +33,7 @@
   right: 0;
 }
 
-@media (min-width: 768px) {
+@media (min-width: theme(--breakpoint-md)) {
   .epub-nav {
     display: flex;
     width: 4rem;
@@ -47,14 +49,14 @@
   padding-right: 0.5rem;
 }
 
-@media (min-width: 640px) {
+@media (min-width: theme(--breakpoint-sm)) {
   .epub-stage {
     padding-left: 3rem;
     padding-right: 3rem;
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: theme(--breakpoint-md)) {
   .epub-stage {
     padding-left: 4rem;
     padding-right: 4rem;

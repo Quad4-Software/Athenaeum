@@ -2,7 +2,9 @@ import { api, ApiError, restoreSession, ensureCsrf, clearCsrfCache } from "$lib/
 import { onUnauthorized, onForbidden, type AuthRedirectReason } from "$lib/api/session";
 import { unauthorizedRedirect, isAuthPagePathname } from "$lib/auth-redirect";
 import { router } from "$lib/router.svelte";
+import { routes } from "$lib/routes";
 import { toast } from "$lib/stores/toast.svelte";
+import { i18n } from "$lib/stores/i18n.svelte";
 import type { AuthMethods, AltchaPublic, PasswordPolicy, User } from "$lib/api/types";
 import { DEFAULT_PASSWORD_POLICY } from "$lib/utils/password-strength";
 
@@ -26,7 +28,7 @@ class AuthStore {
   handleForbidden() {
     if (typeof window === "undefined") return;
     if (isAuthPagePathname(router.appPathname())) return;
-    router.navigate("/error/forbidden", true);
+    router.navigate(routes.error("forbidden"), true);
   }
 
   handleUnauthorized(reason: AuthRedirectReason = "required") {
@@ -96,7 +98,7 @@ class AuthStore {
       if (e instanceof ApiError && e.status === 401) {
         this.user = null;
       } else {
-        this.error = e instanceof Error ? e.message : "Failed to load session";
+        this.error = e instanceof Error ? e.message : i18n.t("auth.loadFailed");
         toast.error(this.error);
       }
     } finally {
@@ -109,7 +111,7 @@ class AuthStore {
     clearCsrfCache();
     this.setupNeeded = false;
     this.authEnabled = true;
-    toast.success("Admin account created");
+    toast.success(i18n.t("auth.adminCreated"));
   }
 
   async login(username: string, password: string, altchaPayload?: string) {
@@ -127,10 +129,10 @@ class AuthStore {
       if (this.methods.altcha?.enabled) {
         this.altcha = this.methods.altcha;
       }
-      toast.success("Signed in");
+      toast.success(i18n.t("auth.signedIn"));
       return result;
     } catch (e) {
-      this.error = e instanceof ApiError ? e.message : "Login failed";
+      this.error = e instanceof ApiError ? e.message : i18n.t("auth.loginFailed");
       toast.error(this.error);
       throw e;
     }
@@ -144,9 +146,9 @@ class AuthStore {
       this.authEnabled = true;
       this.methods = await api.authMethods();
       this.applyPasswordPolicy(this.methods.passwordPolicy);
-      toast.success("Signed in");
+      toast.success(i18n.t("auth.signedIn"));
     } catch (e) {
-      this.error = e instanceof ApiError ? e.message : "Invalid code";
+      this.error = e instanceof ApiError ? e.message : i18n.t("auth.totpInvalid");
       toast.error(this.error);
       throw e;
     }
@@ -158,7 +160,7 @@ class AuthStore {
     this.authEnabled = true;
     this.methods = await api.authMethods();
     this.applyPasswordPolicy(this.methods.passwordPolicy);
-    toast.success("Account created");
+    toast.success(i18n.t("auth.accountCreated"));
   }
 
   async logout() {
@@ -169,7 +171,7 @@ class AuthStore {
     }
     clearCsrfCache();
     this.user = null;
-    toast.info("Signed out");
+    toast.info(i18n.t("auth.signedOut"));
     this.handleUnauthorized("logged_out");
   }
 
@@ -177,22 +179,22 @@ class AuthStore {
     try {
       const u = await api.register(username, password);
       this.authEnabled = true;
-      toast.success("Account created");
+      toast.success(i18n.t("auth.accountCreated"));
       return u;
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Registration failed");
+      toast.error(e instanceof ApiError ? e.message : i18n.t("auth.registerFailed"));
       throw e;
     }
   }
 
   async updateProfile(username: string) {
     this.user = await api.updateProfile(username);
-    toast.success("Profile updated");
+    toast.success(i18n.t("auth.profileUpdated"));
   }
 
   async changePassword(currentPassword: string, newPassword: string) {
     await api.changePassword(currentPassword, newPassword);
-    toast.success("Password changed");
+    toast.success(i18n.t("auth.passwordChanged"));
   }
 
   get needsLogin(): boolean {

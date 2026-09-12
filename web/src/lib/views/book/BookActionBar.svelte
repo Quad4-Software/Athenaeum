@@ -3,6 +3,7 @@
   import Button from "$lib/components/Button.svelte";
   import { api } from "$lib/api/client";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { i18n } from "$lib/stores/i18n.svelte";
   import { isAudioFormat, type Book } from "$lib/api/types";
   import type { BookOfflineStatus } from "$lib/offline/book-cache";
@@ -40,7 +41,10 @@
 </script>
 
 <div class="book-actions mt-6 flex flex-wrap gap-2 sm:gap-3">
-  <Button class="min-h-11 flex-1 sm:flex-none" onclick={() => router.navigate(`/read/${book.id}`)}>
+  <Button
+    class="min-h-11 flex-1 sm:flex-none"
+    onclick={() => router.navigate(routes.reader(book.id))}
+  >
     {#if isAudioFormat(book.format)}
       <Headphones size={16} /> {i18n.t("book.listen")}
     {:else if resumeText}

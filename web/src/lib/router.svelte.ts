@@ -20,6 +20,7 @@ export interface Route {
   path: string;
 }
 
+// Path -> route matching. Builders for the same routes live in ./routes.ts.
 const patterns: { name: RouteName; regex: RegExp; keys: string[] }[] = [
   { name: "library", regex: /^\/$/, keys: [] },
   { name: "login", regex: /^\/login$/, keys: [] },

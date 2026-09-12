@@ -27,6 +27,8 @@ export const AUTH_SILENT_401 = new Set<string>([
   apiOp("POST__api_auth_login").path,
   apiOp("POST__api_auth_refresh").path,
   apiOp("POST__api_auth_logout").path,
+  // TTS status is a soft probe: auth failures mean "disabled", not a redirect.
+  apiOp("GET__api_tts_status").path,
 ]);
 
-export const AUTH_SILENT_403 = new Set<string>([]);
+export const AUTH_SILENT_403 = new Set<string>([apiOp("GET__api_tts_status").path]);

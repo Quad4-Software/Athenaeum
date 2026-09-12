@@ -1,4 +1,5 @@
 import { router } from "$lib/router.svelte";
+import { routes } from "$lib/routes";
 
 export type BookEditorPanel = "edit" | "identify";
 
@@ -7,7 +8,7 @@ class BookEditorIntentStore {
 
   open(bookId: number, panel: BookEditorPanel) {
     this.target = { bookId, panel };
-    router.navigate(`/book/${bookId}`);
+    router.navigate(routes.book(bookId));
   }
 
   consume(bookId: number): BookEditorPanel | null {

@@ -4,6 +4,8 @@
   import { libraries } from "$lib/stores/libraries.svelte";
   import { uploads } from "$lib/stores/uploads.svelte";
   import { formatBytes } from "$lib/utils/format";
+  import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
 
   let libraryId = $state(1);
   let relPath = $state("");
@@ -93,7 +95,7 @@
             </div>
             <div class="flex items-center gap-2">
               {#if job.status === "done" && job.bookId}
-                <a href={`/book/${job.bookId}`} class="text-xs text-primary">View</a>
+                <a href={router.href(routes.book(job.bookId))} class="text-xs text-primary">View</a>
               {/if}
               {#if job.status !== "uploading"}
                 <button

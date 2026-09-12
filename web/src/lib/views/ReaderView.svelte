@@ -3,7 +3,9 @@
   import ErrorView from "$lib/views/ErrorView.svelte";
   import { api, ApiError } from "$lib/api/client";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { toast } from "$lib/stores/toast.svelte";
+  import { i18n } from "$lib/stores/i18n.svelte";
   import { audioPlayer } from "$lib/stores/audioPlayer.svelte";
   import { narrator } from "$lib/stores/narrator.svelte";
   import { bookOfflineCache } from "$lib/offline/book-cache";
@@ -158,13 +160,15 @@
     <button
       type="button"
       class="btn btn-ghost"
-      aria-label="Close reader"
-      onclick={() => router.navigate(book ? `/book/${book.id}` : "/")}
+      aria-label={i18n.t("reader.close")}
+      onclick={() => router.navigate(book ? routes.book(book.id) : routes.library())}
     >
       <ArrowLeft size={18} />
     </button>
     <div class="min-w-0 flex-1">
-      <p class="truncate text-sm font-medium text-fg">{book?.title ?? "Loading..."}</p>
+      <p class="truncate text-sm font-medium text-fg">
+        {book?.title ?? i18n.t("common.loading")}
+      </p>
     </div>
     <span class="text-xs tabular-nums text-muted">{Math.round(percent * 100)}%</span>
   </header>
@@ -221,7 +225,9 @@
         Calibre on your desktop.
       </div>
     {:else}
-      <div class="grid h-full place-items-center text-sm text-muted">Loading...</div>
+      <div class="grid h-full place-items-center text-sm text-muted">
+        {i18n.t("common.loading")}
+      </div>
     {/if}
   </div>
 </div>

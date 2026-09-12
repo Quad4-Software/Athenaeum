@@ -2,6 +2,7 @@
   import { BookText, Files, FileText, Headphones } from "@lucide/svelte";
   import { library } from "$lib/stores/library.svelte";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { i18n } from "$lib/stores/i18n.svelte";
   import type { BookFormat } from "$lib/api/types";
 
@@ -29,7 +30,7 @@
     } else {
       library.setFormat(id);
     }
-    if (router.current.name !== "library") router.navigate("/");
+    if (router.current.name !== "library") router.navigate(routes.library());
   }
 </script>
 

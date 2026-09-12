@@ -3,6 +3,7 @@
   import BookCoverProgress from "./BookCoverProgress.svelte";
   import ContextMenu from "./ContextMenu.svelte";
   import { link } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { api, ApiError } from "$lib/api/client";
   import { favorites } from "$lib/stores/favorites.svelte";
   import { library } from "$lib/stores/library.svelte";
@@ -159,8 +160,8 @@
     </button>
   {/if}
   <a
-    href={`/book/${book.id}`}
-    use:link={`/book/${book.id}`}
+    href={routes.book(book.id)}
+    use:link={routes.book(book.id)}
     class="flex flex-col gap-2 outline-none"
     onclick={(e) => {
       if (selectMode) {

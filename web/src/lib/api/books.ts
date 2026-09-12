@@ -18,7 +18,7 @@ import type {
   Tag,
   BookRating,
 } from "./types";
-import { request, ensureCsrf, ApiError, buildQuery, CSRF_HEADER } from "./core";
+import { request, ApiError, buildQuery } from "./core";
 import { isDemoMode } from "$lib/demo/mode";
 import { demoCoverUrlForBook } from "$lib/demo/covers";
 import { opURL } from "./op";
@@ -49,27 +49,15 @@ export const booksApi = {
       body: JSON.stringify(data),
     }),
 
-  uploadCover: async (id: number, file: File) => {
-    const csrf = await ensureCsrf();
+  uploadCover: (id: number, file: File) => {
     const form = new FormData();
     form.append("cover", file);
-    const res = await fetch(opURL("GET__api_books__id__cover", { id }), {
+    // FormData body: request() adds Accept + CSRF but no Content-Type, so the
+    // multipart boundary is still set by fetch.
+    return request<Book>(opURL("GET__api_books__id__cover", { id }), {
       method: "PUT",
-      credentials: "same-origin",
-      headers: { Accept: "application/json", [CSRF_HEADER]: csrf },
       body: form,
     });
-    if (!res.ok) {
-      let message = res.statusText;
-      try {
-        const body = (await res.json()) as { error?: string };
-        if (body.error) message = body.error;
-      } catch {
-        // ignore
-      }
-      throw new ApiError(res.status, message);
-    }
-    return (await res.json()) as Book;
   },
 
   deleteCover: (id: number) =>
@@ -92,6 +80,7 @@ export const booksApi = {
     }),
 
   getBibTeX: async (id: number) => {
+    // Raw fetch: the response is plain text, not the JSON that request() parses.
     const res = await fetch(`/api/books/${id}/bibtex`, {
       credentials: "same-origin",
       headers: { Accept: "application/x-bibtex, text/plain" },

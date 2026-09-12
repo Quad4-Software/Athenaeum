@@ -9,6 +9,7 @@
   import LibraryView from "$lib/views/LibraryView.svelte";
   import LoginView from "$lib/views/LoginView.svelte";
   import InviteView from "$lib/views/InviteView.svelte";
+  import { MediaQuery } from "svelte/reactivity";
   import ErrorView from "$lib/views/ErrorView.svelte";
   import SetupView from "$lib/views/SetupView.svelte";
   import ConnectivityBanner from "$lib/components/ConnectivityBanner.svelte";
@@ -21,6 +22,7 @@
   import { audioPlayer } from "$lib/stores/audioPlayer.svelte";
   import { narrator } from "$lib/stores/narrator.svelte";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { library } from "$lib/stores/library.svelte";
   import { scan } from "$lib/stores/scan.svelte";
   import { metadataMatch } from "$lib/stores/metadataMatch.svelte";
@@ -37,6 +39,7 @@
     shouldRedirectToLogin,
   } from "$lib/auth-redirect";
   import { errorCodeFromSlug } from "$lib/errors";
+  import { MQ_MD_UP } from "$lib/breakpoints";
   import { captureException } from "$lib/telemetry/sentry";
 
   function onCrash(error: unknown) {
@@ -47,6 +50,8 @@
     window.location.reload();
   }
 
+  const desktopUp = new MediaQuery(MQ_MD_UP);
+
   $effect(() => {
     void auth.init();
     void i18n.init();
@@ -54,7 +59,7 @@
 
   $effect(() => {
     if (!auth.loading && auth.setupNeeded && router.current.name !== "setup") {
-      router.navigate("/setup", true);
+      router.navigate(routes.setup(), true);
     }
     if (
       shouldRedirectToLogin({
@@ -73,10 +78,10 @@
         routeName: router.current.name,
       })
     ) {
-      router.navigate("/", true);
+      router.navigate(routes.library(), true);
     }
     if (!auth.loading && !auth.setupNeeded && router.current.name === "setup") {
-      router.navigate("/", true);
+      router.navigate(routes.library(), true);
     }
   });
 
@@ -109,7 +114,7 @@
       if (Number.isFinite(id)) library.setCollection(id);
     }
     if (route.name === "settings" && !route.params.tab) {
-      router.navigate("/settings/library", true);
+      router.navigate(routes.settings("library"), true);
     }
   });
 
@@ -258,8 +263,14 @@
         }}
       >
         <Dialog.Portal>
-          <Dialog.Overlay class="nav-drawer-overlay" />
-          <Dialog.Content id="mobile-nav" class="nav-drawer" aria-label={i18n.t("a11y.navigation")}>
+          <Dialog.Overlay
+            class={`nav-drawer-overlay${desktopUp.current ? " nav-desktop-hide" : ""}`}
+          />
+          <Dialog.Content
+            id="mobile-nav"
+            class={`nav-drawer${desktopUp.current ? " nav-desktop-hide" : ""}`}
+            aria-label={i18n.t("a11y.navigation")}
+          >
             <Dialog.Close
               type="button"
               class="btn btn-ghost nav-drawer-close"
@@ -329,11 +340,8 @@
     z-index: 1;
   }
 
-  @media (min-width: 48rem) {
-    :global(.nav-drawer-overlay),
-    :global(.nav-drawer) {
-      display: none;
-    }
+  :global(.nav-desktop-hide) {
+    display: none;
   }
 
   @keyframes nav-drawer-in {

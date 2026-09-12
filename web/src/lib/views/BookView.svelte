@@ -15,6 +15,7 @@
   import * as bookViewActions from "$lib/views/book/book-view-actions";
   import { api, ApiError } from "$lib/api/client";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { collections } from "$lib/stores/collections.svelte";
   import { favorites } from "$lib/stores/favorites.svelte";
   import { library } from "$lib/stores/library.svelte";
@@ -321,7 +322,7 @@
             onclick={() => {
               if (!book?.series) return;
               library.setSeries(book.series);
-              router.navigate("/");
+              router.navigate(routes.library());
             }}
           >
             {seriesLabel(book.series, book.seriesIndex)}
@@ -331,7 +332,7 @@
           <p class="mt-2 text-sm text-muted">
             {i18n.t("book.duplicateOf")}
             <a
-              href={`/book/${book.duplicateOf}`}
+              href={router.href(routes.book(book.duplicateOf))}
               class="text-primary underline-offset-2 hover:underline"
             >
               book #{book.duplicateOf}

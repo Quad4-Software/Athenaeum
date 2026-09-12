@@ -2,6 +2,7 @@
   import { fly } from "svelte/transition";
   import { brand } from "$lib/brand";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { theme } from "$lib/stores/theme.svelte";
   import { ApiError, api } from "$lib/api/client";
   import { toast } from "$lib/stores/toast.svelte";
@@ -98,7 +99,7 @@
     submitting = true;
     try {
       await api.acceptInvite(token, { username: username.trim(), password });
-      router.navigate("/login");
+      router.navigate(routes.login());
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : i18n.t("invite.acceptFailed"));
     } finally {
@@ -161,7 +162,8 @@
       >
         {invalidReason}
       </p>
-      <a href="/login" class="btn btn-primary mt-6 w-full text-center">{i18n.t("invite.goLogin")}</a
+      <a href={routes.login()} class="btn btn-primary mt-6 w-full text-center"
+        >{i18n.t("invite.goLogin")}</a
       >
     {:else if guestPassword}
       <div class="mt-8 space-y-3 rounded-lg border border-border bg-surface/80 p-4">
@@ -177,7 +179,8 @@
         </p>
         <p class="text-xs text-subtle">{i18n.t("invite.passwordOnce")}</p>
       </div>
-      <a href="/login" class="btn btn-primary mt-6 w-full text-center">{i18n.t("invite.goLogin")}</a
+      <a href={routes.login()} class="btn btn-primary mt-6 w-full text-center"
+        >{i18n.t("invite.goLogin")}</a
       >
     {:else if meta?.kind === "permanent" && meta.pocketIdConfigured}
       <p class="mt-6 text-center text-sm text-muted">{i18n.t("invite.ssoHint")}</p>

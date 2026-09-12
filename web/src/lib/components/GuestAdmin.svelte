@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { Copy, Trash2, Clock, UserRound } from "@lucide/svelte";
   import { api, ApiError } from "$lib/api/client";
+  import { routes } from "$lib/routes";
   import EmptyState from "$lib/components/EmptyState.svelte";
   import { toast } from "$lib/stores/toast.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
@@ -68,7 +69,7 @@
   }
 
   function inviteLink(username: string) {
-    const url = new URL("/login", window.location.origin);
+    const url = new URL(routes.login(), window.location.origin);
     url.searchParams.set("username", username);
     return url.toString();
   }

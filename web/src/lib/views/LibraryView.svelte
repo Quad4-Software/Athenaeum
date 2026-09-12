@@ -9,6 +9,7 @@
   import FilterChips from "$lib/components/FilterChips.svelte";
   import QuickFilters from "$lib/components/QuickFilters.svelte";
   import { api, ApiError } from "$lib/api/client";
+  import { routes } from "$lib/routes";
   import { library } from "$lib/stores/library.svelte";
   import { collections } from "$lib/stores/collections.svelte";
   import { metadataMatch } from "$lib/stores/metadataMatch.svelte";
@@ -269,7 +270,7 @@
             <RefreshCw size={16} />
             {i18n.t("library.scanLibrary")}
           </Button>
-          <a href="/settings/library" class="btn btn-ghost ring-1 ring-border"
+          <a href={routes.settings("library")} class="btn btn-ghost ring-1 ring-border"
             >{i18n.t("library.librarySettings")}</a
           >
         </div>

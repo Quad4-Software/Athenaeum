@@ -1,6 +1,7 @@
 import { untrack } from "svelte";
 import { api } from "$lib/api/client";
 import { toast } from "$lib/stores/toast.svelte";
+import { i18n } from "$lib/stores/i18n.svelte";
 import { scan } from "$lib/stores/scan.svelte";
 import type { Book, BookFormat, LibraryStats, SortKey } from "$lib/api/types";
 
@@ -133,7 +134,7 @@ class LibraryStore {
       this.books = merged.length > MAX_RETAINED_BOOKS ? merged.slice(-MAX_RETAINED_BOOKS) : merged;
       this.offset = reset ? page.items.length : this.offset + page.items.length;
     } catch (err) {
-      this.error = err instanceof Error ? err.message : "Failed to load library";
+      this.error = err instanceof Error ? err.message : i18n.t("library.loadFailed");
       toast.error(this.error);
     } finally {
       this.loading = false;
@@ -145,7 +146,7 @@ class LibraryStore {
       this.stats = await api.stats(this.libraryFilter ?? undefined);
       if (this.stats?.scanning) {
         scan.startPolling(() => {
-          toast.success("Library scan finished");
+          toast.success(i18n.t("library.scanFinished"));
           void this.refresh({ background: true });
         });
       }
@@ -287,9 +288,9 @@ class LibraryStore {
 
   async triggerScan(libraryId?: number) {
     await api.scan(libraryId ?? this.libraryFilter ?? undefined);
-    toast.info("Library scan started");
+    toast.info(i18n.t("library.scanStarted"));
     scan.startPolling(() => {
-      toast.success("Library scan finished");
+      toast.success(i18n.t("library.scanFinished"));
       void this.refresh({ background: true });
     });
   }

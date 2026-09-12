@@ -2,6 +2,7 @@
   import { fly } from "svelte/transition";
   import { brand } from "$lib/brand";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { auth } from "$lib/stores/auth.svelte";
   import { theme } from "$lib/stores/theme.svelte";
   import { ApiError } from "$lib/api/client";
@@ -77,9 +78,9 @@
   }
 
   function loginRedirectPath(): string {
-    if (typeof window === "undefined") return "/";
+    if (typeof window === "undefined") return routes.library();
     const next = new URLSearchParams(window.location.search).get("next");
-    return safeReturnPath(next) ?? "/";
+    return safeReturnPath(next) ?? routes.library();
   }
 
   $effect(() => {
@@ -88,7 +89,7 @@
     const oidcError = params.get("oidc_error");
     if (oidcError) {
       error = oidcErrorMessage(oidcError);
-      router.navigate("/login", true);
+      router.navigate(routes.login(), true);
       return;
     }
     if (params.get("oidc") === "1") {

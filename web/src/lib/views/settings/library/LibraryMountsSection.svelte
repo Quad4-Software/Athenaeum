@@ -6,6 +6,7 @@
   import { library } from "$lib/stores/library.svelte";
   import { libraries } from "$lib/stores/libraries.svelte";
   import { toast } from "$lib/stores/toast.svelte";
+  import { i18n } from "$lib/stores/i18n.svelte";
   import { ApiError } from "$lib/api/client";
   import type { LibraryS3Input } from "$lib/api/types";
   import LibraryUploadsSection from "./LibraryUploadsSection.svelte";
@@ -66,7 +67,7 @@
       libS3 = emptyS3();
       void library.refresh();
     } catch (e) {
-      libMsg = e instanceof ApiError ? e.message : "Failed to add library";
+      libMsg = e instanceof ApiError ? e.message : i18n.t("settings.mounts.addFailed");
       toast.error(libMsg);
     } finally {
       libCreating = false;
@@ -79,10 +80,10 @@
       await libraries.remove(id);
       if (library.libraryFilter === id) library.setLibrary(null);
       confirmDeleteId = null;
-      toast.info("Library removed");
+      toast.info(i18n.t("settings.mounts.removed"));
       void library.refresh();
     } catch (e) {
-      libMsg = e instanceof ApiError ? e.message : "Failed to remove library";
+      libMsg = e instanceof ApiError ? e.message : i18n.t("settings.mounts.removeFailed");
       toast.error(libMsg);
     }
   }
@@ -131,10 +132,10 @@
         s3: editBackend === "s3" ? { ...editS3 } : undefined,
       });
       cancelEdit();
-      toast.success("Library updated");
+      toast.success(i18n.t("settings.mounts.updated"));
       void library.refresh();
     } catch (e) {
-      libMsg = e instanceof ApiError ? e.message : "Failed to update library";
+      libMsg = e instanceof ApiError ? e.message : i18n.t("settings.mounts.updateFailed");
       toast.error(libMsg);
     } finally {
       libSaving = false;
@@ -145,9 +146,9 @@
     testingS3 = true;
     try {
       await libraries.testS3(cfg);
-      toast.success("S3 connection OK");
+      toast.success(i18n.t("settings.mounts.s3TestOk"));
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : "S3 test failed";
+      const msg = e instanceof ApiError ? e.message : i18n.t("settings.mounts.s3TestFailed");
       toast.error(msg);
     } finally {
       testingS3 = false;
@@ -158,7 +159,7 @@
     try {
       await library.triggerScan(id);
     } catch (e) {
-      libMsg = e instanceof ApiError ? e.message : "Scan failed";
+      libMsg = e instanceof ApiError ? e.message : i18n.t("settings.mounts.scanFailed");
       toast.error(libMsg);
     }
   }

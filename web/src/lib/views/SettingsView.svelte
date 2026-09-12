@@ -1,5 +1,6 @@
 <script lang="ts">
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { auth } from "$lib/stores/auth.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
   import { tick } from "svelte";
@@ -47,7 +48,7 @@
   ] as { id: string; label: string; description: string }[]);
 
   function goTab(id: string) {
-    router.navigate(`/settings/${id}`);
+    router.navigate(routes.settings(id));
   }
 
   $effect(() => {

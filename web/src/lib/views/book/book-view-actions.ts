@@ -1,6 +1,7 @@
 import { Copy, FileOutput, FileText, Pencil, ScanSearch, Star, Trash2 } from "@lucide/svelte";
 import { api, ApiError } from "$lib/api/client";
 import { router } from "$lib/router.svelte";
+import { routes } from "$lib/routes";
 import { collections } from "$lib/stores/collections.svelte";
 import { favorites } from "$lib/stores/favorites.svelte";
 import { library } from "$lib/stores/library.svelte";
@@ -21,10 +22,10 @@ import type { MenuItem } from "$lib/components/menu";
 export async function addToCollection(bookId: number, collectionId: number): Promise<void> {
   try {
     await api.addToCollection(collectionId, bookId);
-    toast.success("Added to list");
+    toast.success(i18n.t("book.addedToList"));
     void collections.refresh();
   } catch (e) {
-    toast.error(e instanceof ApiError ? e.message : "Failed to add");
+    toast.error(e instanceof ApiError ? e.message : i18n.t("book.addToListFailed"));
   }
 }
 
@@ -36,7 +37,7 @@ export async function addTag(bookId: number, name: string): Promise<string[] | n
   try {
     return await api.addBookTag(bookId, name);
   } catch (e) {
-    toast.error(e instanceof ApiError ? e.message : "Failed to add tag");
+    toast.error(e instanceof ApiError ? e.message : i18n.t("book.tagAddFailed"));
     return null;
   }
 }
@@ -45,14 +46,14 @@ export async function removeTag(bookId: number, remaining: string[]): Promise<st
   try {
     return await api.setBookTags(bookId, remaining);
   } catch (e) {
-    toast.error(e instanceof ApiError ? e.message : "Failed to remove tag");
+    toast.error(e instanceof ApiError ? e.message : i18n.t("book.tagRemoveFailed"));
     return null;
   }
 }
 
 export function filterByTag(name: string): void {
   library.setTag(name);
-  router.navigate("/");
+  router.navigate(routes.library());
 }
 
 export async function setRating(
@@ -65,7 +66,7 @@ export async function setRating(
     const rating = await api.setRating(bookId, next);
     return rating.rating;
   } catch (e) {
-    toast.error(e instanceof ApiError ? e.message : "Failed to save rating");
+    toast.error(e instanceof ApiError ? e.message : i18n.t("book.ratingFailed"));
     return null;
   }
 }
@@ -177,7 +178,7 @@ export async function deleteBook(book: Book): Promise<void> {
     await api.deleteBook(book.id);
     toast.success(i18n.t("book.deleted"));
     void library.refresh();
-    router.navigate("/");
+    router.navigate(routes.library());
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : i18n.t("book.deleteFailed"));
   }
@@ -186,13 +187,13 @@ export async function deleteBook(book: Book): Promise<void> {
 export async function convertBook(book: Book, target: "epub" | "pdf"): Promise<void> {
   try {
     const res = await toast.promise(() => api.convertBook(book.id, target), {
-      loading: `Converting to ${target}…`,
-      success: (r) => r.message || `Converted to ${target}`,
-      error: (e) => (e instanceof ApiError ? e.message : "Conversion failed"),
+      loading: i18n.t("book.converting", { target }),
+      success: (r) => r.message || i18n.t("book.converted", { target }),
+      error: (e) => (e instanceof ApiError ? e.message : i18n.t("book.convertFailed")),
     });
     if (res.bookId) {
       void library.refresh();
-      router.navigate(`/book/${res.bookId}`);
+      router.navigate(routes.book(res.bookId));
     }
   } catch {
     // toast.promise already surfaced the error

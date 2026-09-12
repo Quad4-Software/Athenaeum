@@ -8,7 +8,7 @@
   import { toast } from "$lib/stores/toast.svelte";
   import { confirmDialog } from "$lib/stores/confirm.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
-  import { ApiError, api } from "$lib/api/client";
+  import { ApiError, api, opURL } from "$lib/api/client";
   import type { APIKey, APIKeyCreated, APIDoc } from "$lib/api/types";
   import { untrack } from "svelte";
 
@@ -199,19 +199,22 @@
     <h2 class="text-sm font-semibold text-fg">API reference</h2>
     <p class="mt-1 text-sm text-muted">
       Interactive OpenAPI docs:
-      <a href="/docs" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer"
-        >/docs</a
+      <a
+        href={opURL("GET__docs")}
+        class="text-primary hover:underline"
+        target="_blank"
+        rel="noopener noreferrer">/docs</a
       >
       · machine-readable
       <a
-        href="/api/openapi.json"
+        href={opURL("GET__api_openapi_json")}
         class="text-primary hover:underline"
         target="_blank"
         rel="noopener noreferrer">/api/openapi.json</a
       >
       and
       <a
-        href="/api/docs"
+        href={opURL("GET__api_docs")}
         class="text-primary hover:underline"
         target="_blank"
         rel="noopener noreferrer">/api/docs</a

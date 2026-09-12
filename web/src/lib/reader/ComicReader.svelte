@@ -13,6 +13,7 @@
   } from "@lucide/svelte";
   import { api, ApiError } from "$lib/api/client";
   import { MediaQuery } from "svelte/reactivity";
+  import { MQ_MD_UP } from "$lib/breakpoints";
   import { PersistedState } from "runed";
   import EmptyState from "$lib/components/EmptyState.svelte";
   import Popover from "$lib/components/Popover.svelte";
@@ -33,7 +34,7 @@
   const FIT_KEY = storageKey("comic-fit");
   const SPREAD_KEY = storageKey("comic-spread");
   const RTL_KEY = storageKey("comic-rtl");
-  const WIDE_QUERY = "(min-width: 768px)";
+  const WIDE_QUERY = MQ_MD_UP;
 
   interface Props {
     bookId: number;

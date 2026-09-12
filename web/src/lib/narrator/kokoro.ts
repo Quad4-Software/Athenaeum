@@ -1,4 +1,5 @@
-import { ApiError, ensureCsrf, CSRF_HEADER } from "$lib/api/core";
+import { request, ApiError } from "$lib/api/core";
+import { opURL } from "$lib/api/op";
 import type { NarratorVoice, TTSSettingsPublic } from "./types";
 
 export { createKokoroWasmEngine as createKokoroEngine } from "./kokoro-wasm";
@@ -15,28 +16,21 @@ export async function fetchTTSStatus(): Promise<{
   enabled: boolean;
   defaultVoice: string;
 }> {
-  const res = await fetch("/api/tts/status", {
-    credentials: "same-origin",
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
+  try {
+    return await request<{ enabled: boolean; defaultVoice: string }>(opURL("GET__api_tts_status"));
+  } catch (e) {
+    // TTS status is probed opportunistically; auth failures mean "disabled".
+    if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
       return { enabled: false, defaultVoice: "" };
     }
-    throw new ApiError(res.status, await readError(res));
+    throw e;
   }
-  return (await res.json()) as { enabled: boolean; defaultVoice: string };
 }
 
 export async function fetchTTSVoices(): Promise<NarratorVoice[]> {
-  const res = await fetch("/api/tts/voices", {
-    credentials: "same-origin",
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) {
-    throw new ApiError(res.status, await readError(res));
-  }
-  const body = (await res.json()) as { voices?: { id: string; label?: string; lang?: string }[] };
+  const body = await request<{
+    voices?: { id: string; label?: string; lang?: string }[];
+  }>(opURL("GET__api_tts_voices"));
   return (body.voices ?? []).map((v) => ({
     id: v.id,
     label: v.label || v.id,
@@ -46,12 +40,7 @@ export async function fetchTTSVoices(): Promise<NarratorVoice[]> {
 }
 
 export async function getTTSAdmin(): Promise<TTSSettingsPublic> {
-  const res = await fetch("/api/admin/tts", {
-    credentials: "same-origin",
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) throw new ApiError(res.status, await readError(res));
-  return (await res.json()) as TTSSettingsPublic;
+  return request<TTSSettingsPublic>(opURL("GET__api_admin_tts"));
 }
 
 export async function saveTTSAdmin(config: {
@@ -61,41 +50,15 @@ export async function saveTTSAdmin(config: {
   apiKey?: string;
   timeoutSec: number;
 }): Promise<TTSSettingsPublic> {
-  const csrf = await ensureCsrf();
-  const res = await fetch("/api/admin/tts", {
+  return request<TTSSettingsPublic>(opURL("PUT__api_admin_tts"), {
     method: "PUT",
-    credentials: "same-origin",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      [CSRF_HEADER]: csrf,
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(config),
   });
-  if (!res.ok) throw new ApiError(res.status, await readError(res));
-  return (await res.json()) as TTSSettingsPublic;
 }
 
 export async function testTTSAdmin(): Promise<{ ok: boolean; message: string }> {
-  const csrf = await ensureCsrf();
-  const res = await fetch("/api/admin/tts/test", {
+  return request<{ ok: boolean; message: string }>(opURL("POST__api_admin_tts_test"), {
     method: "POST",
-    credentials: "same-origin",
-    headers: {
-      Accept: "application/json",
-      [CSRF_HEADER]: csrf,
-    },
   });
-  if (!res.ok) throw new ApiError(res.status, await readError(res));
-  return (await res.json()) as { ok: boolean; message: string };
-}
-
-async function readError(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { error?: string };
-    if (body.error) return body.error;
-  } catch {
-    // ignore
-  }
-  return res.statusText || `HTTP ${res.status}`;
 }

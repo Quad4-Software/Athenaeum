@@ -1,5 +1,6 @@
 <script lang="ts">
   import { link } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import Cover from "./Cover.svelte";
   import BookCoverProgress from "./BookCoverProgress.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
@@ -27,8 +28,8 @@
     <div class="continue-rail -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
       {#each items as book (book.id)}
         <a
-          href={`/book/${book.id}`}
-          use:link={`/book/${book.id}`}
+          href={routes.book(book.id)}
+          use:link={routes.book(book.id)}
           class="group w-[7.5rem] shrink-0 sm:w-36"
         >
           <div

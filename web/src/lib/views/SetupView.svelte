@@ -2,6 +2,7 @@
   import { fly } from "svelte/transition";
   import { brand } from "$lib/brand";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { auth } from "$lib/stores/auth.svelte";
   import { theme } from "$lib/stores/theme.svelte";
   import { ApiError } from "$lib/api/client";
@@ -43,7 +44,7 @@
     error = null;
     try {
       await auth.setup(username.trim(), password, altchaPayload || undefined);
-      router.navigate("/");
+      router.navigate(routes.library());
     } catch (e) {
       error = e instanceof ApiError ? e.message : i18n.t("setup.setupFailed");
     } finally {

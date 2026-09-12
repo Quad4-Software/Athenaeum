@@ -19,6 +19,7 @@
     FileText,
   } from "@lucide/svelte";
   import { router, link } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { library } from "$lib/stores/library.svelte";
   import { libraries } from "$lib/stores/libraries.svelte";
   import { collections } from "$lib/stores/collections.svelte";
@@ -85,27 +86,27 @@
   function goHome() {
     library.search = "";
     library.clearFilters();
-    go("/");
+    go(routes.library());
   }
 
   function filterBy(value: BookFormat | "") {
     library.setFormat(value);
-    go("/");
+    go(routes.library());
   }
 
   function filterSeries(name: string) {
     library.setSeries(name);
-    go("/");
+    go(routes.library());
   }
 
   function openCollection(id: number) {
     library.setCollection(id);
-    go("/");
+    go(routes.library());
   }
 
   function selectLibrary(id: number | null) {
     library.setLibrary(id);
-    go("/");
+    go(routes.library());
   }
 
   function formatActive(value: BookFormat | ""): boolean {
@@ -153,16 +154,18 @@
 </script>
 
 {#snippet manageCollectionsLink()}
-  <a href="/collections" use:link={"/collections"} class="text-xs text-primary hover:underline"
-    >{i18n.t("nav.manage")}</a
+  <a
+    href={routes.collections()}
+    use:link={routes.collections()}
+    class="text-xs text-primary hover:underline">{i18n.t("nav.manage")}</a
   >
 {/snippet}
 
 <nav class="flex h-full min-h-0 flex-col" aria-label={i18n.t("nav.primary")}>
   <div class="shrink-0 p-3 pb-0">
     <a
-      href="/"
-      use:link={"/"}
+      href={routes.library()}
+      use:link={routes.library()}
       onclick={() => goHome()}
       class="mb-4 flex items-center gap-2.5 px-2 py-1.5 text-fg
         {collapsed ? 'justify-center px-0' : ''}"
@@ -256,7 +259,7 @@
               type="button"
               onclick={() => {
                 library.setFavorites(true);
-                go("/");
+                go(routes.library());
               }}
               class="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors
             {favoritesActive()
@@ -275,7 +278,7 @@
               type="button"
               onclick={() => {
                 library.setInProgress(true);
-                go("/");
+                go(routes.library());
               }}
               class="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors
             {continueActive()
@@ -360,7 +363,7 @@
                     type="button"
                     onclick={() => {
                       library.setAuthor(a.name);
-                      go("/");
+                      go(routes.library());
                     }}
                     class="flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-sm
                   {active
@@ -414,8 +417,8 @@
 
   <div class="mt-auto flex shrink-0 flex-col gap-0.5 border-t border-border p-3 pt-3">
     <a
-      href="/collections"
-      use:link={"/collections"}
+      href={routes.collections()}
+      use:link={routes.collections()}
       onclick={() => onnavigate?.()}
       class="flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors
         {router.current.name === 'collections' || router.current.name === 'collection'
@@ -443,8 +446,8 @@
     </button>
 
     <a
-      href="/settings/library"
-      use:link={"/settings/library"}
+      href={routes.settings("library")}
+      use:link={routes.settings("library")}
       onclick={() => onnavigate?.()}
       class="flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors
         {router.current.name === 'settings'

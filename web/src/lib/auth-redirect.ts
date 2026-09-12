@@ -1,6 +1,9 @@
 import type { AuthRedirectReason } from "$lib/api/session";
+import { routes } from "$lib/routes";
 
-const AUTH_PATHS = new Set(["/login", "/setup"]);
+const AUTH_PATHS = new Set([routes.login(), routes.setup()]);
+const ERROR_PREFIX = routes.error("");
+const INVITE_PREFIX = routes.invite("");
 const AUTH_REDIRECT_REASONS = new Set<AuthRedirectReason>([
   "required",
   "session_expired",
@@ -18,15 +21,15 @@ export function pathnameOf(url: string): string {
 export function safeReturnPath(path: string | null | undefined): string | null {
   if (!path || !path.startsWith("/") || path.startsWith("//")) return null;
   const base = pathnameOf(path);
-  if (AUTH_PATHS.has(base) || base.startsWith("/error/")) return null;
+  if (AUTH_PATHS.has(base) || base.startsWith(ERROR_PREFIX)) return null;
   return base;
 }
 
 export function loginUrl(reason: AuthRedirectReason, returnTo?: string | null): string {
   const params = new URLSearchParams({ reason });
   const next = safeReturnPath(returnTo);
-  if (next && next !== "/") params.set("next", next);
-  return `/login?${params}`;
+  if (next && next !== routes.library()) params.set("next", next);
+  return `${routes.login()}?${params}`;
 }
 
 export function normalizeAuthRedirectReason(reason: string | null | undefined): AuthRedirectReason {
@@ -40,7 +43,11 @@ export function unauthorizedRedirect(
   pathname: string,
   reason: AuthRedirectReason = "required",
 ): string | null {
-  if (pathname === "/login" || pathname === "/setup" || pathname.startsWith("/invite/"))
+  if (
+    pathname === routes.login() ||
+    pathname === routes.setup() ||
+    pathname.startsWith(INVITE_PREFIX)
+  )
     return null;
   return loginUrl(reason, safeReturnPath(pathname));
 }
@@ -73,7 +80,7 @@ export function shouldRedirectFromLogin(state: {
 }
 
 export function sanitizeLoginLocation(pathname: string, search: string): string | null {
-  if (pathname !== "/login") return null;
+  if (pathname !== routes.login()) return null;
   const params = new URLSearchParams(search);
   const cleaned = loginUrl(normalizeAuthRedirectReason(params.get("reason")), params.get("next"));
   const current = pathname + search;
@@ -82,9 +89,9 @@ export function sanitizeLoginLocation(pathname: string, search: string): string 
 
 export function isAuthPagePathname(pathname: string): boolean {
   return (
-    pathname === "/login" ||
-    pathname === "/setup" ||
-    pathname.startsWith("/invite/") ||
-    pathname.startsWith("/error/")
+    pathname === routes.login() ||
+    pathname === routes.setup() ||
+    pathname.startsWith(INVITE_PREFIX) ||
+    pathname.startsWith(ERROR_PREFIX)
   );
 }

@@ -1,4 +1,5 @@
 import { router } from "$lib/router.svelte";
+import { routes } from "$lib/routes";
 import { watch } from "runed";
 import { online as onlineWindow } from "svelte/reactivity/window";
 
@@ -26,14 +27,14 @@ class ConnectivityStore {
   onOffline() {
     this.online = false;
     if (!SKIP_OFFLINE_NAV.has(router.current.name)) {
-      router.navigate("/error/offline", true);
+      router.navigate(routes.error("offline"), true);
     }
   }
 
   onOnline() {
     this.online = true;
     if (router.current.name === "error" && router.current.params.code === "offline") {
-      router.navigate("/", true);
+      router.navigate(routes.library(), true);
       this.markReachable();
     }
   }

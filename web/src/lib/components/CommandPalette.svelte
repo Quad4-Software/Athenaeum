@@ -3,6 +3,7 @@
   import { Command, Dialog } from "bits-ui";
   import { api } from "$lib/api/client";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { commandPalette } from "$lib/stores/commandPalette.svelte";
   import { keybindings } from "$lib/stores/keybindings.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
@@ -92,7 +93,7 @@
         modifiedAt: row.book.modifiedAt,
       });
       close();
-      router.navigate(`/book/${row.book.id}`);
+      router.navigate(routes.book(row.book.id));
       return;
     }
     close();

@@ -1,4 +1,5 @@
 import { router } from "$lib/router.svelte";
+import { routes } from "$lib/routes";
 import { library } from "$lib/stores/library.svelte";
 import { ui } from "$lib/stores/ui.svelte";
 import { theme } from "$lib/stores/theme.svelte";
@@ -10,13 +11,13 @@ import type { CommandDef, CommandId } from "./types";
 
 function goLibraryHome(clear = true) {
   if (clear) library.clearFilters();
-  router.navigate("/");
+  router.navigate(routes.library());
   ui.closeMobileNav();
 }
 
 function goFormat(format: BookFormat | "") {
   library.setFormat(format);
-  router.navigate("/");
+  router.navigate(routes.library());
   ui.closeMobileNav();
 }
 
@@ -45,7 +46,7 @@ const COMMANDS: CommandDef[] = [
     defaultBinding: { key: "2", mod: true },
     run: () => {
       library.setInProgress(true);
-      router.navigate("/");
+      router.navigate(routes.library());
       ui.closeMobileNav();
     },
   },
@@ -56,7 +57,7 @@ const COMMANDS: CommandDef[] = [
     scope: "shell",
     run: () => {
       library.setFavorites(true);
-      router.navigate("/");
+      router.navigate(routes.library());
       ui.closeMobileNav();
     },
   },
@@ -67,7 +68,7 @@ const COMMANDS: CommandDef[] = [
     scope: "shell",
     defaultBinding: { key: "3", mod: true },
     run: () => {
-      router.navigate("/collections");
+      router.navigate(routes.collections());
       ui.closeMobileNav();
     },
   },
@@ -78,7 +79,7 @@ const COMMANDS: CommandDef[] = [
     scope: "shell",
     defaultBinding: { key: ",", mod: true },
     run: () => {
-      router.navigate("/settings/library");
+      router.navigate(routes.settings("library"));
       ui.closeMobileNav();
     },
   },
@@ -155,7 +156,7 @@ const COMMANDS: CommandDef[] = [
     scope: "shell",
     defaultBinding: { key: "?", shift: true },
     run: () => {
-      router.navigate("/settings/library");
+      router.navigate(routes.settings("library"));
       ui.closeMobileNav();
       queueMicrotask(() => {
         document.getElementById("settings-keyboard-shortcuts")?.scrollIntoView({

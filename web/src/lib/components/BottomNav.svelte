@@ -1,5 +1,6 @@
 <script lang="ts">
   import { MediaQuery } from "svelte/reactivity";
+  import { MQ_BELOW_MD } from "$lib/breakpoints";
   import { BookOpen, Compass, Library, Settings, Layers } from "@lucide/svelte";
   import { router } from "$lib/router.svelte";
   import { library } from "$lib/stores/library.svelte";
@@ -34,7 +35,7 @@
     return null;
   });
 
-  const isMobile = new MediaQuery("(max-width: 767px)");
+  const isMobile = new MediaQuery(MQ_BELOW_MD);
 
   $effect(() => {
     const root = document.documentElement;

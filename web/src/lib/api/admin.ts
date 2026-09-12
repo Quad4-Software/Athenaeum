@@ -11,7 +11,7 @@ import type {
   Webhook,
   WebhookDelivery,
 } from "./types";
-import { request, ensureCsrf, ApiError, CSRF_HEADER } from "./core";
+import { request } from "./core";
 import { opURL } from "./op";
 
 export const adminApi = {
@@ -165,26 +165,14 @@ export const adminApi = {
       body: JSON.stringify(body),
     }),
 
-  restoreBackup: async (file: File) => {
-    const csrf = await ensureCsrf();
+  restoreBackup: (file: File) => {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch("/api/admin/restore", {
+    // FormData body: request() adds Accept + CSRF but no Content-Type, so the
+    // multipart boundary is still set by fetch.
+    return request<{ status: string; message: string }>("/api/admin/restore", {
       method: "POST",
-      credentials: "same-origin",
-      headers: { [CSRF_HEADER]: csrf },
       body: form,
     });
-    if (!res.ok) {
-      let msg = res.statusText;
-      try {
-        const body = (await res.json()) as { error?: string };
-        if (body.error) msg = body.error;
-      } catch {
-        /* ignore */
-      }
-      throw new ApiError(res.status, msg);
-    }
-    return res.json() as Promise<{ status: string; message: string }>;
   },
 };

@@ -35,7 +35,9 @@
     "scanning": "Scanning...",
     "settings": "Settings",
     "shelfAuto": "auto",
-    "shelfSmart": "smart"
+    "shelfSmart": "smart",
+    "shelfFallback": "Shelf",
+    "reading": "Reading"
   },
   "search": {
     "placeholder": "Search title, author, series, or DOI...",
@@ -119,6 +121,9 @@
     "scanning": "Scanning{count}...",
     "matchingProgress": "Matching metadata ({done}/{total})...",
     "matchFailed": "Failed to start metadata matching",
+    "loadFailed": "Failed to load library",
+    "scanStarted": "Library scan started",
+    "scanFinished": "Library scan finished",
     "importBibtex": "Import BibTeX",
     "importBibtexHint": "Match .bib entries to existing PDFs by DOI, arXiv, PMID, or title",
     "importBibtexDone": "BibTeX import: {updated} updated, {matched} matched, {unmatched} unmatched",
@@ -196,7 +201,31 @@
     "offlineCaching": "Caching {pct}%",
     "offlineStarted": "Offline download started",
     "offlineCleared": "Offline copy removed",
-    "offlineFailed": "Offline cache failed"
+    "offlineFailed": "Offline cache failed",
+    "providerHint": "Search {providers} and pick a match.",
+    "providerHintEmpty": "Search external catalogs and pick a match.",
+    "searchNeedInput": "Enter a title, author, ISBN, ASIN, DOI, arXiv ID, or PubMed ID to search",
+    "searchNeedProvider": "Select at least one metadata source",
+    "searchNoMatches": "No matches found. Try fewer words or a different source.",
+    "metadataSearchFailed": "Metadata search failed",
+    "filledFrom": "Filled from {provider}",
+    "metadataApplied": "Metadata applied",
+    "metadataApplyFailed": "Failed to apply metadata",
+    "titleRequired": "Title is required",
+    "metadataSaved": "Metadata saved",
+    "metadataSaveFailed": "Failed to save metadata",
+    "coverUpdated": "Cover updated",
+    "coverUploadFailed": "Failed to upload cover",
+    "coverRemoved": "Cover removed",
+    "coverRemoveFailed": "Failed to remove cover",
+    "addedToList": "Added to list",
+    "addToListFailed": "Failed to add",
+    "tagAddFailed": "Failed to add tag",
+    "tagRemoveFailed": "Failed to remove tag",
+    "ratingFailed": "Failed to save rating",
+    "converting": "Converting to {target}…",
+    "converted": "Converted to {target}",
+    "convertFailed": "Conversion failed"
   },
   "confirm": {
     "confirm": "Confirm",
@@ -423,7 +452,17 @@
     "pwaInstall": "Install",
     "pwaInstalled": "Installed on this device.",
     "pwaInstalledToast": "App installed",
-    "pwaUnavailable": "Install is not available in this browser right now."
+    "pwaUnavailable": "Install is not available in this browser right now.",
+    "mounts": {
+      "removed": "Library removed",
+      "addFailed": "Failed to add library",
+      "removeFailed": "Failed to remove library",
+      "updated": "Library updated",
+      "updateFailed": "Failed to update library",
+      "s3TestOk": "S3 connection OK",
+      "s3TestFailed": "S3 test failed",
+      "scanFailed": "Scan failed"
+    }
   },
   "sort": {
     "label": "Sort books",
@@ -496,7 +535,14 @@
     "passwordReqDigit": "Include a digit",
     "passwordReqSymbol": "Include a symbol",
     "passwordReqDiversity": "Use at least {n} character types",
-    "passwordReqDiversityOrLong": "Use {n}+ characters or mix letter case, digits, and symbols"
+    "passwordReqDiversityOrLong": "Use {n}+ characters or mix letter case, digits, and symbols",
+    "adminCreated": "Admin account created",
+    "signedIn": "Signed in",
+    "signedOut": "Signed out",
+    "accountCreated": "Account created",
+    "loadFailed": "Failed to load session",
+    "profileUpdated": "Profile updated",
+    "passwordChanged": "Password changed"
   },
   "invite": {
     "title": "Accept invite",
@@ -625,7 +671,8 @@
     "fontClear": "Remove custom font",
     "fontUploaded": "Custom font loaded",
     "fontUploadFailed": "Could not load font file",
-    "fontTooLarge": "Font file is too large (max 4 MB)"
+    "fontTooLarge": "Font file is too large (max 4 MB)",
+    "close": "Close reader"
   },
   "admin": {
     "server": {

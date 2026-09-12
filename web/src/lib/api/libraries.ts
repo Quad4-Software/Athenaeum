@@ -11,7 +11,7 @@ import type {
   ScanStatus,
   UploadSession,
 } from "./types";
-import { request, ensureCsrf, ApiError, CSRF_HEADER } from "./core";
+import { request } from "./core";
 import { opURL } from "./op";
 
 export const librariesApi = {
@@ -103,40 +103,25 @@ export const librariesApi = {
       { method: "DELETE" },
     ),
 
-  uploadChunk: async (
+  uploadChunk: (
     libraryId: number,
     uploadId: string,
     chunk: Blob,
     start: number,
     end: number,
     total: number,
-  ): Promise<UploadSession> => {
-    const csrf = await ensureCsrf();
-    const res = await fetch(
+  ): Promise<UploadSession> =>
+    request<UploadSession>(
       opURL("PATCH__api_libraries__id__uploads__uploadId", { id: libraryId, uploadId }),
       {
         method: "PATCH",
-        credentials: "same-origin",
         headers: {
           "Content-Type": "application/octet-stream",
           "Content-Range": `bytes ${start}-${end}/${total}`,
-          [CSRF_HEADER]: csrf,
         },
         body: chunk,
       },
-    );
-    if (!res.ok) {
-      let msg = res.statusText;
-      try {
-        const body = await res.json();
-        if (body?.error) msg = body.error;
-      } catch {
-        /* ignore */
-      }
-      throw new ApiError(res.status, msg);
-    }
-    return res.json() as Promise<UploadSession>;
-  },
+    ),
 
   browseFS: (path = "") =>
     request<FSBrowseResult>(`/api/fs/browse${path ? `?path=${encodeURIComponent(path)}` : ""}`),

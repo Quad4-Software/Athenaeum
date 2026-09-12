@@ -113,6 +113,10 @@
   --shadow-panel: var(--shadow);
   --spacing-bottom-chrome: var(--bottom-chrome);
 
+  /* Extra small breakpoint below Tailwind's sm. Keep in sync with
+     lib/breakpoints.ts (BP_XS_PX). */
+  --breakpoint-xs: 480px;
+
   --font-sans:
     "Source Sans 3 Variable", "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, Helvetica, Arial, sans-serif;

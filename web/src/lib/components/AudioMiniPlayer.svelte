@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Gauge, Headphones, Moon, Pause, Play, SkipBack, SkipForward, X } from "@lucide/svelte";
+  import { MediaQuery } from "svelte/reactivity";
   import MenuList from "$lib/components/MenuList.svelte";
   import Popover from "$lib/components/Popover.svelte";
   import Dropdown from "$lib/components/Dropdown.svelte";
@@ -7,7 +8,9 @@
   import { audioPlayer } from "$lib/stores/audioPlayer.svelte";
   import { formatAudioTime, formatSleepRemaining } from "$lib/audio/format";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { i18n } from "$lib/stores/i18n.svelte";
+  import { MQ_XS_UP } from "$lib/breakpoints";
 
   const MINI_SKIP = 10;
   const SLEEP_OPTIONS = [5, 15, 30, 45, 60, 90];
@@ -18,6 +21,8 @@
   let speedOpen = $state(false);
 
   let showBar = $derived(audioPlayer.active && !audioPlayer.expanded);
+
+  const xsUp = new MediaQuery(MQ_XS_UP);
 
   let sleepRemainingMs = $derived(
     audioPlayer.sleepEndsAt
@@ -49,7 +54,7 @@
   function openFull() {
     const book = audioPlayer.book;
     if (!book) return;
-    router.navigate(`/read/${book.id}`);
+    router.navigate(routes.reader(book.id));
   }
 
   function stop() {
@@ -162,7 +167,9 @@
               aria-label={i18n.t("audio.speed", { rate: audioPlayer.rate })}
             >
               <Gauge size={15} />
-              <span class="tool-rate">{audioPlayer.rate}x</span>
+              <span class="tool-rate" class:tool-rate--shown={xsUp.current}
+                >{audioPlayer.rate}x</span
+              >
             </button>
           {/snippet}
         </Dropdown>
@@ -180,7 +187,9 @@
             >
               <Moon size={15} />
               {#if audioPlayer.sleepEndsAt}
-                <span class="tool-rate">{formatSleepRemaining(sleepRemainingMs)}</span>
+                <span class="tool-rate" class:tool-rate--shown={xsUp.current}
+                  >{formatSleepRemaining(sleepRemainingMs)}</span
+                >
               {/if}
             </button>
           {/snippet}
@@ -434,10 +443,8 @@
     display: none;
   }
 
-  @media (min-width: 480px) {
-    .tool-rate {
-      display: inline;
-    }
+  .tool-rate--shown {
+    display: inline;
   }
 
   .seek-row {

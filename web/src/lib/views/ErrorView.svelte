@@ -1,5 +1,6 @@
 <script lang="ts">
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { auth } from "$lib/stores/auth.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
   import Button from "$lib/components/Button.svelte";
@@ -87,7 +88,7 @@
     {#if code === 401 || (code === 403 && auth.authEnabled)}
       <Button onclick={goLogin}>{i18n.t("error.signIn")}</Button>
     {/if}
-    <Button variant="ghost" onclick={() => router.navigate("/")}>
+    <Button variant="ghost" onclick={() => router.navigate(routes.library())}>
       {i18n.t("app.goToLibrary")}
     </Button>
     {#if onRetry || code === "offline"}

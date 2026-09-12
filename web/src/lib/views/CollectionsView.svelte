@@ -4,6 +4,7 @@
   import EmptyState from "$lib/components/EmptyState.svelte";
   import Skeleton from "$lib/components/Skeleton.svelte";
   import { router } from "$lib/router.svelte";
+  import { routes } from "$lib/routes";
   import { collections } from "$lib/stores/collections.svelte";
   import { library } from "$lib/stores/library.svelte";
   import { confirmDialog } from "$lib/stores/confirm.svelte";
@@ -90,7 +91,7 @@
   }
 
   function open(id: number) {
-    router.navigate(`/collections/${id}`);
+    router.navigate(routes.collection(id));
   }
 </script>
 
