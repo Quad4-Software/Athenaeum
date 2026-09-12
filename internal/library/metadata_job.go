@@ -57,6 +57,10 @@ type MetadataAutoMatchRequest struct {
 	BookIDs    []int64 `json:"bookIds,omitempty"`
 	LibraryID  int64   `json:"libraryId,omitempty"`
 	ApplyCover bool    `json:"applyCover"`
+
+	// AllowedLibraryIDs limits the job to libraries the requester may see;
+	// empty means unrestricted. Set by the handler, never by clients.
+	AllowedLibraryIDs []int64 `json:"-"`
 }
 
 // Running reports whether a metadata job is active.
@@ -123,6 +127,19 @@ func (m *MetadataMatcher) run(ctx context.Context, req MetadataAutoMatchRequest)
 		finished := time.Now()
 		m.progress.finishedAt.Store(finished)
 		return
+	}
+	if len(req.AllowedLibraryIDs) > 0 {
+		allowed := make(map[int64]struct{}, len(req.AllowedLibraryIDs))
+		for _, id := range req.AllowedLibraryIDs {
+			allowed[id] = struct{}{}
+		}
+		filtered := books[:0]
+		for _, b := range books {
+			if _, ok := allowed[b.LibraryID]; ok {
+				filtered = append(filtered, b)
+			}
+		}
+		books = filtered
 	}
 
 	m.progress.total.Store(int64(len(books)))

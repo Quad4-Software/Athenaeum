@@ -24,6 +24,16 @@ func (s *Server) handleMetadataAutoMatch(w http.ResponseWriter, r *http.Request)
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
+	if u, ok := UserFromContext(r.Context()); ok {
+		acc, err := s.store.AccessibleLibraries(r.Context(), u)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		if acc.Restricted {
+			req.AllowedLibraryIDs = acc.LibraryIDs
+		}
+	}
 	if !s.metadataMatcher.Start(s.jobsCtx, req) {
 		writeError(w, http.StatusConflict, errors.New("metadata match already running"))
 		return
