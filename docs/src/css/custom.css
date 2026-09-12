@@ -337,14 +337,7 @@ pre code {
   padding: 0;
 }
 
-.prism-code {
-  border-radius: 12px;
-  border: 1px solid var(--athena-border);
-}
 
-.theme-code-block {
-  box-shadow: 0 12px 32px -20px rgb(0 0 0 / 0.4);
-}
 
 /* --------------------------------------------------------------- buttons */
 
