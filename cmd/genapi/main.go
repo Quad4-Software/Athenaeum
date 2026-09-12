@@ -23,6 +23,7 @@ func main() {
 	spec := server.BuildOpenAPI()
 	openapiPath := filepath.Join(*root, "web/src/lib/api/generated/openapi.json")
 	tsPath := filepath.Join(*root, "web/src/lib/api/generated/paths.ts")
+	modelsPath := filepath.Join(*root, "web/src/lib/api/generated/models.ts")
 
 	openapiBytes, err := json.MarshalIndent(spec, "", "  ")
 	if err != nil {
@@ -31,13 +32,22 @@ func main() {
 	openapiBytes = append(openapiBytes, '\n')
 
 	tsBytes := []byte(renderTypeScript(spec))
+	modelsBytes := []byte(renderModels())
+
+	outputs := []struct {
+		path string
+		data []byte
+	}{
+		{openapiPath, openapiBytes},
+		{tsPath, tsBytes},
+		{modelsPath, modelsBytes},
+	}
 
 	if *check {
-		if err := checkFile(openapiPath, openapiBytes); err != nil {
-			fail(err)
-		}
-		if err := checkFile(tsPath, tsBytes); err != nil {
-			fail(err)
+		for _, out := range outputs {
+			if err := checkFile(out.path, out.data); err != nil {
+				fail(err)
+			}
 		}
 		fmt.Println("generated API client is up to date")
 		return
@@ -46,14 +56,12 @@ func main() {
 	if err := os.MkdirAll(filepath.Dir(tsPath), 0o755); err != nil { // #nosec G301 -- generated sources in repo tree
 		fail(err)
 	}
-	if err := os.WriteFile(openapiPath, openapiBytes, 0o644); err != nil { // #nosec G306 -- generated sources in repo tree
-		fail(err)
+	for _, out := range outputs {
+		if err := os.WriteFile(out.path, out.data, 0o644); err != nil { // #nosec G306 -- generated sources in repo tree
+			fail(err)
+		}
+		fmt.Printf("wrote %s\n", out.path)
 	}
-	if err := os.WriteFile(tsPath, tsBytes, 0o644); err != nil { // #nosec G306 -- generated sources in repo tree
-		fail(err)
-	}
-	fmt.Printf("wrote %s\n", openapiPath)
-	fmt.Printf("wrote %s\n", tsPath)
 }
 
 func checkFile(path string, want []byte) error {

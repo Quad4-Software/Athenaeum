@@ -1,3 +1,12 @@
+import type * as gen from "./generated/models";
+
+// Interfaces mirroring Go API models live in generated/models.ts, emitted by
+// genapi from the structs in internal/models (run `task generate`). They are
+// re-exported here so existing imports keep working.
+export * from "./generated/models";
+
+export type { PasswordStrength, PasswordPolicy } from "$lib/utils/password-strength";
+
 export type BookFormat =
   | "epub"
   | "pdf"
@@ -18,9 +27,6 @@ export type BookFormat =
   | "kindle"
   | "papers";
 
-import type { PasswordPolicy } from "$lib/utils/password-strength";
-export type { PasswordStrength, PasswordPolicy } from "$lib/utils/password-strength";
-
 export const AUDIO_FORMATS = ["mp3", "m4b", "m4a", "ogg", "flac", "audiobook"] as const;
 
 export function isAudioFormat(format: string): boolean {
@@ -39,386 +45,55 @@ export function isPaperBook(book: { doi?: string; arxivId?: string; pubmedId?: s
   return Boolean(book.doi || book.arxivId || book.pubmedId);
 }
 
-export interface MetadataProvider {
-  id: string;
-  label: string;
-  description?: string;
-  requiresAsin?: boolean;
-}
+// The following aliases keep generated shapes but narrow fields where the API
+// contract is tighter than the Go type (string enums) or where the client
+// sends partial payloads the Go struct marks as required.
 
-export interface MetadataMatch {
-  source: string;
-  sourceId?: string;
-  title: string;
-  author: string;
-  description?: string;
-  language?: string;
-  series?: string;
-  seriesIndex?: number;
-  isbn?: string;
-  asin?: string;
-  coverUrl?: string;
-  publishedYear?: number;
-  doi?: string;
-  arxivId?: string;
-  pubmedId?: string;
-  journal?: string;
-  volume?: string;
-  issue?: string;
-  pages?: string;
-}
+export type Book = Omit<gen.Book, "format"> & { format: BookFormat };
 
-export interface MetadataSearchQuery {
-  title?: string;
-  author?: string;
-  isbn?: string;
-  asin?: string;
-  doi?: string;
-  arxivId?: string;
-  pubmedId?: string;
-  providers?: string[];
-}
+export type BookPage = Omit<gen.BookPage, "items"> & { items: Book[] };
 
-export interface Chapter {
-  index: number;
-  title: string;
-  startSec: number;
-}
-
-export interface Book {
-  id: number;
-  libraryId?: number;
-  title: string;
-  author: string;
-  series?: string;
-  seriesIndex?: number;
-  format: BookFormat;
-  relPath: string;
-  fileSize: number;
-  hasCover: boolean;
-  language?: string;
-  description?: string;
-  doi?: string;
-  arxivId?: string;
-  pubmedId?: string;
-  journal?: string;
-  volume?: string;
-  issue?: string;
-  pages?: string;
-  publishedYear?: number;
-  addedAt: string;
-  modifiedAt: string;
-  metaEdited?: boolean;
-  coverEdited?: boolean;
-  contentHash?: string;
-  duplicateOf?: number;
-  progressPercent?: number;
-  tags?: string[];
-  userRating?: number;
-}
-
-export interface BookUpdate {
-  title: string;
-  author: string;
-  series?: string;
-  seriesIndex?: number;
-  language?: string;
-  description?: string;
-  doi?: string;
-  arxivId?: string;
-  pubmedId?: string;
-  journal?: string;
-  volume?: string;
-  issue?: string;
-  pages?: string;
-  publishedYear?: number;
-}
-
-export interface BookPage {
-  items: Book[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-export interface HealthResponse {
-  status: string;
-  version?: string;
-  webVersion?: string;
-  telemetry?: TelemetryConfig;
-}
-
-export interface TelemetryConfig {
-  sentryDsn?: string;
-  environment?: string;
-  release?: string;
-  tracesSampleRate?: number;
-}
-
-export interface LibraryStats {
-  totalBooks: number;
-  epubCount: number;
-  pdfCount: number;
-  audioCount: number;
-  totalSizeBytes: number;
-  authorCount: number;
-  seriesCount: number;
-  libraryCount: number;
-  addedLast7Days: number;
-  collectionCount: number;
-  readingInProgress?: number;
-  readingCompleted?: number;
-  favoriteCount?: number;
-  userCount?: number;
-  lastScanAt?: string;
-  scanning: boolean;
-  authEnabled: boolean;
-}
-
-export interface Progress {
-  bookId: number;
-  userId?: number;
-  location: string;
-  percent: number;
-  readSeconds?: number;
-  updatedAt: string;
-}
-
-export interface Bookmark {
-  id: number;
-  bookId: number;
-  location: string;
-  label?: string;
-  createdAt: string;
-}
-
-export interface Tag {
-  id: number;
-  name: string;
-}
-
-export interface BookRating {
-  userId?: number;
-  bookId: number;
-  rating: number;
-  updatedAt?: number;
-}
-
-export interface ReaderPrefs {
-  userId?: number;
-  prefs: Record<string, unknown>;
-  updatedAt?: number;
-}
-
-export interface LoginChallenge {
-  needsTotp: boolean;
-  totpToken: string;
-}
-
-export type LoginResult = User | LoginChallenge;
-
-export function isLoginChallenge(r: LoginResult): r is LoginChallenge {
-  return "needsTotp" in r && r.needsTotp === true;
-}
-
-export interface TOTPSetup {
-  secret: string;
-  otpauthUrl: string;
-}
-
-export interface AuthSettings {
-  allowRegistration: boolean;
-  requireTotp: boolean;
-}
-
-export interface Highlight {
-  id: number;
-  bookId: number;
-  location: string;
-  excerpt?: string;
-  note?: string;
-  color?: string;
-  createdAt: string;
-}
-
-export interface ComicPage {
-  index: number;
-  name: string;
-  mimeType: string;
-}
-
-export interface ComicManifest {
-  total: number;
-  pages: ComicPage[];
-}
-
-export interface MobiSection {
-  index: number;
-  title: string;
-  html: string;
-}
-
-export interface AudiobookTrack {
-  index: number;
-  title: string;
-  relPath: string;
-  format: string;
-  fileSize: number;
-}
-
-export interface ConvertResult {
-  targetFormat: string;
-  outputPath: string;
-  bookId?: number;
-  message?: string;
-}
-
-export interface ReadingStats {
-  totalReadSeconds: number;
-  booksInProgress: number;
-  booksCompleted: number;
-  currentStreakDays: number;
-}
-
-export interface AuthorInfo {
-  name: string;
-  count: number;
-}
-
-export interface ScanStatus {
-  scanning: boolean;
-  indexed: number;
-  skipped: number;
-  currentPath?: string;
-  libraryName?: string;
-  startedAt?: string;
-  finishedAt?: string;
-}
-
-export interface MetadataMatchStatus {
-  running: boolean;
-  total: number;
-  done: number;
-  matched: number;
-  skipped: number;
-  failed: number;
-  currentTitle?: string;
-  startedAt?: string;
-  finishedAt?: string;
-}
-
-export interface MetadataAutoMatchRequest {
-  bookIds?: number[];
-  libraryId?: number;
-  applyCover?: boolean;
-}
-
-export interface IntegrityReport {
-  totalBooks: number;
-  missingCount: number;
-  missingFiles: { id: number; libraryId: number; title: string; relPath: string }[];
-  orphanCovers: number;
-}
-
-export interface MaintenanceStatus {
-  running: boolean;
-  task?: string;
-  total: number;
-  done: number;
-  updated: number;
-  skipped: number;
-  failed: number;
-  currentTitle?: string;
-  startedAt?: string;
-  finishedAt?: string;
-}
+export type MetadataSearchQuery = Partial<gen.MetadataSearchQuery>;
 
 export type Permission =
   "read" | "edit_metadata" | "delete_books" | "manage_library" | "manage_users";
 
-export interface User {
-  id: number;
-  username: string;
-  email?: string;
-  isAdmin: boolean;
-  isGuest?: boolean;
-  expiresAt?: string;
-  localAuth?: boolean;
-  totpEnabled?: boolean;
+export type User = Omit<gen.User, "permissions" | "totpEnabled"> & {
   permissions?: Permission[];
-  createdAt: string;
-}
+  totpEnabled?: boolean;
+};
 
-export interface GuestCredentials {
-  user: User;
-  password: string;
-}
+export type Invite = Omit<gen.Invite, "kind"> & { kind: "permanent" | "guest" };
 
-export interface ServerConfig {
-  metricsEnabled: boolean;
-  metricsAuth: boolean;
-  metricsUsername: string;
-  metricsPassword?: string;
-  metricsPasswordSet: boolean;
-  trustedProxies: string;
-  corsEnabled: boolean;
-  corsOrigins: string;
-  cspEnabled: boolean;
-  cspPolicy: string;
-  autoScanEnabled?: boolean;
-  autoScanIntervalSec?: number;
-  scanWorkers?: number;
-}
+export type OIDCMatchBy = "username" | "email" | "sub";
 
-export interface SMTPSettingsPublic {
-  enabled: boolean;
-  host: string;
-  port: number;
-  username: string;
-  passwordSet: boolean;
-  fromAddr: string;
-  useTls: boolean;
-}
+export type OIDCConfig = Omit<gen.OIDCConfig, "matchBy"> & { matchBy: OIDCMatchBy };
 
-export interface PocketIDSettingsPublic {
-  enabled: boolean;
-  baseUrl: string;
-  apiKeySet: boolean;
-  defaultGroupIds: string[];
-}
+export type CollectionKind = "manual" | "smart" | "auto" | "reading";
 
-export interface Invite {
-  id: number;
-  token: string;
-  kind: "permanent" | "guest";
-  email?: string;
-  permissions: string[];
-  createdBy: number;
-  expiresAt?: string;
-  guestExpiresAt?: string;
-  pocketIdUserId?: string;
-  acceptedAt?: string;
-  acceptedUserId?: number;
-  revokedAt?: string;
-  createdAt: string;
-  status: string;
-}
+export type SmartQuery = Omit<gen.SmartQuery, "format"> & { format?: BookFormat | "" };
 
-export interface InviteCreateResult {
-  invite: Invite;
-  url: string;
-  pocketIdSetupUrl?: string;
-  emailSent: boolean;
-}
+export type Collection = Omit<gen.Collection, "kind" | "query"> & {
+  kind: CollectionKind;
+  query?: SmartQuery;
+};
 
-export interface InviteMeta {
-  kind: string;
-  emailPresent: boolean;
-  expiresAt?: string;
-  valid: boolean;
-  reason?: string;
-  pocketIdConfigured: boolean;
-}
+export type LibraryCreateInput = Omit<gen.LibraryCreateInput, "mountPath" | "backend"> & {
+  mountPath?: string;
+  backend?: "local" | "s3";
+};
+
+export type I18nLocaleInfo = Omit<gen.I18nLocaleInfo, "source"> & {
+  source: "bundled" | "custom";
+};
+
+export type I18nCatalog = Omit<gen.I18nCatalog, "locales"> & {
+  locales: I18nLocaleInfo[];
+};
+
+export type GuestCredentials = Omit<gen.GuestCredentials, "user"> & { user: User };
+
+export type ServerConfig = gen.ServerConfig & { metricsPassword?: string };
 
 export type WebhookEvent =
   | "user.create"
@@ -428,27 +103,29 @@ export type WebhookEvent =
   | "book.upload"
   | "library.scan.complete";
 
-export interface Webhook {
-  id: number;
-  url: string;
-  secretSet: boolean;
-  events: string[];
-  enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
+export type LoginResult = User | gen.LoginChallenge;
+
+export function isLoginChallenge(r: LoginResult): r is gen.LoginChallenge {
+  return "needsTotp" in r && r.needsTotp === true;
 }
 
-export interface WebhookDelivery {
-  id: number;
-  webhookId: number;
-  event: string;
-  payload: string;
-  statusCode: number;
-  success: boolean;
-  attempts: number;
-  lastError?: string;
-  createdAt: string;
-  deliveredAt?: string;
+// Hand-written shapes without a single Go struct behind them (map literals in
+// handlers, unexported request bodies, or UI-only client types).
+
+export interface HealthResponse {
+  status: string;
+  database?: string;
+  version?: string;
+  webVersion?: string;
+  scanning?: boolean;
+  lastScan?: string;
+  diskFreeBytes?: number;
+  telemetry?: gen.TelemetryConfig;
+}
+
+export interface TOTPSetup {
+  secret: string;
+  otpauthUrl: string;
 }
 
 export interface SandboxComponentStatus {
@@ -464,200 +141,10 @@ export interface SandboxStatus {
   seccomp: SandboxComponentStatus;
 }
 
-export interface SystemStats {
-  version: string;
-  webVersion: string;
-  cpuPercent: number;
-  memUsed: number;
-  memTotal: number;
-  memPercent: number;
-  disks: {
-    path: string;
-    total: number;
-    used: number;
-    available: number;
-    percent: number;
-  }[];
-  sandbox?: SandboxStatus;
-}
-
-export interface UserSession {
-  id: string;
-  userId?: number;
-  ip?: string;
-  userAgent?: string;
-  device?: string;
-  authMethod: string;
-  createdAt: string;
-  lastSeenAt: string;
-  expiresAt: string;
-  current: boolean;
-}
-
-export interface AltchaWidgetPublic {
-  auto?: string;
-  display?: string;
-  hideFooter?: boolean;
-  hideLogo?: boolean;
-  language?: string;
-  name?: string;
-  theme?: string;
-  type?: string;
-  workers?: number;
-}
-
-/** Browser-safe ALTCHA widget configuration from auth methods. */
-export interface AltchaPublic {
-  enabled: boolean;
-  challengeUrl?: string;
-  protectLogin: boolean;
-  protectSetup: boolean;
-  widget: AltchaWidgetPublic;
-}
-
-export interface AuthMethods {
-  authEnabled: boolean;
-  loginLocal: boolean;
-  loginOidc: boolean;
-  oidcButtonText?: string;
-  oidcAutoLaunch: boolean;
-  allowRegistration?: boolean;
-  passwordPolicy?: PasswordPolicy;
-  altcha?: AltchaPublic;
-}
-
-export type OIDCMatchBy = "username" | "email" | "sub";
-
-export interface OIDCConfig {
-  enabled: boolean;
-  loginLocal: boolean;
-  issuerUrl: string;
-  authorizeUrl: string;
-  tokenUrl: string;
-  userinfoUrl: string;
-  jwksUrl: string;
-  logoutUrl?: string;
-  clientId: string;
-  clientSecret?: string;
-  clientSecretSet: boolean;
-  signingAlgorithm: string;
-  buttonText: string;
-  matchBy: OIDCMatchBy;
-  autoRegister: boolean;
-  autoLaunch: boolean;
-  groupClaim?: string;
-  adminGroups?: string;
-}
-
-export interface OIDCDiscovery {
-  issuerUrl: string;
-  authorizeUrl: string;
-  tokenUrl: string;
-  userinfoUrl: string;
-  jwksUrl: string;
-  logoutUrl?: string;
-}
-
-export interface AuditEntry {
-  id: number;
-  actorId: number;
-  actorName: string;
-  targetUserId?: number;
-  targetName?: string;
-  action: string;
-  details?: string;
-  ip?: string;
-  createdAt: string;
-}
-
-export interface AuditPage {
-  items: AuditEntry[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-export type CollectionKind = "manual" | "smart" | "auto" | "reading";
-
-export interface SmartQuery {
-  format?: BookFormat | "";
-  author?: string;
-  series?: string;
-  search?: string;
-  addedDays?: number;
-}
-
-export interface Collection {
-  id: number;
-  userId?: number;
-  name: string;
-  description?: string;
-  kind: CollectionKind;
-  query?: SmartQuery;
-  bookCount: number;
-  createdAt: string;
-}
-
-export interface LibraryS3Config {
-  endpoint: string;
-  region: string;
-  bucket: string;
-  prefix: string;
-  accessKey: string;
-  usePathStyle: boolean;
-  tls: boolean;
-  hasSecretKey: boolean;
-}
-
-export interface LibraryS3Input {
-  endpoint: string;
-  region: string;
-  bucket: string;
-  prefix: string;
-  accessKey: string;
-  secretKey: string;
-  usePathStyle: boolean;
-  tls: boolean;
-}
-
-export interface LibraryCreateInput {
-  name: string;
-  mountPath?: string;
-  backend?: "local" | "s3";
-  s3?: LibraryS3Input;
-}
-
-export interface LibraryMount {
-  id: number;
-  name: string;
-  mountPath: string;
-  backend: "local" | "s3" | string;
-  s3?: LibraryS3Config;
-  sortOrder: number;
-  bookCount: number;
-  createdAt: string;
-}
-
-export interface UploadSession {
-  id: string;
-  libraryId: number;
-  userId: number;
-  relPath: string;
-  totalSize: number;
-  offset: number;
-  done: boolean;
-  bookId?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+export type SystemStats = Omit<gen.SystemStats, "sandbox"> & { sandbox?: SandboxStatus };
 
 export interface UserLibraries {
   libraryIds: number[];
-}
-
-export interface SeriesInfo {
-  name: string;
-  count: number;
 }
 
 export type SortKey = "recent" | "oldest" | "title" | "author" | "progress";
@@ -677,68 +164,10 @@ export interface BookQueryParams {
   offset?: number;
 }
 
-export interface FSDirEntry {
-  name: string;
-  path: string;
-}
-
-export interface FSBrowseResult {
-  path?: string;
-  parent?: string;
-  entries: FSDirEntry[];
-}
-
 export type SidebarSectionId =
   "libraries" | "formats" | "series" | "favorites" | "continue" | "reading" | "shelves";
 
 export interface SidebarPrefs {
   order: SidebarSectionId[];
   hidden: SidebarSectionId[];
-}
-
-export interface APIKey {
-  id: number;
-  userId: number;
-  name: string;
-  prefix: string;
-  createdAt: string;
-  lastUsedAt?: string;
-}
-
-export interface APIKeyCreated extends APIKey {
-  key: string;
-}
-
-export interface APIDocEndpoint {
-  method: string;
-  path: string;
-  summary: string;
-  auth?: string;
-  query?: string;
-  body?: string;
-  response?: string;
-}
-
-export interface APIDocSection {
-  title: string;
-  endpoints: APIDocEndpoint[];
-}
-
-export interface APIDoc {
-  title: string;
-  version: string;
-  auth: string[];
-  baseUrl: string;
-  contentTypes: string[];
-  sections: APIDocSection[];
-}
-
-export interface I18nLocaleInfo {
-  code: string;
-  name: string;
-  source: "bundled" | "custom";
-}
-
-export interface I18nCatalog {
-  locales: I18nLocaleInfo[];
 }
