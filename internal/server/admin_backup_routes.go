@@ -5,13 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
+	"athenaeum/internal/backup"
 	"athenaeum/internal/brand"
 	"athenaeum/internal/models"
 )
@@ -29,53 +26,17 @@ func (s *Server) handleBackup(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", mimeZip)
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s-%s.zip"`, brand.BackupPrefix, time.Now().UTC().Format("20060102-150405")))
-	zw := zip.NewWriter(w)
-	defer zw.Close()
 
-	addFile := func(name, path string) error {
-		info, err := os.Stat(path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				return nil
-			}
-			return err
-		}
-		if info.IsDir() {
-			return filepath.Walk(path, func(p string, fi os.FileInfo, err error) error {
-				if err != nil || fi.IsDir() {
-					return err
-				}
-				rel, err := filepath.Rel(path, p)
-				if err != nil {
-					return err
-				}
-				return addZipFile(zw, filepath.ToSlash(filepath.Join(name, rel)), p)
-			})
-		}
-		return addZipFile(zw, name, path)
-	}
-
+	var items []backup.Item
 	if !s.cfg.UsesPostgres() {
-		if err := addFile(brand.DBFilename, s.cfg.DBPath()); err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
+		items = append(items, backup.Item{Name: brand.DBFilename, Path: s.cfg.DBPath()})
 	} else {
-		fw, err := zw.Create("DATABASE.txt")
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-		_, _ = io.WriteString(fw, "Athenaeum is using PostgreSQL. Back up the database with pg_dump separately.\n")
+		items = append(items, backup.Item{Name: "DATABASE.txt", Data: []byte(backup.PostgresNotice)})
 	}
-	if err := addFile("covers", s.cfg.CoverDir()); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-	if err := addFile("i18n", s.cfg.I18nDir()); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
+	items = append(items,
+		backup.Item{Name: "covers", Path: s.cfg.CoverDir()},
+		backup.Item{Name: "i18n", Path: s.cfg.I18nDir()},
+	)
 	cfg, err := s.buildConfigExport(r)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -86,36 +47,14 @@ func (s *Server) handleBackup(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
-	fw, err := zw.Create("config.json")
-	if err != nil {
+	items = append(items, backup.Item{Name: "config.json", Data: data})
+	if err := backup.Write(w, items); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
-		return
 	}
-	_, _ = fw.Write(data)
 }
 
 func addZipFile(zw *zip.Writer, name, path string) error {
-	f, err := os.Open(path) // #nosec G304 -- admin backup reads fixed server paths
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	info, err := f.Stat()
-	if err != nil {
-		return err
-	}
-	hdr, err := zip.FileInfoHeader(info)
-	if err != nil {
-		return err
-	}
-	hdr.Name = name
-	hdr.Method = zip.Deflate
-	w, err := zw.CreateHeader(hdr)
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(w, f)
-	return err
+	return backup.AddFile(zw, name, path)
 }
 
 func (s *Server) handleRestore(w http.ResponseWriter, r *http.Request) {
@@ -132,75 +71,14 @@ func (s *Server) handleRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	tmp, err := os.CreateTemp(s.cfg.DataDir, "restore-*.zip")
-	if err != nil {
+	if err := backup.Restore(file, s.cfg.DataDir, brand.DBFilename); err != nil {
+		var cerr *backup.ClientError
+		if errors.As(err, &cerr) {
+			writeError(w, http.StatusBadRequest, err)
+			return
+		}
 		writeError(w, http.StatusInternalServerError, err)
 		return
-	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-	if _, err := io.Copy(tmp, file); err != nil {
-		_ = tmp.Close()
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-	_ = tmp.Close()
-
-	zr, err := zip.OpenReader(tmpPath)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, errors.New("invalid zip archive"))
-		return
-	}
-	defer zr.Close()
-	hasDB := false
-	for _, f := range zr.File {
-		if f.Name == brand.DBFilename || strings.HasSuffix(f.Name, "/"+brand.DBFilename) {
-			hasDB = true
-			break
-		}
-	}
-	if !hasDB {
-		writeError(w, http.StatusBadRequest, errors.New("archive must contain "+brand.DBFilename))
-		return
-	}
-	for _, f := range zr.File {
-		if f.FileInfo().IsDir() {
-			continue
-		}
-		name := filepath.Clean(filepath.FromSlash(f.Name))
-		if name == "." || name == "" || strings.HasPrefix(name, ".."+string(os.PathSeparator)) || name == ".." {
-			continue
-		}
-		if filepath.IsAbs(name) {
-			continue
-		}
-		dest := filepath.Join(s.cfg.DataDir, name)
-		rel, err := filepath.Rel(s.cfg.DataDir, dest)
-		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-			continue
-		}
-		if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-		rc, err := f.Open()
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-		out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) // #nosec G304 -- dest validated under dataDir
-		if err != nil {
-			_ = rc.Close()
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-		_, err = io.Copy(out, rc) // #nosec G110 -- admin-only restore; entries validated under dataDir
-		_ = out.Close()
-		_ = rc.Close()
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "restored", "message": "restart Athenaeum to load restored database"})
 }

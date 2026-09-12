@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,7 +15,7 @@ import (
 	"athenaeum/internal/auth"
 	"athenaeum/internal/brand"
 	"athenaeum/internal/models"
-	"athenaeum/internal/storage"
+	athoidc "athenaeum/internal/oidc"
 )
 
 const oidcStateCookie = brand.OIDCStateCookie
@@ -272,229 +271,40 @@ func (s *Server) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/?oidc=1", http.StatusFound)
 }
 
+// oidcResolver builds the OIDC user resolver with this server's store and
+// webhook emitter.
+func (s *Server) oidcResolver() *athoidc.Resolver {
+	return &athoidc.Resolver{Store: s.store, Emit: s.emitWebhook}
+}
+
 func (s *Server) resolveOIDCUser(ctx context.Context, cfg models.OIDCConfig, sub, email, preferredUsername, name string, isAdminGroup, emailVerified bool) (models.User, error) {
-	if u, err := s.store.FindUserByOIDCSub(ctx, sub); err == nil {
-		if isAdminGroup && !u.IsAdmin {
-			if err := s.store.SetUserAdmin(ctx, u.ID, true); err != nil {
-				return models.User{}, err
-			}
-			return s.store.GetUser(ctx, u.ID)
-		}
-		return u, nil
-	} else if !errors.Is(err, storage.ErrNotFound) {
-		return models.User{}, err
-	}
-
-	var matched models.User
-	var matchErr error
-	switch cfg.MatchBy {
-	case models.OIDCMatchEmail:
-		if email == "" {
-			matchErr = storage.ErrNotFound
-		} else if !emailVerified {
-			return models.User{}, errors.New("email claim is not verified")
-		} else {
-			matched, matchErr = s.store.FindUserByEmail(ctx, email)
-		}
-	case models.OIDCMatchSub:
-		matchErr = storage.ErrNotFound
-	default:
-		username := preferredUsername
-		if username == "" && email != "" {
-			username = strings.Split(email, "@")[0]
-		}
-		if username == "" {
-			username = name
-		}
-		username = sanitizeUsername(username)
-		if username == "" {
-			return models.User{}, errors.New("could not determine username from OIDC claims")
-		}
-		matched, _, matchErr = s.store.GetUserByUsername(ctx, username)
-	}
-	if matchErr == nil {
-		if err := s.store.LinkOIDCSub(ctx, matched.ID, sub, email); err != nil {
-			if errors.Is(err, storage.ErrConflict) {
-				return models.User{}, errors.New("account is already linked to another identity")
-			}
-			return models.User{}, err
-		}
-		if isAdminGroup && !matched.IsAdmin {
-			if err := s.store.SetUserAdmin(ctx, matched.ID, true); err != nil {
-				return models.User{}, err
-			}
-		}
-		return s.store.GetUser(ctx, matched.ID)
-	}
-	if !errors.Is(matchErr, storage.ErrNotFound) {
-		return models.User{}, matchErr
-	}
-	if !cfg.AutoRegister {
-		return models.User{}, errors.New("no matching account; contact an administrator")
-	}
-
-	username := preferredUsername
-	if username == "" && email != "" {
-		username = strings.Split(email, "@")[0]
-	}
-	if username == "" {
-		username = name
-	}
-	username = sanitizeUsername(username)
-	if username == "" {
-		if len(sub) > 8 {
-			username = "user-" + sub[:8]
-		} else {
-			username = "user-" + sub
-		}
-	}
-	username, err := s.uniqueUsername(ctx, username)
-	if err != nil {
-		return models.User{}, err
-	}
-	id, err := s.store.CreateOIDCUser(ctx, username, email, sub, isAdminGroup)
-	if err != nil {
-		return models.User{}, err
-	}
-	s.emitWebhook(models.WebhookEventUserCreate, map[string]any{
-		"userId":   id,
-		"username": username,
-		"via":      "oidc",
-	})
-	return s.store.GetUser(ctx, id)
+	return s.oidcResolver().ResolveUser(ctx, cfg, sub, email, preferredUsername, name, isAdminGroup, emailVerified)
 }
 
 // oidcGroups extracts the group membership claim from the ID token, falling
 // back to the userinfo endpoint when the claim is absent there.
 func (s *Server) oidcGroups(ctx context.Context, idToken *oidc.IDToken, token *oauth2.Token, oauthCfg *oauth2.Config, cfg models.OIDCConfig) []string {
-	claimKey := strings.TrimSpace(cfg.GroupClaim)
-	if claimKey == "" {
-		claimKey = "groups"
-	}
-	var raw map[string]any
-	if err := idToken.Claims(&raw); err == nil {
-		if groups := groupsFromClaim(raw, claimKey); len(groups) > 0 {
-			return groups
-		}
-	}
-	if cfg.UserinfoURL == "" {
-		return nil
-	}
-	client := oauthCfg.Client(ctx, token)
-	reqCtx, cancel := context.WithTimeout(ctx, httpClientTimeout)
-	defer cancel()
-	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, cfg.UserinfoURL, nil)
-	if err != nil {
-		return nil
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil
-	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return nil
-	}
-	var userinfo map[string]any
-	if err := json.NewDecoder(res.Body).Decode(&userinfo); err != nil {
-		return nil
-	}
-	return groupsFromClaim(userinfo, claimKey)
+	return athoidc.Groups(ctx, idToken, token, oauthCfg, cfg)
 }
 
 // groupsFromClaim normalizes a claim value that may be a string array, a
 // single string, or a comma-separated string into a list of group names.
 func groupsFromClaim(claims map[string]any, key string) []string {
-	value, ok := claims[key]
-	if !ok {
-		return nil
-	}
-	switch v := value.(type) {
-	case []any:
-		out := make([]string, 0, len(v))
-		for _, item := range v {
-			if s, ok := item.(string); ok && s != "" {
-				out = append(out, s)
-			}
-		}
-		return out
-	case []string:
-		return v
-	case string:
-		var out []string
-		for part := range strings.SplitSeq(v, ",") {
-			part = strings.TrimSpace(part)
-			if part != "" {
-				out = append(out, part)
-			}
-		}
-		return out
-	default:
-		return nil
-	}
+	return athoidc.GroupsFromClaim(claims, key)
 }
 
 // oidcGroupMatchesAdmin reports whether any of groups matches a comma
 // separated admin group list, case-insensitively.
 func oidcGroupMatchesAdmin(groups []string, adminGroups string) bool {
-	adminGroups = strings.TrimSpace(adminGroups)
-	if adminGroups == "" || len(groups) == 0 {
-		return false
-	}
-	var wanted []string
-	for part := range strings.SplitSeq(adminGroups, ",") {
-		part = strings.TrimSpace(part)
-		if part != "" {
-			wanted = append(wanted, part)
-		}
-	}
-	for _, g := range groups {
-		for _, w := range wanted {
-			if strings.EqualFold(g, w) {
-				return true
-			}
-		}
-	}
-	return false
+	return athoidc.GroupMatchesAdmin(groups, adminGroups)
 }
 
 func sanitizeUsername(s string) string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return ""
-	}
-	var b strings.Builder
-	for _, r := range s {
-		switch {
-		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '-', r == '_', r == '.':
-			b.WriteRune(r)
-		case r == ' ' || r == '@':
-			b.WriteRune('_')
-		}
-	}
-	out := strings.Trim(b.String(), "._-")
-	if len(out) < 2 {
-		return ""
-	}
-	if len(out) > 64 {
-		out = out[:64]
-	}
-	return out
+	return athoidc.SanitizeUsername(s)
 }
 
 func (s *Server) uniqueUsername(ctx context.Context, base string) (string, error) {
-	candidate := base
-	for i := range 20 {
-		taken, err := s.store.UsernameTaken(ctx, candidate, 0)
-		if err != nil {
-			return "", err
-		}
-		if !taken {
-			return candidate, nil
-		}
-		candidate = fmt.Sprintf("%s-%d", base, i+2)
-	}
-	return "", errors.New("could not allocate unique username")
+	return s.oidcResolver().UniqueUsername(ctx, base)
 }
 
 func (s *Server) oidcRuntimeConfig(ctx context.Context) (models.OIDCConfig, string, error) {

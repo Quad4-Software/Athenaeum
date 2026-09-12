@@ -3,6 +3,8 @@ package server
 import (
 	"errors"
 	"net/http"
+
+	"athenaeum/internal/invite"
 )
 
 type csrfResponse struct {
@@ -60,7 +62,7 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 
 var (
 	errBadCredentials  = errors.New("invalid username or password")
-	errWeakCredentials = errors.New("username must be at least 2 characters and password at least 8")
-	errUsernameTaken   = errors.New("username already taken")
+	errWeakCredentials = invite.ErrWeakCredentials
+	errUsernameTaken   = invite.ErrUsernameTaken
 	errForbidden       = errors.New("forbidden")
 )
