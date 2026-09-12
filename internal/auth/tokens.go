@@ -19,7 +19,7 @@ const (
 	// HeaderAuthorization carries Basic or Bearer credentials.
 	HeaderAuthorization = "Authorization"
 	// HeaderAPIKey carries a raw API key.
-	HeaderAPIKey = "X-API-Key"
+	HeaderAPIKey = "X-API-Key" // #nosec G101 -- header name, not a credential
 
 	// AccessTTL is how long an access session remains valid before refresh.
 	AccessTTL = 15 * time.Minute
