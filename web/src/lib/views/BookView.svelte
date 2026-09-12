@@ -28,7 +28,7 @@
   import { descriptionLooksLikeHtml } from "$lib/utils/sanitize-html";
   import { bookOfflineCache, type BookOfflineStatus } from "$lib/offline/book-cache";
   import { isAudioFormat, type Book, type Progress } from "$lib/api/types";
-  import type { MenuItem } from "$lib/components/MenuList.svelte";
+  import type { MenuItem } from "$lib/components/menu";
 
   interface Props {
     id: number;
@@ -226,14 +226,12 @@
   }
 
   function openEditor(panel: "edit" | "identify") {
-    closeMenu();
     editorPanel = panel;
     editorOpen = true;
   }
 
   async function deleteBook() {
     if (!book) return;
-    closeMenu();
     const ok = await confirmDialog.ask({
       title: i18n.t("book.deleteTitle"),
       message: i18n.t("book.deleteConfirm", { title: book.title }),
@@ -247,7 +245,6 @@
 
   async function convertBook(target: "epub" | "pdf") {
     if (!book) return;
-    closeMenu();
     await bookViewActions.convertBook(book, target);
   }
 
@@ -260,15 +257,12 @@
           onIdentify: () => openEditor("identify"),
           onConvertEpub: () => void convertBook("epub"),
           onCopyBibtex: () => {
-            closeMenu();
             void copyBibTeX();
           },
           onDownloadBibtex: () => {
-            closeMenu();
             void downloadBibTeX();
           },
           onToggleFavorite: () => {
-            closeMenu();
             void toggleFavorite();
           },
           onDelete: () => void deleteBook(),
@@ -475,7 +469,7 @@
 </section>
 
 <ContextMenu
-  open={menuOpen}
+  bind:open={menuOpen}
   x={menuX}
   y={menuY}
   title={book?.title}

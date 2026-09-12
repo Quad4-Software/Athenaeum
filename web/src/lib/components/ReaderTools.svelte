@@ -2,7 +2,7 @@
   import { BookOpen, Search } from "@lucide/svelte";
   import EmptyState from "$lib/components/EmptyState.svelte";
   import Popover from "$lib/components/Popover.svelte";
-  import MenuList from "$lib/components/MenuList.svelte";
+  import Dropdown from "$lib/components/Dropdown.svelte";
   import type { ReaderChapter, ReaderSearchHit } from "$lib/reader/reader-search";
   import { i18n } from "$lib/stores/i18n.svelte";
 
@@ -42,7 +42,6 @@
 
   function selectChapter(chapter: ReaderChapter) {
     onChapterSelect?.(chapter);
-    chaptersOpen = false;
   }
 
   function selectHit(hit: ReaderSearchHit) {
@@ -52,42 +51,43 @@
 </script>
 
 {#if chapters.length > 0}
-  <Popover bind:open={chaptersOpen} placement="bottom" align="start" minWidth={260}>
-    {#snippet trigger(toggle)}
+  <Dropdown
+    bind:open={chaptersOpen}
+    side="bottom"
+    align="start"
+    minWidth={260}
+    title={i18n.t("reader.chapters")}
+    items={chapters.map((chapter) => ({
+      id: chapter.id,
+      label: `${chapter.depth ? "\u2003".repeat(chapter.depth) : ""}${chapter.label}`,
+      hint: chapter.hint,
+      onclick: () => selectChapter(chapter),
+    }))}
+  >
+    {#snippet trigger(props)}
       <button
+        {...props}
         type="button"
         class="btn btn-ghost text-xs"
         class:ring-1={chaptersOpen}
         class:ring-border={chaptersOpen}
-        aria-expanded={chaptersOpen}
-        onclick={toggle}
       >
         <BookOpen size={14} />
         <span class="hidden sm:inline">{i18n.t("reader.chapters")}</span>
       </button>
     {/snippet}
-    <MenuList
-      title={i18n.t("reader.chapters")}
-      items={chapters.map((chapter) => ({
-        id: chapter.id,
-        label: `${chapter.depth ? "\u2003".repeat(chapter.depth) : ""}${chapter.label}`,
-        hint: chapter.hint,
-        onclick: () => selectChapter(chapter),
-      }))}
-    />
-  </Popover>
+  </Dropdown>
 {/if}
 
 {#if onSearch}
   <Popover bind:open={searchOpen} placement="bottom" align="start" minWidth={320}>
-    {#snippet trigger(toggle)}
+    {#snippet trigger(props)}
       <button
+        {...props}
         type="button"
         class="btn btn-ghost text-xs"
         class:ring-1={searchOpen}
         class:ring-border={searchOpen}
-        aria-expanded={searchOpen}
-        onclick={toggle}
       >
         <Search size={14} />
         <span class="hidden sm:inline">{i18n.t("reader.search")}</span>

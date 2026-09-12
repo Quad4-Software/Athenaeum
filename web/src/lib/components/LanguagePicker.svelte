@@ -61,14 +61,19 @@
   function onMenuClose() {
     query = "";
   }
+
+  function focusSearch(event: Event) {
+    event.preventDefault();
+    searchEl?.focus();
+  }
 </script>
 
-<Popover bind:open align="end" minWidth={260} onclose={onMenuClose}>
-  {#snippet trigger(toggle)}
+<Popover bind:open align="end" minWidth={260} onclose={onMenuClose} onOpenAutoFocus={focusSearch}>
+  {#snippet trigger(props)}
     <IconButton
+      {...props}
       ariaLabel={i18n.t("language.select")}
       title={`${i18n.t("language.label")}: ${currentLabel}`}
-      onclick={toggle}
     >
       <span class="lang-trigger">
         <Globe size={18} />

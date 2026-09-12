@@ -1,15 +1,14 @@
 <script lang="ts">
   import { Gauge, Pause, Play, SkipForward, Volume2, X } from "@lucide/svelte";
-  import MenuList from "$lib/components/MenuList.svelte";
-  import Popover from "$lib/components/Popover.svelte";
+  import { Progress } from "bits-ui";
+  import Dropdown from "$lib/components/Dropdown.svelte";
+  import MenuItems from "$lib/components/MenuItems.svelte";
   import { narrator } from "$lib/stores/narrator.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
   import { toast } from "$lib/stores/toast.svelte";
   import type { NarratorProvider } from "$lib/narrator/types";
 
-  let speedOpen = $state(false);
   let voiceOpen = $state(false);
-  let providerOpen = $state(false);
 
   let showBar = $derived(narrator.showBar);
 
@@ -31,6 +30,10 @@
   $effect(() => {
     if (!showBar) return;
     void narrator.refreshStatus().then(() => narrator.loadVoices());
+  });
+
+  $effect(() => {
+    if (voiceOpen) void narrator.loadVoices();
   });
 </script>
 
@@ -59,19 +62,17 @@
             {/if}
           </p>
           {#if narrator.total > 0}
-            <div
-              class="mt-1 h-1 w-full max-w-xs overflow-hidden rounded-full bg-border/50"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={narrator.total}
-              aria-valuenow={Math.min(narrator.index + 1, narrator.total)}
+            <Progress.Root
+              value={Math.min(narrator.index + 1, narrator.total)}
+              max={narrator.total}
               aria-label={narrator.progressLabel}
+              class="mt-1 h-1 w-full max-w-xs overflow-hidden rounded-full bg-border/50"
             >
               <div
                 class="h-full rounded-full bg-accent transition-[width] duration-200"
                 style:width="{Math.round(narrator.progress * 100)}%"
               ></div>
-            </div>
+            </Progress.Root>
           {/if}
         </div>
       </div>
@@ -100,43 +101,37 @@
           <SkipForward size={18} />
         </button>
 
-        <Popover bind:open={speedOpen} placement="top" align="end" minWidth={140}>
-          {#snippet trigger(toggle)}
+        <Dropdown
+          side="top"
+          align="end"
+          minWidth={140}
+          items={narrator.speeds.map((r) => ({
+            id: String(r),
+            label: `${r}x`,
+            active: r === narrator.rate,
+            onclick: () => narrator.setRate(r),
+          }))}
+        >
+          {#snippet trigger(props)}
             <button
+              {...props}
               type="button"
               class="btn btn-ghost text-xs tabular-nums"
               aria-label={i18n.t("narrator.speed", { rate: narrator.rate })}
-              aria-expanded={speedOpen}
-              onclick={toggle}
             >
               <Gauge size={16} />
               {narrator.rate}x
             </button>
           {/snippet}
-          <MenuList
-            items={narrator.speeds.map((r) => ({
-              id: String(r),
-              label: `${r}x`,
-              active: r === narrator.rate,
-              onclick: () => {
-                narrator.setRate(r);
-                speedOpen = false;
-              },
-            }))}
-          />
-        </Popover>
+        </Dropdown>
 
-        <Popover bind:open={voiceOpen} placement="top" align="end" minWidth={220}>
-          {#snippet trigger(toggle)}
+        <Dropdown bind:open={voiceOpen} side="top" align="end" minWidth={220}>
+          {#snippet trigger(props)}
             <button
+              {...props}
               type="button"
               class="btn btn-ghost text-xs"
               aria-label={i18n.t("narrator.voice")}
-              aria-expanded={voiceOpen}
-              onclick={() => {
-                void narrator.loadVoices();
-                toggle();
-              }}
             >
               {i18n.t("narrator.voice")}
             </button>
@@ -146,61 +141,53 @@
           {:else if !narrator.voices.length}
             <p class="px-3 py-2 text-xs text-muted">{i18n.t("narrator.noVoices")}</p>
           {:else}
-            <MenuList
+            <MenuItems
               items={narrator.voices.map((v) => ({
                 id: v.id,
                 label: v.label,
                 active: v.id === narrator.voiceId,
-                onclick: () => {
-                  narrator.setVoice(v.id);
-                  voiceOpen = false;
-                },
+                onclick: () => narrator.setVoice(v.id),
               }))}
             />
           {/if}
-        </Popover>
+        </Dropdown>
 
-        <Popover bind:open={providerOpen} placement="top" align="end" minWidth={180}>
-          {#snippet trigger(toggle)}
+        <Dropdown
+          side="top"
+          align="end"
+          minWidth={180}
+          items={[
+            {
+              id: "browser",
+              label: i18n.t("narrator.providerBrowser"),
+              active: narrator.provider === "browser",
+              onclick: () => narrator.setProvider("browser" as NarratorProvider),
+            },
+            ...(narrator.kokoroEnabled
+              ? [
+                  {
+                    id: "kokoro",
+                    label: i18n.t("narrator.providerKokoro"),
+                    active: narrator.provider === "kokoro",
+                    onclick: () => narrator.setProvider("kokoro" as NarratorProvider),
+                  },
+                ]
+              : []),
+          ]}
+        >
+          {#snippet trigger(props)}
             <button
+              {...props}
               type="button"
               class="btn btn-ghost text-xs"
               aria-label={i18n.t("narrator.provider")}
-              aria-expanded={providerOpen}
-              onclick={toggle}
             >
               {narrator.provider === "kokoro"
                 ? i18n.t("narrator.providerKokoro")
                 : i18n.t("narrator.providerBrowser")}
             </button>
           {/snippet}
-          <MenuList
-            items={[
-              {
-                id: "browser",
-                label: i18n.t("narrator.providerBrowser"),
-                active: narrator.provider === "browser",
-                onclick: () => {
-                  narrator.setProvider("browser" as NarratorProvider);
-                  providerOpen = false;
-                },
-              },
-              ...(narrator.kokoroEnabled
-                ? [
-                    {
-                      id: "kokoro",
-                      label: i18n.t("narrator.providerKokoro"),
-                      active: narrator.provider === "kokoro",
-                      onclick: () => {
-                        narrator.setProvider("kokoro" as NarratorProvider);
-                        providerOpen = false;
-                      },
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </Popover>
+        </Dropdown>
 
         <button
           type="button"

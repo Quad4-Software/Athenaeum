@@ -1,5 +1,6 @@
 <script lang="ts">
   import { BookText, FileText, Headphones } from "@lucide/svelte";
+  import { useIntersectionObserver } from "runed";
   import { api } from "$lib/api/client";
   import { isAudioFormat, type Book } from "$lib/api/types";
 
@@ -16,21 +17,20 @@
     visible && showImage ? api.coverUrl(book.id, book.modifiedAt) : undefined,
   );
 
-  function unloadOffscreen(node: HTMLElement) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        visible = entries[0]?.isIntersecting ?? true;
-      },
-      { rootMargin: "300px" },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }
+  let rootEl = $state<HTMLElement | null>(null);
+
+  useIntersectionObserver(
+    () => rootEl,
+    (entries) => {
+      visible = entries[0]?.isIntersecting ?? true;
+    },
+    { rootMargin: "300px", threshold: 0 },
+  );
 </script>
 
 <div
+  bind:this={rootEl}
   class="relative flex aspect-[2/3] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-bg-elevated"
-  {@attach unloadOffscreen}
 >
   {#if showImage}
     <img

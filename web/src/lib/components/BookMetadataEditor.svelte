@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Pencil, Search, Trash2, Upload } from "@lucide/svelte";
+  import { Collapsible } from "bits-ui";
   import { tick } from "svelte";
   import Cover from "$lib/components/Cover.svelte";
   import { api, ApiError } from "$lib/api/client";
@@ -111,10 +112,6 @@
       selectedProviders = list.map((p) => p.id);
     });
   });
-
-  function toggle() {
-    open = !open;
-  }
 
   $effect(() => {
     if (!open || panel !== "identify") return;
@@ -296,20 +293,18 @@
   }
 </script>
 
-<div class="mt-6 rounded-[var(--radius-card)] border border-border">
-  <button
-    type="button"
+<Collapsible.Root bind:open class="mt-6 rounded-[var(--radius-card)] border border-border">
+  <Collapsible.Trigger
     class="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-fg"
-    onclick={toggle}
   >
     <span class="inline-flex items-center gap-2">
       <Pencil size={16} />
       Edit metadata & cover
     </span>
     <span class="text-muted">{open ? "Hide" : "Show"}</span>
-  </button>
+  </Collapsible.Trigger>
 
-  {#if open}
+  <Collapsible.Content>
     <form class="space-y-4 border-t border-border px-4 py-4" onsubmit={save}>
       <section class="identify-panel" bind:this={identifySection}>
         <div class="identify-header">
@@ -559,8 +554,8 @@
         </button>
       </div>
     </form>
-  {/if}
-</div>
+  </Collapsible.Content>
+</Collapsible.Root>
 
 <style>
   .identify-panel {

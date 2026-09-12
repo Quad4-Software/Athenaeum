@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ChevronRight } from "@lucide/svelte";
-  import { slide } from "svelte/transition";
+  import { Collapsible } from "bits-ui";
   import { sidebarPrefs } from "$lib/stores/sidebar.svelte";
   import type { Snippet } from "svelte";
 
@@ -31,7 +31,7 @@
     sidebarCollapsed ? false : sidebarPrefs.isSectionExpanded(id, defaultExpanded),
   );
 
-  function toggle() {
+  function onOpenChange() {
     if (!collapsible || sidebarCollapsed) return;
     sidebarPrefs.toggleSectionExpanded(id);
   }
@@ -52,12 +52,17 @@
     {@render children()}
   </div>
 {:else}
-  <div class="flex flex-col gap-0.5 {bordered ? 'mt-3 border-t border-border pt-3' : ''}">
-    <button
-      type="button"
+  <Collapsible.Root
+    bind:open={
+      () => expanded,
+      (next) => {
+        if (next !== expanded) onOpenChange();
+      }
+    }
+    class="flex flex-col gap-0.5 {bordered ? 'mt-3 border-t border-border pt-3' : ''}"
+  >
+    <Collapsible.Trigger
       class="mb-0.5 flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1 text-left transition-colors hover:bg-surface-hover"
-      aria-expanded={expanded}
-      onclick={toggle}
     >
       <span class="flex min-w-0 items-center gap-1.5">
         <ChevronRight
@@ -71,11 +76,43 @@
         <span class="text-[10px] tabular-nums text-subtle">{itemCount}</span>
       </span>
       {#if headerExtra}{@render headerExtra()}{/if}
-    </button>
-    {#if expanded}
-      <div class="flex flex-col gap-0.5" transition:slide={{ duration: 150 }}>
+    </Collapsible.Trigger>
+    <Collapsible.Content class="sidebar-section-content">
+      <div class="flex flex-col gap-0.5">
         {@render children()}
       </div>
-    {/if}
-  </div>
+    </Collapsible.Content>
+  </Collapsible.Root>
 {/if}
+
+<style>
+  :global(.sidebar-section-content) {
+    overflow: hidden;
+  }
+
+  :global(.sidebar-section-content[data-state="open"]) {
+    animation: sidebar-section-open 150ms ease-out;
+  }
+
+  :global(.sidebar-section-content[data-state="closed"]) {
+    animation: sidebar-section-close 150ms ease-out;
+  }
+
+  @keyframes sidebar-section-open {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--bits-collapsible-content-height);
+    }
+  }
+
+  @keyframes sidebar-section-close {
+    from {
+      height: var(--bits-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+</style>

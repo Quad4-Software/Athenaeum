@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { MediaQuery } from "svelte/reactivity";
   import { BookOpen, Compass, Library, Settings, Layers } from "@lucide/svelte";
   import { router } from "$lib/router.svelte";
   import { library } from "$lib/stores/library.svelte";
@@ -33,19 +34,13 @@
     return null;
   });
 
+  const isMobile = new MediaQuery("(max-width: 767px)");
+
   $effect(() => {
     const root = document.documentElement;
-    const mq = window.matchMedia("(max-width: 767px)");
-    function apply() {
-      if (mq.matches) root.style.setProperty("--nav-bar-height", "3.75rem");
-      else root.style.removeProperty("--nav-bar-height");
-    }
-    apply();
-    mq.addEventListener("change", apply);
-    return () => {
-      mq.removeEventListener("change", apply);
-      root.style.removeProperty("--nav-bar-height");
-    };
+    if (isMobile.current) root.style.setProperty("--nav-bar-height", "3.75rem");
+    else root.style.removeProperty("--nav-bar-height");
+    return () => root.style.removeProperty("--nav-bar-height");
   });
 
   const tabCommands: Partial<Record<TabId, CommandId>> = {

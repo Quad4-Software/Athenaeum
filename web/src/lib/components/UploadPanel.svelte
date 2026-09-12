@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Upload } from "@lucide/svelte";
+  import { Progress } from "bits-ui";
   import { libraries } from "$lib/stores/libraries.svelte";
   import { uploads } from "$lib/stores/uploads.svelte";
   import { formatBytes } from "$lib/utils/format";
@@ -105,13 +106,18 @@
               {/if}
             </div>
           </div>
-          <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-bg">
+          <Progress.Root
+            value={Math.round(job.progress * 100)}
+            max={100}
+            aria-label={job.relPath}
+            class="mt-2 h-1.5 overflow-hidden rounded-full bg-bg"
+          >
             <div
               class="h-full bg-primary transition-all"
               class:!bg-danger={job.status === "error"}
               style:width={`${Math.round(job.progress * 100)}%`}
             ></div>
-          </div>
+          </Progress.Root>
           <p class="mt-1 text-xs text-subtle">
             {#if job.status === "queued"}Queued{/if}
             {#if job.status === "uploading"}{Math.round(job.progress * 100)}%{/if}

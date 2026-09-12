@@ -16,7 +16,7 @@ import {
   type Book,
   type Progress,
 } from "$lib/api/types";
-import type { MenuItem } from "$lib/components/MenuList.svelte";
+import type { MenuItem } from "$lib/components/menu";
 
 export async function addToCollection(bookId: number, collectionId: number): Promise<void> {
   try {

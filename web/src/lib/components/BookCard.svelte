@@ -14,7 +14,7 @@
   import { can } from "$lib/permissions";
   import { Star, Check, MoreVertical, Pencil, ScanSearch, Trash2 } from "@lucide/svelte";
   import type { Book } from "$lib/api/types";
-  import type { MenuItem } from "./MenuList.svelte";
+  import type { MenuItem } from "./menu";
 
   interface Props {
     book: Book;
@@ -60,7 +60,6 @@
   }
 
   async function deleteBook() {
-    closeMenu();
     const ok = await confirmDialog.ask({
       title: i18n.t("book.deleteTitle"),
       message: i18n.t("book.deleteConfirm", { title: book.title }),
@@ -86,7 +85,6 @@
             label: i18n.t("book.editMetadata"),
             icon: Pencil,
             onclick: () => {
-              closeMenu();
               bookEditorIntent.open(book.id, "edit");
             },
           },
@@ -95,7 +93,6 @@
             label: i18n.t("book.identify"),
             icon: ScanSearch,
             onclick: () => {
-              closeMenu();
               bookEditorIntent.open(book.id, "identify");
             },
           },
@@ -107,7 +104,6 @@
       icon: Star,
       active: isFavorite,
       onclick: () => {
-        closeMenu();
         void toggleFavorite();
       },
     },
@@ -208,7 +204,7 @@
 </div>
 
 <ContextMenu
-  open={menuOpen}
+  bind:open={menuOpen}
   x={menuX}
   y={menuY}
   title={book.title}

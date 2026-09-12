@@ -2,6 +2,8 @@
   import { Gauge, Headphones, Moon, Pause, Play, SkipBack, SkipForward, X } from "@lucide/svelte";
   import MenuList from "$lib/components/MenuList.svelte";
   import Popover from "$lib/components/Popover.svelte";
+  import Dropdown from "$lib/components/Dropdown.svelte";
+  import Slider from "$lib/components/Slider.svelte";
   import { audioPlayer } from "$lib/stores/audioPlayer.svelte";
   import { formatAudioTime, formatSleepRemaining } from "$lib/audio/format";
   import { router } from "$lib/router.svelte";
@@ -138,45 +140,43 @@
       </div>
 
       <div class="tools">
-        <Popover bind:open={speedOpen} placement="top" align="end" minWidth={120}>
-          {#snippet trigger(toggle)}
+        <Dropdown
+          bind:open={speedOpen}
+          side="top"
+          align="end"
+          minWidth={120}
+          title={i18n.t("audio.speedTitle")}
+          items={SPEEDS.map((speed) => ({
+            id: String(speed),
+            label: `${speed}x`,
+            active: audioPlayer.rate === speed,
+            onclick: () => audioPlayer.setRate(speed),
+          }))}
+        >
+          {#snippet trigger(props)}
             <button
+              {...props}
               type="button"
               class="tool-btn"
               class:tool-btn--active={speedOpen}
               aria-label={i18n.t("audio.speed", { rate: audioPlayer.rate })}
-              aria-expanded={speedOpen}
-              onclick={toggle}
             >
               <Gauge size={15} />
               <span class="tool-rate">{audioPlayer.rate}x</span>
             </button>
           {/snippet}
-          <MenuList
-            title={i18n.t("audio.speedTitle")}
-            items={SPEEDS.map((speed) => ({
-              id: String(speed),
-              label: `${speed}x`,
-              active: audioPlayer.rate === speed,
-              onclick: () => {
-                audioPlayer.setRate(speed);
-                speedOpen = false;
-              },
-            }))}
-          />
-        </Popover>
+        </Dropdown>
 
         <Popover bind:open={sleepOpen} placement="top" align="end" minWidth={220}>
-          {#snippet trigger(toggle)}
+          {#snippet trigger(props)}
             <button
+              {...props}
               type="button"
               class="tool-btn"
               class:tool-btn--active={sleepOpen || !!audioPlayer.sleepEndsAt}
               aria-label={audioPlayer.sleepEndsAt
                 ? i18n.t("audio.sleepIn", { time: formatSleepRemaining(sleepRemainingMs) })
                 : i18n.t("audio.sleepTimer")}
-              aria-expanded={sleepOpen}
-              onclick={toggle}
             >
               <Moon size={15} />
               {#if audioPlayer.sleepEndsAt}
@@ -238,24 +238,21 @@
             style:width={`${audioPlayer.duration > 0 ? (playbackTime / audioPlayer.duration) * 100 : 0}%`}
           ></div>
         </div>
-        <input
-          type="range"
+        <Slider
           class="seek-input"
           min={0}
-          max={audioPlayer.duration || 0}
+          max={audioPlayer.duration || 1}
           step={0.1}
-          value={playbackTime}
           disabled={!audioPlayer.duration}
-          aria-label={i18n.t("audio.seek")}
-          onpointerdown={() => {
-            audioPlayer.scrubbing = true;
-            audioPlayer.scrubValue = audioPlayer.current;
-          }}
-          oninput={(e) => (audioPlayer.scrubValue = Number(e.currentTarget.value))}
-          onchange={() => audioPlayer.applyScrub()}
-          onkeyup={(e) => {
-            if (e.key === "Enter") audioPlayer.applyScrub();
-          }}
+          ariaLabel={i18n.t("audio.seek")}
+          bind:value={
+            () => playbackTime,
+            (v) => {
+              audioPlayer.scrubbing = true;
+              audioPlayer.scrubValue = v;
+            }
+          }
+          oncommit={() => audioPlayer.applyScrub()}
         />
       </div>
       <span class="time time-end">{formatAudioTime(audioPlayer.duration)}</span>
@@ -504,49 +501,26 @@
     background: var(--color-primary);
   }
 
-  .seek-input {
+  .seek-track :global(.seek-input) {
     position: absolute;
     inset: 0;
     z-index: 1;
     width: 100%;
     height: 100%;
-    margin: 0;
-    appearance: none;
-    background: transparent;
-    cursor: pointer;
   }
 
-  .seek-input:disabled {
-    cursor: default;
+  .seek-track :global(.seek-input)::before {
+    content: none;
   }
 
-  .seek-input::-webkit-slider-runnable-track {
-    height: 4px;
-    background: transparent;
+  .seek-track :global(.seek-input .slider-range) {
+    display: none;
   }
 
-  .seek-input::-webkit-slider-thumb {
-    appearance: none;
+  .seek-track :global(.seek-input .slider-thumb) {
     width: 14px;
     height: 14px;
-    margin-top: -5px;
-    border-radius: 50%;
-    border: 2px solid var(--color-primary-fg);
-    background: var(--color-primary);
-    box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
-  }
-
-  .seek-input::-moz-range-track {
-    height: 4px;
-    background: transparent;
-    border: 0;
-  }
-
-  .seek-input::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 2px solid var(--color-primary-fg);
+    border-color: var(--color-primary-fg);
     background: var(--color-primary);
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
   }

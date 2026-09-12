@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { useIntersectionObserver } from "runed";
   import BookCard from "./BookCard.svelte";
   import BookCardSkeleton from "./BookCardSkeleton.svelte";
   import Skeleton from "./Skeleton.svelte";
@@ -33,16 +34,15 @@
       : "grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
   );
 
-  function sentinel(node: HTMLElement) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && hasMore && !loading) onLoadMore();
-      },
-      { rootMargin: "600px" },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }
+  let sentinelEl = $state<HTMLElement | null>(null);
+
+  useIntersectionObserver(
+    () => sentinelEl,
+    (entries) => {
+      if (entries[0]?.isIntersecting && hasMore && !loading) onLoadMore();
+    },
+    { rootMargin: "600px", threshold: 0 },
+  );
 </script>
 
 {#if initialLoading}
@@ -65,7 +65,7 @@
 {/if}
 
 {#if hasMore}
-  <div {@attach sentinel} class="flex h-16 items-center justify-center">
+  <div bind:this={sentinelEl} class="flex h-16 items-center justify-center">
     {#if loading}
       <Skeleton width="6rem" height="0.75rem" rounded="full" />
     {/if}
