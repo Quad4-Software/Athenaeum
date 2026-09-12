@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -209,6 +210,132 @@ func TestTTSSynthesizeProxy(t *testing.T) {
 	if !testRes.OK {
 		t.Fatalf("expected ok test: %s", rec.Body.String())
 	}
+}
+
+func TestTTSJobLifecycle(t *testing.T) {
+	srv, store := testServer(t)
+	handler, err := srv.Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, csrf := loginAdmin(t, handler, store)
+	ctx := context.Background()
+
+	if err := store.SaveTTSSettings(ctx, models.TTSSettings{
+		Enabled: true, BaseURL: "http://127.0.0.1:9", DefaultVoice: "af_heart", TimeoutSec: 10,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	bookID, err := store.UpsertBook(ctx, &models.Book{
+		Title: "Narrate Me", Format: models.FormatEPUB, RelPath: "narrate-me.epub", AbsPath: "/x/narrate-me.epub",
+	}, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Preferences round-trip.
+	prefBody, _ := json.Marshal(map[string]any{
+		"voice": "bm_george", "speed": 1.25, "schedEnabled": false,
+	})
+	req := httptest.NewRequest(http.MethodPut, "/api/tts/prefs", bytes.NewReader(prefBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(session)
+	withCSRF(req, csrf)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("put prefs status=%d body=%s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/tts/prefs", nil)
+	req.AddCookie(session)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	var prefs models.TTSUserPrefs
+	if err := json.NewDecoder(rec.Body).Decode(&prefs); err != nil {
+		t.Fatal(err)
+	}
+	if prefs.Voice != "bm_george" || prefs.Speed != 1.25 {
+		t.Fatalf("unexpected prefs %+v", prefs)
+	}
+
+	// Queue a job for the EPUB.
+	jobBody, _ := json.Marshal(map[string]any{"bookId": bookID})
+	req = httptest.NewRequest(http.MethodPost, "/api/tts/jobs", bytes.NewReader(jobBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(session)
+	withCSRF(req, csrf)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("create job status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var job models.TTSJob
+	if err := json.NewDecoder(rec.Body).Decode(&job); err != nil {
+		t.Fatal(err)
+	}
+	if job.Status != models.TTSJobQueued || job.Voice != "bm_george" {
+		t.Fatalf("unexpected job %+v", job)
+	}
+
+	// Duplicate active jobs for the same book are rejected.
+	req = httptest.NewRequest(http.MethodPost, "/api/tts/jobs", bytes.NewReader(jobBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(session)
+	withCSRF(req, csrf)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected 409 for duplicate job, got %d", rec.Code)
+	}
+
+	// List shows the job.
+	req = httptest.NewRequest(http.MethodGet, "/api/tts/jobs", nil)
+	req.AddCookie(session)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	var list struct {
+		Jobs []models.TTSJob `json:"jobs"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&list); err != nil {
+		t.Fatal(err)
+	}
+	if len(list.Jobs) != 1 {
+		t.Fatalf("expected 1 job, got %d", len(list.Jobs))
+	}
+
+	// Cancel then retry then delete.
+	req = httptest.NewRequest(http.MethodPost, "/api/tts/jobs/"+itoa(job.ID)+"/cancel", nil)
+	req.AddCookie(session)
+	withCSRF(req, csrf)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("cancel status=%d body=%s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/tts/jobs/"+itoa(job.ID)+"/retry", nil)
+	req.AddCookie(session)
+	withCSRF(req, csrf)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("retry status=%d body=%s", rec.Code, rec.Body.String())
+	}
+
+	// Cannot delete while active again.
+	req = httptest.NewRequest(http.MethodDelete, "/api/tts/jobs/"+itoa(job.ID), nil)
+	req.AddCookie(session)
+	withCSRF(req, csrf)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected 409 deleting active job, got %d", rec.Code)
+	}
+}
+
+func itoa(v int64) string {
+	return strconv.FormatInt(v, 10)
 }
 
 func TestTTSPutValidation(t *testing.T) {

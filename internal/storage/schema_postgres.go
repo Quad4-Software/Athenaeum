@@ -378,14 +378,46 @@ CREATE TABLE IF NOT EXISTS offline_grants (
 );
 
 CREATE TABLE IF NOT EXISTS tts_settings (
-	id            INTEGER PRIMARY KEY CHECK (id = 1),
-	enabled       INTEGER NOT NULL DEFAULT 0,
-	base_url      TEXT    NOT NULL DEFAULT '',
-	api_key       TEXT    NOT NULL DEFAULT '',
-	default_voice TEXT    NOT NULL DEFAULT 'af_heart',
-	timeout_sec   INTEGER NOT NULL DEFAULT 60,
-	updated_at    BIGINT  NOT NULL
+	id              INTEGER PRIMARY KEY CHECK (id = 1),
+	enabled         INTEGER NOT NULL DEFAULT 0,
+	base_url        TEXT    NOT NULL DEFAULT '',
+	api_key         TEXT    NOT NULL DEFAULT '',
+	model           TEXT    NOT NULL DEFAULT 'kokoro',
+	default_voice   TEXT    NOT NULL DEFAULT 'af_heart',
+	response_format TEXT    NOT NULL DEFAULT 'mp3',
+	timeout_sec     INTEGER NOT NULL DEFAULT 60,
+	updated_at      BIGINT  NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS tts_user_prefs (
+	user_id       BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+	voice         TEXT    NOT NULL DEFAULT '',
+	speed         DOUBLE PRECISION NOT NULL DEFAULT 1,
+	sched_enabled INTEGER NOT NULL DEFAULT 0,
+	sched_start   TEXT    NOT NULL DEFAULT '',
+	sched_end     TEXT    NOT NULL DEFAULT '',
+	updated_at    BIGINT  NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS tts_jobs (
+	id             BIGSERIAL PRIMARY KEY,
+	user_id        BIGINT NOT NULL,
+	book_id        BIGINT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+	voice          TEXT   NOT NULL DEFAULT '',
+	speed          DOUBLE PRECISION NOT NULL DEFAULT 1,
+	status         TEXT   NOT NULL DEFAULT 'queued',
+	total_chapters INTEGER NOT NULL DEFAULT 0,
+	done_chapters  INTEGER NOT NULL DEFAULT 0,
+	output_dir     TEXT   NOT NULL DEFAULT '',
+	error          TEXT   NOT NULL DEFAULT '',
+	run_at         BIGINT NOT NULL DEFAULT 0,
+	created_at     BIGINT NOT NULL DEFAULT 0,
+	started_at     BIGINT,
+	finished_at    BIGINT
+);
+CREATE INDEX IF NOT EXISTS idx_tts_jobs_user   ON tts_jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_tts_jobs_status ON tts_jobs(status, run_at);
+CREATE INDEX IF NOT EXISTS idx_tts_jobs_book   ON tts_jobs(book_id);
 
 CREATE TABLE IF NOT EXISTS invites (
 	id                BIGSERIAL PRIMARY KEY,

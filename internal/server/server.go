@@ -18,6 +18,7 @@ import (
 	"athenaeum/internal/sandbox"
 	"athenaeum/internal/storage"
 	"athenaeum/internal/telemetry"
+	"athenaeum/internal/tts"
 )
 
 const (
@@ -31,6 +32,7 @@ type Server struct {
 	store           *storage.Store
 	scanner         *library.Scanner
 	metadataMatcher *library.MetadataMatcher
+	ttsWorker       *tts.Worker
 	maintenance     *library.Maintenance
 	altcha          *altcha.Service
 	log             *slog.Logger
@@ -66,6 +68,7 @@ func New(ctx context.Context, cfg config.Config, store *storage.Store, scanner *
 		store:           store,
 		scanner:         scanner,
 		metadataMatcher: library.NewMetadataMatcher(store, cfg.CoverDir(), log),
+		ttsWorker:       tts.NewWorker(store, scanner, cfg, log),
 		maintenance:     library.NewMaintenance(store, cfg.CoverDir(), log),
 		altcha:          altchaSvc,
 		log:             log,
@@ -154,6 +157,7 @@ func (s *Server) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	go s.ttsWorker.Start(ctx)
 
 	srv := &http.Server{
 		Addr:              announceAddr(s.cfg.Addr),

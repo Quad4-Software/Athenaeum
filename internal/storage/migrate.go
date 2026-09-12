@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const currentSchemaVersion = 25
+const currentSchemaVersion = 26
 
 func (s *Store) migrate(ctx context.Context) error {
 	if s.driver.isPostgres() {
@@ -52,6 +52,7 @@ func (s *Store) migrateSQLite(ctx context.Context) error {
 		{23, s.migrateV23},
 		{24, s.migrateV24},
 		{25, s.migrateV25},
+		{26, s.migrateV26},
 	}
 	for _, step := range steps {
 		if version >= step.to {
@@ -89,13 +90,31 @@ func (s *Store) migratePostgres(ctx context.Context) error {
 		return fmt.Errorf("database schema version %d is newer than this binary (%d)", version, currentSchemaVersion)
 	}
 	if version < currentSchemaVersion {
-		if version == 24 && currentSchemaVersion == 25 {
-			if err := s.migratePostgresV25(ctx); err != nil {
+		steps := []struct {
+			to int
+			fn func(context.Context) error
+		}{
+			{25, s.migratePostgresV25},
+			{26, s.migratePostgresV26},
+		}
+		for _, step := range steps {
+			if version >= step.to {
+				continue
+			}
+			if version != step.to-1 {
+				return fmt.Errorf("postgres schema upgrade from %d to %d is not supported yet (recreate the database or stay on sqlite)", version, currentSchemaVersion)
+			}
+			if err := step.fn(ctx); err != nil {
 				return err
 			}
-			return s.setUserVersion(ctx, 25)
+			if err := s.setUserVersion(ctx, step.to); err != nil {
+				return err
+			}
+			version = step.to
 		}
-		return fmt.Errorf("postgres schema upgrade from %d to %d is not supported yet (recreate the database or stay on sqlite)", version, currentSchemaVersion)
+		if version < currentSchemaVersion {
+			return fmt.Errorf("postgres schema upgrade from %d to %d is not supported yet (recreate the database or stay on sqlite)", version, currentSchemaVersion)
+		}
 	}
 	return nil
 }

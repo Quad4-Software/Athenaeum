@@ -51,6 +51,12 @@ type opfPackage struct {
 			Properties string `xml:"properties,attr"`
 		} `xml:"item"`
 	} `xml:"manifest"`
+	Spine struct {
+		ItemRefs []struct {
+			IDRef  string `xml:"idref,attr"`
+			Linear string `xml:"linear,attr"`
+		} `xml:"itemref"`
+	} `xml:"spine"`
 }
 
 // parseEPUB opens an EPUB file and extracts its metadata and cover image.

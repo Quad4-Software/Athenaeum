@@ -110,17 +110,6 @@ func TestPureHelpersCoverage(t *testing.T) {
 		t.Fatal("withAltchaConnectSrc local")
 	}
 
-	long := make([]byte, 250)
-	for i := range long {
-		long[i] = 'a'
-	}
-	if trunc := truncateErr(long); len(trunc) <= 200 || !strings.HasSuffix(trunc, "…") {
-		t.Fatalf("truncateErr=%q", trunc)
-	}
-	if truncateErr([]byte(" short ")) != "short" {
-		t.Fatal("truncateErr short")
-	}
-
 	name, err := uploadPartName("0123456789abcdef0123456789abcdef")
 	if err != nil || name != "0123456789abcdef0123456789abcdef.part" {
 		t.Fatalf("uploadPartName=%q err=%v", name, err)
