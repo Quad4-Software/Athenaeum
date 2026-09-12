@@ -2642,6 +2642,127 @@
         ]
       }
     },
+    "/api/feeds": {
+      "get": {
+        "tags": [
+          "Audio feeds"
+        ],
+        "summary": "List your audio feeds",
+        "description": "Auth: required",
+        "operationId": "GET__api_feeds",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Audio feeds"
+        ],
+        "summary": "Create a token-scoped audio RSS feed",
+        "description": "Auth: required\nBody: {\"name\",\"libraryId?\",\"collectionId?\"}\nResponse: {\"id\",\"name\",\"url\",\"token\",\"createdAt\"}",
+        "operationId": "POST__api_feeds",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds/{id}": {
+      "delete": {
+        "tags": [
+          "Audio feeds"
+        ],
+        "summary": "Delete one of your feeds (admins may pass userId)",
+        "description": "Auth: required",
+        "operationId": "DELETE__api_feeds__id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -4143,6 +4264,110 @@
         }
       }
     },
+    "/feed/{token}": {
+      "get": {
+        "tags": [
+          "Audio feeds"
+        ],
+        "summary": "RSS 2.0 audio feed; the token is the credential",
+        "operationId": "GET__feed__token",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/feed/{token}/item/{bookId}/cover": {
+      "get": {
+        "tags": [
+          "Audio feeds"
+        ],
+        "summary": "Feed item cover image",
+        "operationId": "GET__feed__token__item__bookId__cover",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/feed/{token}/item/{bookId}/file": {
+      "get": {
+        "tags": [
+          "Audio feeds"
+        ],
+        "summary": "Feed item audio bytes (HTTP Range)",
+        "operationId": "GET__feed__token__item__bookId__file",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "track",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/metrics": {
       "get": {
         "tags": [
@@ -4393,6 +4618,9 @@
     },
     {
       "name": "Collections"
+    },
+    {
+      "name": "Audio feeds"
     },
     {
       "name": "Uploads"

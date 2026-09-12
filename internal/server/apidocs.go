@@ -125,6 +125,17 @@ func apiDocumentation() APIDoc {
 				},
 			},
 			{
+				Title: "Audio feeds",
+				Endpoints: []APIDocEndpoint{
+					{Method: "GET", Path: "/api/feeds", Summary: "List your audio feeds", Auth: "required"},
+					{Method: "POST", Path: "/api/feeds", Summary: "Create a token-scoped audio RSS feed", Auth: "required", Body: `{"name","libraryId?","collectionId?"}`, Response: `{"id","name","url","token","createdAt"}`},
+					{Method: "DELETE", Path: "/api/feeds/{id}", Summary: "Delete one of your feeds (admins may pass userId)", Auth: "required", Query: "userId"},
+					{Method: "GET", Path: "/feed/{token}", Summary: "RSS 2.0 audio feed; the token is the credential", Auth: "public"},
+					{Method: "GET", Path: "/feed/{token}/item/{bookId}/file", Summary: "Feed item audio bytes (HTTP Range)", Auth: "public", Query: "track"},
+					{Method: "GET", Path: "/feed/{token}/item/{bookId}/cover", Summary: "Feed item cover image", Auth: "public"},
+				},
+			},
+			{
 				Title: "Uploads",
 				Endpoints: []APIDocEndpoint{
 					{Method: "POST", Path: "/api/libraries/{id}/uploads", Summary: "Start resumable upload", Auth: "required", Body: `{"relPath","totalSize"}`},

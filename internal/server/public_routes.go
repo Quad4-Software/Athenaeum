@@ -43,6 +43,7 @@ var publicPrefixes = []publicPrefix{
 	{Prefix: "/api/i18n/", Method: http.MethodGet},
 	{Prefix: "/api/share/", Method: http.MethodGet},
 	{Prefix: "/share/", Method: ""},
+	{Prefix: "/feed/", Method: ""},
 	{Prefix: "/kosync/", Method: ""},
 	{Prefix: "/api/invite/", Method: ""},
 }

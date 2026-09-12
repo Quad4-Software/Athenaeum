@@ -33,6 +33,7 @@ func (s *Server) registerAPI(mux *http.ServeMux) {
 	s.registerFavoriteRoutes(mux)
 	s.registerTagRoutes(mux)
 	s.registerShareRoutes(mux)
+	s.registerFeedRoutes(mux)
 	s.registerKosyncRoutes(mux)
 	s.registerSMTPRoutes(mux)
 	s.registerTTSRoutes(mux)

@@ -241,6 +241,16 @@ export interface FSDirEntry {
   path: string;
 }
 
+export interface FeedToken {
+  id: number;
+  token: string;
+  name: string;
+  libraryId: number;
+  collectionId: number;
+  url?: string;
+  createdAt: string;
+}
+
 export interface GuestCredentials {
   user: User;
   password: string;

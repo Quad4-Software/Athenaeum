@@ -1,7 +1,7 @@
 package storage
 
 // schemaPostgres is the full Athenaeum schema for a fresh PostgreSQL database
-// (equivalent to SQLite user_version 28 plus tsvector FTS).
+// (equivalent to SQLite user_version 29 plus tsvector FTS).
 const schemaPostgres = `
 CREATE TABLE IF NOT EXISTS schema_version (
 	version INTEGER NOT NULL
@@ -162,6 +162,17 @@ CREATE TABLE IF NOT EXISTS reading_sessions (
 );
 CREATE INDEX IF NOT EXISTS idx_reading_sessions_user_ended ON reading_sessions(user_id, ended_at);
 CREATE INDEX IF NOT EXISTS idx_reading_sessions_book ON reading_sessions(book_id);
+
+CREATE TABLE IF NOT EXISTS feed_tokens (
+	id            BIGSERIAL PRIMARY KEY,
+	token         TEXT   NOT NULL UNIQUE,
+	user_id       BIGINT NOT NULL DEFAULT 0,
+	name          TEXT   NOT NULL DEFAULT '',
+	library_id    BIGINT NOT NULL DEFAULT 0,
+	collection_id BIGINT NOT NULL DEFAULT 0,
+	created_at    BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_feed_tokens_user ON feed_tokens(user_id);
 
 CREATE TABLE IF NOT EXISTS book_chapters (
 	book_id  BIGINT  NOT NULL REFERENCES books(id) ON DELETE CASCADE,

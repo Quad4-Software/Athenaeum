@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const currentSchemaVersion = 28
+const currentSchemaVersion = 29
 
 func (s *Store) migrate(ctx context.Context) error {
 	if s.driver.isPostgres() {
@@ -55,6 +55,7 @@ func (s *Store) migrateSQLite(ctx context.Context) error {
 		{26, s.migrateV26},
 		{27, s.migrateV27},
 		{28, s.migrateV28},
+		{29, s.migrateV29},
 	}
 	for _, step := range steps {
 		if version >= step.to {
@@ -100,6 +101,7 @@ func (s *Store) migratePostgres(ctx context.Context) error {
 			{26, s.migratePostgresV26},
 			{27, s.migratePostgresV27},
 			{28, s.migratePostgresV28},
+			{29, s.migratePostgresV29},
 		}
 		for _, step := range steps {
 			if version >= step.to {

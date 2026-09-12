@@ -26,6 +26,7 @@ func APITypes() []any {
 		ComicManifest{},
 		ComicPage{},
 		ConvertResult{},
+		FeedToken{},
 		GuestCredentials{},
 		Highlight{},
 		InviteCreateResult{},
