@@ -131,12 +131,12 @@ describe("router", () => {
     const { router } = await import("./router.svelte");
     const popstate = (window.addEventListener as ReturnType<typeof vi.fn>).mock.calls.find(
       ([event]) => event === "popstate",
-    )?.[1] as () => void;
+    )?.[1] as (event: Event) => void;
 
     router.navigate("/book/9", true);
     loc.pathname = "/";
     loc.search = "";
-    popstate();
+    popstate(new Event("popstate"));
 
     expect(router.current.name).toBe("library");
   });

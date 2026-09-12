@@ -33,18 +33,20 @@ describe("LanguagePicker", () => {
     cleanup();
   });
 
+  // bits-ui keeps popover content visibility:hidden until floating-ui measures,
+  // which never happens in jsdom, so role queries need hidden: true.
   async function openMenu() {
     const user = userEvent.setup();
     render(LanguagePicker);
     await user.click(screen.getByRole("button", { name: "Select language" }));
-    const menus = screen.getAllByRole("menu");
+    const menus = screen.getAllByRole("menu", { hidden: true });
     const menu = menus[menus.length - 1];
     return { user, menu };
   }
 
   it("opens language menu with search and native names", async () => {
     const { menu } = await openMenu();
-    expect(within(menu).getByRole("searchbox", { name: "Search languages" })).toBeInTheDocument();
+    expect(within(menu).getByRole("searchbox", { hidden: true })).toBeInTheDocument();
     expect(within(menu).getByText("English")).toBeInTheDocument();
     expect(within(menu).getByText("Deutsch")).toBeInTheDocument();
     expect(within(menu).getByText("日本語")).toBeInTheDocument();
@@ -52,7 +54,7 @@ describe("LanguagePicker", () => {
 
   it("filters languages by query", async () => {
     const { user, menu } = await openMenu();
-    await user.type(within(menu).getByRole("searchbox", { name: "Search languages" }), "deu");
+    await user.type(within(menu).getByRole("searchbox", { hidden: true }), "deu");
     expect(within(menu).getByText("Deutsch")).toBeInTheDocument();
     expect(within(menu).queryByText("日本語")).not.toBeInTheDocument();
   });

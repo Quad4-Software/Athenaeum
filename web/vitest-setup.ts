@@ -60,3 +60,28 @@ class IntersectionObserverMock implements IntersectionObserver {
 if (typeof globalThis.IntersectionObserver === "undefined") {
   globalThis.IntersectionObserver = IntersectionObserverMock;
 }
+
+// jsdom lacks matchMedia; svelte/reactivity MediaQuery and bits-ui need it.
+if (typeof globalThis.matchMedia === "undefined") {
+  globalThis.matchMedia = (query: string): MediaQueryList =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener() {},
+      removeListener() {},
+      addEventListener() {},
+      removeEventListener() {},
+      dispatchEvent() {
+        return false;
+      },
+    }) as MediaQueryList;
+}
+
+// jsdom stubs for APIs used by bits-ui internals.
+if (typeof Element !== "undefined") {
+  Element.prototype.scrollIntoView ??= () => {};
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.setPointerCapture ??= () => {};
+  Element.prototype.releasePointerCapture ??= () => {};
+}

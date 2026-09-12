@@ -437,6 +437,8 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     fsModuleCache: true,
+    // Cold dynamic imports in a few tests approach the 5s default under parallel workers.
+    testTimeout: 15000,
     setupFiles: ["./vitest-setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,svelte.ts}"],
     coverage: {

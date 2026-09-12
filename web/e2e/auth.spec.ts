@@ -64,8 +64,8 @@ test.describe("login UI", () => {
     await expect(toggle).toBeVisible();
     const before = await page.locator("html").getAttribute("data-theme");
     await toggle.click();
-    const light = page.getByRole("button", { name: /light|hell/i });
-    const dark = page.getByRole("button", { name: /dark|dunkel/i });
+    const light = page.getByRole("menuitem", { name: /light|hell/i });
+    const dark = page.getByRole("menuitem", { name: /dark|dunkel/i });
     if (await light.isVisible().catch(() => false)) {
       await (before === "light" ? dark : light).first().click();
     }
