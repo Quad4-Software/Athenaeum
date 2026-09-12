@@ -234,7 +234,11 @@ function kokoroAssetsPlugin(): Plugin {
 // the binary stays self-contained. Demo builds (VITE_DEMO=1) write a static
 // SPA under ../site for GitHub Pages and similar hosts.
 export default defineConfig({
-  base: isDemoBuild ? "./" : "/",
+  // The demo ships under /demo on the docs site. An absolute base keeps
+  // asset URLs valid when the service worker serves index.html for deep
+  // links like /demo/book/1; a relative "./" base would resolve them under
+  // /demo/book/ and the shell would hang on the loading screen.
+  base: isDemoBuild ? "/demo/" : "/",
   plugins: [
     svelte(),
     tailwindcss(),
@@ -324,11 +328,13 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
-            urlPattern: /^\/api\//,
+            // Workbox tests RegExp urlPattern against the full href, so a
+            // path-anchored /^\/api\// never matches; use pathname instead.
+            urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith("/api/"),
             handler: "NetworkOnly",
           },
           {
-            urlPattern: /^\/pdfjs\//,
+            urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith("/pdfjs/"),
             handler: "CacheFirst",
             options: {
               cacheName: "pdfjs-assets",
