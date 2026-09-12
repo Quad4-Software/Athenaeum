@@ -15,6 +15,10 @@ import (
 	"athenaeum/internal/storage"
 )
 
+// guestInviteTTL is the default lifetime of a guest account created from a
+// guest invite when the invite carries no explicit expiry.
+const guestInviteTTL = 24 * time.Hour
+
 func (s *Server) registerInviteRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/invites", s.handleCreateInvite)
 	mux.HandleFunc("GET /api/invites", s.handleListInvites)
@@ -137,7 +141,7 @@ func (s *Server) handleCreateInvite(w http.ResponseWriter, r *http.Request) {
 			pidCfg, err := s.store.GetPocketIDSettings(r.Context())
 			if err == nil && pidCfg.Enabled {
 				client := pocketid.NewClient(pidCfg.BaseURL, pidCfg.APIKey)
-				if err := client.RequestOneTimeAccessEmail(r.Context(), created.PocketIDUserID, "24h"); err != nil {
+				if err := client.RequestOneTimeAccessEmail(r.Context(), created.PocketIDUserID, pocketIDTokenTTL); err != nil {
 					s.log.Warn("pocket id one-time access email failed", "err", err)
 				} else {
 					emailSent = true
@@ -192,7 +196,7 @@ func (s *Server) provisionPocketIDInvite(r *http.Request, email, username string
 			s.log.Warn("pocket id group assign failed", "err", err)
 		}
 	}
-	tok, err := client.CreateOneTimeAccessToken(r.Context(), u.ID, "24h")
+	tok, err := client.CreateOneTimeAccessToken(r.Context(), u.ID, pocketIDTokenTTL)
 	if err != nil {
 		return "", "", err
 	}
@@ -231,7 +235,7 @@ func (s *Server) handleRevokeInvite(w http.ResponseWriter, r *http.Request) {
 	}
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil || id <= 0 {
-		writeError(w, http.StatusBadRequest, errors.New("invalid id"))
+		writeError(w, http.StatusBadRequest, errInvalidID)
 		return
 	}
 	if err := s.store.RevokeInvite(r.Context(), id); err != nil {
@@ -357,7 +361,7 @@ func (s *Server) handleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
-		guestExp := now.Add(24 * time.Hour)
+		guestExp := now.Add(guestInviteTTL)
 		if inv.GuestExpiresAt != nil {
 			guestExp = *inv.GuestExpiresAt
 		}

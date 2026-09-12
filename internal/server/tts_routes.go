@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"athenaeum/internal/auth"
 	"athenaeum/internal/models"
 )
 
@@ -267,7 +268,7 @@ func synthesizeTTS(ctx context.Context, cfg models.TTSSettings, text, voice stri
 		return nil, "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "audio/wav, audio/*, application/octet-stream")
+	req.Header.Set("Accept", "audio/wav, audio/*, "+mimeOctetStream)
 	applyTTSAuth(req, cfg)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -293,7 +294,7 @@ func synthesizeTTS(ctx context.Context, cfg models.TTSSettings, text, voice stri
 
 func applyTTSAuth(req *http.Request, cfg models.TTSSettings) {
 	if cfg.APIKey != "" {
-		req.Header.Set("Authorization", "Bearer "+cfg.APIKey)
+		req.Header.Set(auth.HeaderAuthorization, "Bearer "+cfg.APIKey)
 	}
 }
 

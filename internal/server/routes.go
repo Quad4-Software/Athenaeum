@@ -89,11 +89,11 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 func (s *Server) bookByID(w http.ResponseWriter, r *http.Request) (models.Book, error) {
 	id, ok := pathID(w, r)
 	if !ok {
-		return models.Book{}, errors.New("bad id")
+		return models.Book{}, errInvalidID
 	}
 	book, err := s.store.GetBook(r.Context(), id)
 	if errors.Is(err, storage.ErrNotFound) {
-		writeError(w, http.StatusNotFound, errors.New("book not found"))
+		writeError(w, http.StatusNotFound, errBookNotFound)
 		return models.Book{}, err
 	}
 	if err != nil {
@@ -106,7 +106,7 @@ func (s *Server) bookByID(w http.ResponseWriter, r *http.Request) (models.Book, 
 func pathID(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil || id <= 0 {
-		writeError(w, http.StatusBadRequest, errors.New("invalid id"))
+		writeError(w, http.StatusBadRequest, errInvalidID)
 		return 0, false
 	}
 	return id, true
@@ -115,27 +115,27 @@ func pathID(w http.ResponseWriter, r *http.Request) (int64, bool) {
 func contentType(format string) string {
 	switch format {
 	case models.FormatEPUB:
-		return "application/epub+zip"
+		return mimeEPUB
 	case models.FormatPDF:
-		return "application/pdf"
+		return mimePDF
 	case models.FormatMP3:
-		return "audio/mpeg"
+		return mimeMP3
 	case models.FormatM4B, models.FormatM4A:
-		return "audio/mp4"
+		return mimeMP4Audio
 	case models.FormatOGG:
-		return "audio/ogg"
+		return mimeOGG
 	case models.FormatFLAC:
-		return "audio/flac"
+		return mimeFLAC
 	case models.FormatMOBI, models.FormatAZW, models.FormatAZW3:
-		return "application/x-mobipocket-ebook"
+		return mimeMobipocket
 	case models.FormatKFX:
-		return "application/vnd.amazon.ebook"
+		return mimeKindle
 	case models.FormatCBZ:
-		return "application/vnd.comicbook+zip"
+		return mimeComicZip
 	case models.FormatCBR:
-		return "application/vnd.comicbook-rar"
+		return mimeComicRAR
 	default:
-		return "application/octet-stream"
+		return mimeOctetStream
 	}
 }
 
@@ -162,7 +162,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	buf := jsonEncodeBufPool.Get().(*bytes.Buffer)
 	buf.Reset()
 	encErr := json.NewEncoder(buf).Encode(v)
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Type", mimeJSON)
 	if encErr != nil {
 		jsonEncodeBufPool.Put(buf)
 		w.WriteHeader(http.StatusInternalServerError)

@@ -126,7 +126,7 @@ func (s *Server) handleSendBook(w http.ResponseWriter, r *http.Request) {
 	}
 	rc, err := fs.Open(r.Context(), book.RelPath)
 	if err != nil {
-		writeError(w, http.StatusNotFound, errors.New("file missing on disk"))
+		writeError(w, http.StatusNotFound, errFileMissing)
 		return
 	}
 	data, err := io.ReadAll(rc)
@@ -165,7 +165,7 @@ func buildMIMEAttachment(from, to, subject, filename string, data []byte) []byte
 	b.WriteString("Content-Type: text/plain; charset=utf-8\r\n\r\n")
 	b.WriteString("Sent from Athenaeum\r\n\r\n")
 	b.WriteString("--" + boundary + "\r\n")
-	b.WriteString("Content-Type: application/octet-stream\r\n")
+	b.WriteString("Content-Type: " + mimeOctetStream + "\r\n")
 	b.WriteString("Content-Disposition: attachment; filename=\"" + sanitizeFilenameToken(filename) + "\"\r\n")
 	b.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
 	encoded := make([]byte, base64.StdEncoding.EncodedLen(len(data)))

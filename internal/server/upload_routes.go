@@ -45,7 +45,7 @@ func (s *Server) handleCreateUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := UserIDFromContext(r.Context())
 	if required && userID == 0 {
-		writeError(w, http.StatusUnauthorized, errors.New("authentication required"))
+		writeError(w, http.StatusUnauthorized, errUnauthorized)
 		return
 	}
 	var body createUploadBody
@@ -223,11 +223,11 @@ func (s *Server) loadUploadSession(w http.ResponseWriter, r *http.Request) (mode
 	userID := UserIDFromContext(r.Context())
 	if user, ok := UserFromContext(r.Context()); ok {
 		if sess.UserID != user.ID && !user.IsAdmin {
-			writeError(w, http.StatusForbidden, errors.New("upload access denied"))
+			writeError(w, http.StatusForbidden, errUploadAccessDenied)
 			return models.UploadSession{}, false
 		}
 	} else if sess.UserID != userID {
-		writeError(w, http.StatusForbidden, errors.New("upload access denied"))
+		writeError(w, http.StatusForbidden, errUploadAccessDenied)
 		return models.UploadSession{}, false
 	}
 	return sess, true
@@ -282,11 +282,11 @@ func sanitizeUploadRelPath(rel string) (string, error) {
 	rel = filepath.ToSlash(strings.TrimSpace(rel))
 	rel = strings.TrimPrefix(rel, "/")
 	if rel == "" || strings.Contains(rel, "..") {
-		return "", errors.New("invalid relPath")
+		return "", errInvalidRelPath
 	}
 	clean := filepath.Clean(rel)
 	if clean == "." || strings.HasPrefix(clean, "..") {
-		return "", errors.New("invalid relPath")
+		return "", errInvalidRelPath
 	}
 	return filepath.ToSlash(clean), nil
 }

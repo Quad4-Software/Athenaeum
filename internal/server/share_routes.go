@@ -103,7 +103,7 @@ func (s *Server) handleShareMeta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if sl.ExpiresAt != nil && time.Now().After(*sl.ExpiresAt) {
-		writeError(w, http.StatusGone, errors.New("share link expired"))
+		writeError(w, http.StatusGone, errShareExpired)
 		return
 	}
 	book, err := s.store.GetBook(r.Context(), sl.BookID)
@@ -133,7 +133,7 @@ func (s *Server) handleShareDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if sl.ExpiresAt != nil && time.Now().After(*sl.ExpiresAt) {
-		writeError(w, http.StatusGone, errors.New("share link expired"))
+		writeError(w, http.StatusGone, errShareExpired)
 		return
 	}
 	ok, err := s.store.TryIncrementShareDownload(r.Context(), sl.ID, sl.MaxDownloads)

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"athenaeum/internal/auth"
 	"athenaeum/internal/brand"
 	"athenaeum/internal/version"
 )
@@ -119,7 +120,7 @@ func openAPIFromDoc(doc APIDoc) openAPISpec {
 				"apiKeyHeader": {
 					Type:        "apiKey",
 					In:          "header",
-					Name:        "X-API-Key",
+					Name:        auth.HeaderAPIKey,
 					Description: "API key (" + brand.APIKeyPrefix + "…)",
 				},
 				"bearerAuth": {
@@ -181,7 +182,7 @@ func openAPIFromDoc(doc APIDoc) openAPISpec {
 					op.RequestBody = &openAPIRequestBody{
 						Required: true,
 						Content: map[string]openAPIMediaType{
-							"application/octet-stream": {Schema: schema},
+							mimeOctetStream: {Schema: schema},
 						},
 					}
 				} else {

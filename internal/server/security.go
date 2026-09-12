@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"athenaeum/internal/auth"
 	"athenaeum/internal/telemetry"
 )
 
@@ -52,7 +53,9 @@ func (s *Server) withSecurityHeaders(next http.Handler) http.Handler {
 				} else {
 					w.Header().Set("Access-Control-Allow-Origin", "*")
 				}
-				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-API-Key, X-CSRF-Token, Content-Range")
+				w.Header().Set("Access-Control-Allow-Headers", strings.Join([]string{
+					auth.HeaderAuthorization, "Content-Type", auth.HeaderAPIKey, auth.CSRFHeader, "Content-Range",
+				}, ", "))
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 				if r.Method == http.MethodOptions {
 					w.WriteHeader(http.StatusNoContent)

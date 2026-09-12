@@ -49,7 +49,7 @@ func (s *Server) userFromRequest(r *http.Request) (models.User, bool) {
 			return u, true
 		}
 	}
-	if key, ok := auth.ParseAPIKey(r.Header.Get("Authorization"), r.Header.Get("X-API-Key")); ok {
+	if key, ok := auth.ParseAPIKey(r.Header.Get(auth.HeaderAuthorization), r.Header.Get(auth.HeaderAPIKey)); ok {
 		u, _, err := s.store.UserFromAPIKey(r.Context(), key)
 		if err == nil {
 			return u, true
@@ -62,7 +62,7 @@ func (s *Server) userFromRequest(r *http.Request) (models.User, bool) {
 }
 
 func (s *Server) userFromBasicAuth(r *http.Request) (models.User, bool) {
-	h := r.Header.Get("Authorization")
+	h := r.Header.Get(auth.HeaderAuthorization)
 	if !strings.HasPrefix(h, "Basic ") {
 		return models.User{}, false
 	}

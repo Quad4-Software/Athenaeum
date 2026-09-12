@@ -8,6 +8,10 @@ import (
 	"athenaeum/internal/auth"
 )
 
+// csrfCookieMaxAge bounds how long a CSRF cookie lives. The token rotates
+// on login, so a day is a safe upper bound for stale cookies.
+const csrfCookieMaxAge = 24 * time.Hour
+
 func (s *Server) requestSecure(r *http.Request) bool {
 	if r.TLS != nil {
 		return true
@@ -79,7 +83,7 @@ func (s *Server) csrfCookie(r *http.Request, token string) *http.Cookie {
 		HttpOnly: false,
 		SameSite: http.SameSiteStrictMode,
 		Secure:   s.requestSecure(r),
-		MaxAge:   int((24 * time.Hour).Seconds()),
+		MaxAge:   int(csrfCookieMaxAge.Seconds()),
 	}
 }
 

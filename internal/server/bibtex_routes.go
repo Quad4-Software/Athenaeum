@@ -29,7 +29,7 @@ func (s *Server) handleBookBibTeX(w http.ResponseWriter, r *http.Request) {
 	}
 	book, err := s.store.GetBook(r.Context(), id)
 	if errors.Is(err, storage.ErrNotFound) {
-		writeError(w, http.StatusNotFound, errors.New("book not found"))
+		writeError(w, http.StatusNotFound, errBookNotFound)
 		return
 	}
 	if err != nil {

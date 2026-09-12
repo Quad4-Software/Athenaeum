@@ -27,7 +27,7 @@ func (s *Server) handleBackup(w http.ResponseWriter, r *http.Request) {
 	if _, ok := requireAdmin(w, r); !ok {
 		return
 	}
-	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Type", mimeZip)
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s-%s.zip"`, brand.BackupPrefix, time.Now().UTC().Format("20060102-150405")))
 	zw := zip.NewWriter(w)
 	defer zw.Close()

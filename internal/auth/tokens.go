@@ -16,6 +16,10 @@ const (
 	CSRFCookie = "athenaeum_csrf"
 	// CSRFHeader is sent by clients alongside the CSRF cookie value.
 	CSRFHeader = "X-CSRF-Token"
+	// HeaderAuthorization carries Basic or Bearer credentials.
+	HeaderAuthorization = "Authorization"
+	// HeaderAPIKey carries a raw API key.
+	HeaderAPIKey = "X-API-Key"
 
 	// AccessTTL is how long an access session remains valid before refresh.
 	AccessTTL = 15 * time.Minute

@@ -11,6 +11,10 @@ import (
 	"athenaeum/internal/pocketid"
 )
 
+// pocketIDTokenTTL is the default validity for Pocket ID one-time access
+// and signup tokens.
+const pocketIDTokenTTL = "24h"
+
 func (s *Server) registerPocketIDRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/admin/pocketid", s.handleGetPocketID)
 	mux.HandleFunc("PUT /api/admin/pocketid", s.handlePutPocketID)
@@ -159,7 +163,7 @@ func (s *Server) handleCreatePocketIDSignupToken(w http.ResponseWriter, r *http.
 		return
 	}
 	if req.TTL == "" {
-		req.TTL = "24h"
+		req.TTL = pocketIDTokenTTL
 	}
 	if req.UsageLimit <= 0 {
 		req.UsageLimit = 1

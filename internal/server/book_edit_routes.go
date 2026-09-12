@@ -39,7 +39,7 @@ func (s *Server) handleMetadataSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	book, err := s.store.GetBook(r.Context(), id)
 	if errors.Is(err, storage.ErrNotFound) {
-		writeError(w, http.StatusNotFound, errors.New("book not found"))
+		writeError(w, http.StatusNotFound, errBookNotFound)
 		return
 	}
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *Server) handleMetadataApply(w http.ResponseWriter, r *http.Request) {
 	}
 	book, err := s.store.GetBook(r.Context(), id)
 	if errors.Is(err, storage.ErrNotFound) {
-		writeError(w, http.StatusNotFound, errors.New("book not found"))
+		writeError(w, http.StatusNotFound, errBookNotFound)
 		return
 	}
 	if err != nil {
@@ -98,7 +98,7 @@ func (s *Server) handleMetadataApply(w http.ResponseWriter, r *http.Request) {
 	book, err = s.store.UpdateBookMetadata(r.Context(), id, update)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			writeError(w, http.StatusNotFound, errors.New("book not found"))
+			writeError(w, http.StatusNotFound, errBookNotFound)
 		} else {
 			writeError(w, http.StatusInternalServerError, err)
 		}
@@ -125,7 +125,7 @@ func (s *Server) handleCoverFromURL(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err := s.store.GetBook(r.Context(), id); err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			writeError(w, http.StatusNotFound, errors.New("book not found"))
+			writeError(w, http.StatusNotFound, errBookNotFound)
 		} else {
 			writeError(w, http.StatusInternalServerError, err)
 		}
@@ -185,7 +185,7 @@ func (s *Server) handlePutBook(w http.ResponseWriter, r *http.Request) {
 
 	book, err = s.store.UpdateBookMetadata(r.Context(), book.ID, u)
 	if errors.Is(err, storage.ErrNotFound) {
-		writeError(w, http.StatusNotFound, errors.New("book not found"))
+		writeError(w, http.StatusNotFound, errBookNotFound)
 		return
 	}
 	if err != nil {
@@ -202,7 +202,7 @@ func (s *Server) handlePutCover(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err := s.store.GetBook(r.Context(), id); err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			writeError(w, http.StatusNotFound, errors.New("book not found"))
+			writeError(w, http.StatusNotFound, errBookNotFound)
 		} else {
 			writeError(w, http.StatusInternalServerError, err)
 		}
@@ -246,7 +246,7 @@ func (s *Server) handleDeleteCover(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err := s.store.GetBook(r.Context(), id); err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			writeError(w, http.StatusNotFound, errors.New("book not found"))
+			writeError(w, http.StatusNotFound, errBookNotFound)
 		} else {
 			writeError(w, http.StatusInternalServerError, err)
 		}
@@ -284,7 +284,7 @@ func (s *Server) handleDeleteBook(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.store.DeleteBook(r.Context(), book.ID); err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			writeError(w, http.StatusNotFound, errors.New("book not found"))
+			writeError(w, http.StatusNotFound, errBookNotFound)
 		} else {
 			writeError(w, http.StatusInternalServerError, err)
 		}

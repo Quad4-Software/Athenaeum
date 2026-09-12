@@ -21,7 +21,7 @@ func (s *Server) kosyncUser(w http.ResponseWriter, r *http.Request) (models.User
 	user, pass, ok := r.BasicAuth()
 	if !ok || user == "" {
 		w.Header().Set("WWW-Authenticate", `Basic realm="kosync"`)
-		writeError(w, http.StatusUnauthorized, errors.New("authentication required"))
+		writeError(w, http.StatusUnauthorized, errUnauthorized)
 		return models.User{}, false
 	}
 	u, hash, err := s.store.GetUserByUsername(r.Context(), user)

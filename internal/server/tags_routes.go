@@ -44,7 +44,7 @@ func (s *Server) handleCreateTag(w http.ResponseWriter, r *http.Request) {
 	}
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
-		writeError(w, http.StatusBadRequest, errors.New("name required"))
+		writeError(w, http.StatusBadRequest, errTagNameRequired)
 		return
 	}
 	tag, err := s.store.CreateTag(r.Context(), name)
@@ -117,7 +117,7 @@ func (s *Server) handleAddBookTag(w http.ResponseWriter, r *http.Request) {
 	}
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
-		writeError(w, http.StatusBadRequest, errors.New("name required"))
+		writeError(w, http.StatusBadRequest, errTagNameRequired)
 		return
 	}
 	names, err := s.store.AddBookTag(r.Context(), bookID, name)

@@ -26,7 +26,7 @@ func (s *Server) handleComicManifest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !models.IsComic(book.Format) {
-		writeError(w, http.StatusBadRequest, errors.New("not a comic"))
+		writeError(w, http.StatusBadRequest, errNotAComic)
 		return
 	}
 	path, cleanup, err := s.materializeBookFile(r.Context(), book.LibraryID, book.RelPath)
@@ -49,7 +49,7 @@ func (s *Server) handleComicPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !models.IsComic(book.Format) {
-		writeError(w, http.StatusBadRequest, errors.New("not a comic"))
+		writeError(w, http.StatusBadRequest, errNotAComic)
 		return
 	}
 	idx, err := strconv.Atoi(r.PathValue("page"))

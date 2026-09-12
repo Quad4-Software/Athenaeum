@@ -88,11 +88,11 @@ func (s *Server) handleCreateLibrary(w http.ResponseWriter, r *http.Request) {
 		in.Backend = models.LibraryBackendLocal
 	}
 	if in.Backend == models.LibraryBackendLocal && (body.Name == "" || body.MountPath == "") {
-		writeError(w, http.StatusBadRequest, errors.New("name and mountPath are required"))
+		writeError(w, http.StatusBadRequest, errLibraryFieldsRequired)
 		return
 	}
 	if in.Backend == models.LibraryBackendS3 && body.Name == "" {
-		writeError(w, http.StatusBadRequest, errors.New("name is required"))
+		writeError(w, http.StatusBadRequest, errLibraryNameRequired)
 		return
 	}
 	lib, err := s.store.CreateLibraryFull(r.Context(), in)
@@ -126,11 +126,11 @@ func (s *Server) handleUpdateLibrary(w http.ResponseWriter, r *http.Request) {
 		in.Backend = models.LibraryBackendLocal
 	}
 	if in.Backend == models.LibraryBackendLocal && (body.Name == "" || body.MountPath == "") {
-		writeError(w, http.StatusBadRequest, errors.New("name and mountPath are required"))
+		writeError(w, http.StatusBadRequest, errLibraryFieldsRequired)
 		return
 	}
 	if in.Backend == models.LibraryBackendS3 && body.Name == "" {
-		writeError(w, http.StatusBadRequest, errors.New("name is required"))
+		writeError(w, http.StatusBadRequest, errLibraryNameRequired)
 		return
 	}
 	lib, err := s.store.UpdateLibraryFull(r.Context(), id, in)

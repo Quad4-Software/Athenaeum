@@ -1,17 +1,16 @@
 package server
 
 import (
-	"errors"
 	"os"
 )
 
 func uploadPartName(uploadID string) (string, error) {
 	if len(uploadID) != 32 {
-		return "", errors.New("invalid upload id")
+		return "", errInvalidUploadID
 	}
 	for _, c := range uploadID {
 		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
-			return "", errors.New("invalid upload id")
+			return "", errInvalidUploadID
 		}
 	}
 	return uploadID + ".part", nil

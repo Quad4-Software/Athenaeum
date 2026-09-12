@@ -49,7 +49,7 @@ func (s *Server) serveLibraryFile(w http.ResponseWriter, r *http.Request, librar
 	info, err := fs.Stat(r.Context(), relPath)
 	if err != nil {
 		if errors.Is(err, libfs.ErrNotExist) {
-			writeError(w, http.StatusNotFound, errors.New("file missing on disk"))
+			writeError(w, http.StatusNotFound, errFileMissing)
 			return
 		}
 		writeError(w, http.StatusInternalServerError, err)
@@ -58,7 +58,7 @@ func (s *Server) serveLibraryFile(w http.ResponseWriter, r *http.Request, librar
 	f, err := fs.Open(r.Context(), relPath)
 	if err != nil {
 		if errors.Is(err, libfs.ErrNotExist) {
-			writeError(w, http.StatusNotFound, errors.New("file missing on disk"))
+			writeError(w, http.StatusNotFound, errFileMissing)
 			return
 		}
 		writeError(w, http.StatusInternalServerError, err)

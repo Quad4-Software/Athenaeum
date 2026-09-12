@@ -36,7 +36,7 @@ func (s *Server) handleGetFavorite(w http.ResponseWriter, r *http.Request) {
 	fav, err := s.store.IsFavorite(r.Context(), userID, id)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			writeError(w, http.StatusNotFound, errors.New("book not found"))
+			writeError(w, http.StatusNotFound, errBookNotFound)
 		} else {
 			writeError(w, http.StatusInternalServerError, err)
 		}
@@ -60,7 +60,7 @@ func (s *Server) handleSetFavorite(w http.ResponseWriter, r *http.Request) {
 	userID := UserIDFromContext(r.Context())
 	if err := s.store.SetFavorite(r.Context(), userID, id, body.Favorite); err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			writeError(w, http.StatusNotFound, errors.New("book not found"))
+			writeError(w, http.StatusNotFound, errBookNotFound)
 		} else {
 			writeError(w, http.StatusInternalServerError, err)
 		}

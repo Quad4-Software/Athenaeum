@@ -57,10 +57,10 @@ func (s *Server) usesExternalAuth(r *http.Request) bool {
 	if c, err := r.Cookie(auth.RefreshCookie); err == nil && c.Value != "" {
 		return false
 	}
-	if strings.HasPrefix(r.Header.Get("Authorization"), "Basic ") {
+	if strings.HasPrefix(r.Header.Get(auth.HeaderAuthorization), "Basic ") {
 		return true
 	}
-	_, ok := auth.ParseAPIKey(r.Header.Get("Authorization"), r.Header.Get("X-API-Key"))
+	_, ok := auth.ParseAPIKey(r.Header.Get(auth.HeaderAuthorization), r.Header.Get(auth.HeaderAPIKey))
 	return ok
 }
 

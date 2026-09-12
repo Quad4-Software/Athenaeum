@@ -1,9 +1,25 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
+)
+
+// Shared error values for messages returned by more than one handler.
+var (
+	errBookNotFound          = errors.New("book not found")
+	errInvalidID             = errors.New("invalid id")
+	errFileMissing           = errors.New("file missing on disk")
+	errUploadAccessDenied    = errors.New("upload access denied")
+	errInvalidRelPath        = errors.New("invalid relPath")
+	errInvalidUploadID       = errors.New("invalid upload id")
+	errTagNameRequired       = errors.New("name required")
+	errShareExpired          = errors.New("share link expired")
+	errNotAComic             = errors.New("not a comic")
+	errLibraryFieldsRequired = errors.New("name and mountPath are required")
+	errLibraryNameRequired   = errors.New("name is required")
 )
 
 func prefersHTML(r *http.Request) bool {
