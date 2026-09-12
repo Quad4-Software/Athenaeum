@@ -181,6 +181,7 @@ describe("decideEpubNarration", () => {
         narratorActive: true,
         provider: "browser",
         kokoroEnabled: true,
+        serverEnabled: false,
         browserAvailable: true,
       }),
     ).toEqual({ kind: "toggle-off" });
@@ -192,6 +193,7 @@ describe("decideEpubNarration", () => {
         narratorActive: false,
         provider: "browser",
         kokoroEnabled: false,
+        serverEnabled: false,
         browserAvailable: false,
       }),
     ).toEqual({ kind: "error", key: "narrator.errUnavailable" });
@@ -203,6 +205,7 @@ describe("decideEpubNarration", () => {
         narratorActive: false,
         provider: "kokoro",
         kokoroEnabled: false,
+        serverEnabled: false,
         browserAvailable: true,
       }),
     ).toEqual({ kind: "start", switchToBrowser: true });
@@ -211,9 +214,31 @@ describe("decideEpubNarration", () => {
         narratorActive: false,
         provider: "kokoro",
         kokoroEnabled: false,
+        serverEnabled: false,
         browserAvailable: false,
       }),
     ).toEqual({ kind: "error", key: "narrator.errKokoro" });
+  });
+
+  it("falls back from server to browser when TTS is off", () => {
+    expect(
+      decideEpubNarration({
+        narratorActive: false,
+        provider: "server",
+        kokoroEnabled: false,
+        serverEnabled: false,
+        browserAvailable: true,
+      }),
+    ).toEqual({ kind: "start", switchToBrowser: true });
+    expect(
+      decideEpubNarration({
+        narratorActive: false,
+        provider: "server",
+        kokoroEnabled: false,
+        serverEnabled: false,
+        browserAvailable: false,
+      }),
+    ).toEqual({ kind: "error", key: "narrator.errServer" });
   });
 
   it("starts with the current provider when ready", () => {
@@ -222,6 +247,7 @@ describe("decideEpubNarration", () => {
         narratorActive: false,
         provider: "kokoro",
         kokoroEnabled: true,
+        serverEnabled: false,
         browserAvailable: false,
       }),
     ).toEqual({ kind: "start", switchToBrowser: false });

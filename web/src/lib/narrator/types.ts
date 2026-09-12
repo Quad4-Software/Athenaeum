@@ -1,5 +1,5 @@
 /** TTS provider identifiers. */
-export type NarratorProvider = "browser" | "kokoro";
+export type NarratorProvider = "browser" | "kokoro" | "server";
 
 export interface NarratorVoice {
   id: string;
@@ -18,9 +18,37 @@ export interface NarratorStatus {
 export interface TTSSettingsPublic {
   enabled: boolean;
   baseUrl: string;
+  model: string;
   defaultVoice: string;
+  responseFormat: string;
   apiKeySet: boolean;
   timeoutSec: number;
+}
+
+export interface TTSUserPrefs {
+  voice: string;
+  speed: number;
+  schedEnabled: boolean;
+  schedStart: string;
+  schedEnd: string;
+}
+
+export interface TTSJob {
+  id: number;
+  userId: number;
+  bookId: number;
+  bookTitle?: string;
+  voice: string;
+  speed: number;
+  status: "queued" | "running" | "done" | "failed" | "cancelled";
+  totalChapters: number;
+  doneChapters: number;
+  outputDir?: string;
+  error?: string;
+  runAt?: number;
+  createdAt: string;
+  startedAt?: string;
+  finishedAt?: string;
 }
 
 export type SpeakResult = "ended" | "cancelled" | "error";

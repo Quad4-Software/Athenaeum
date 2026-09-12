@@ -205,7 +205,7 @@
         "tags": [
           "Admin"
         ],
-        "summary": "Kokoro TTS sidecar settings",
+        "summary": "TTS sidecar settings",
         "description": "Auth: admin",
         "operationId": "GET__api_admin_tts",
         "responses": {
@@ -235,7 +235,7 @@
         "tags": [
           "Admin"
         ],
-        "summary": "Update Kokoro TTS settings",
+        "summary": "Update TTS settings",
         "description": "Auth: admin",
         "operationId": "PUT__api_admin_tts",
         "responses": {
@@ -267,7 +267,7 @@
         "tags": [
           "Admin"
         ],
-        "summary": "Ping Kokoro TTS sidecar",
+        "summary": "Ping TTS sidecar",
         "description": "Auth: admin",
         "operationId": "POST__api_admin_tts_test",
         "responses": {
@@ -3693,12 +3693,291 @@
         ]
       }
     },
+    "/api/tts/jobs": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List your audiobook jobs (admins: all=1)",
+        "description": "Auth: required",
+        "operationId": "GET__api_tts_jobs",
+        "parameters": [
+          {
+            "name": "all",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Queue a whole-book narration job",
+        "description": "Auth: required\nBody: {bookId, voice?, speed?}",
+        "operationId": "POST__api_tts_jobs",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/tts/jobs/{id}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete a finished job record",
+        "description": "Auth: required",
+        "operationId": "DELETE__api_tts_jobs__id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/tts/jobs/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Cancel a queued or running job",
+        "description": "Auth: required",
+        "operationId": "POST__api_tts_jobs__id__cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/tts/jobs/{id}/retry": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Requeue a finished, failed, or cancelled job",
+        "description": "Auth: required",
+        "operationId": "POST__api_tts_jobs__id__retry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/tts/prefs": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Your narration preferences and schedule",
+        "description": "Auth: required",
+        "operationId": "GET__api_tts_prefs",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Save narration preferences",
+        "description": "Auth: required\nBody: {voice, speed, schedEnabled, schedStart, schedEnd}",
+        "operationId": "PUT__api_tts_prefs",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "basicAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/tts/status": {
       "get": {
         "tags": [
           "Admin"
         ],
-        "summary": "Whether Kokoro TTS is enabled",
+        "summary": "Whether server TTS is enabled",
         "description": "Auth: required",
         "operationId": "GET__api_tts_status",
         "responses": {
@@ -3730,9 +4009,19 @@
         "tags": [
           "Admin"
         ],
-        "summary": "Synthesize speech via Kokoro sidecar",
-        "description": "Auth: required",
+        "summary": "Synthesize speech via the TTS sidecar",
+        "description": "Auth: required\nBody: {text, voice, speed}\nResponse: audio bytes",
         "operationId": "POST__api_tts_synthesize",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success"
@@ -3762,7 +4051,7 @@
         "tags": [
           "Admin"
         ],
-        "summary": "List Kokoro voices",
+        "summary": "List TTS voices",
         "description": "Auth: required",
         "operationId": "GET__api_tts_voices",
         "responses": {

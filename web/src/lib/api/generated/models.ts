@@ -620,10 +620,30 @@ export interface SystemStats {
   sandbox?: Record<string, unknown>;
 }
 
+export interface TTSJob {
+  id: number;
+  userId: number;
+  bookId: number;
+  bookTitle?: string;
+  voice: string;
+  speed: number;
+  status: string;
+  totalChapters: number;
+  doneChapters: number;
+  outputDir?: string;
+  error?: string;
+  runAt?: number;
+  createdAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
 export interface TTSSettingsPublic {
   enabled: boolean;
   baseUrl: string;
+  model: string;
   defaultVoice: string;
+  responseFormat: string;
   apiKeySet: boolean;
   timeoutSec: number;
 }
@@ -631,6 +651,14 @@ export interface TTSSettingsPublic {
 export interface TTSStatus {
   enabled: boolean;
   defaultVoice: string;
+}
+
+export interface TTSUserPrefs {
+  voice: string;
+  speed: number;
+  schedEnabled: boolean;
+  schedStart: string;
+  schedEnd: string;
 }
 
 export interface Tag {

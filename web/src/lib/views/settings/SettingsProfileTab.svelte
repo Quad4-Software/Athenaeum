@@ -10,6 +10,7 @@
   import { i18n } from "$lib/stores/i18n.svelte";
   import { pwa } from "$lib/stores/pwa.svelte";
   import { ApiError, api } from "$lib/api/client";
+  import SettingsTTSSection from "$lib/views/settings/SettingsTTSSection.svelte";
   import { scorePassword } from "$lib/utils/password-strength";
   import { totpQrDataUrl } from "$lib/utils/totp-qr";
   import type { UserSession } from "$lib/api/types";
@@ -384,6 +385,8 @@
       {/if}
       {#if totpMsg}<p class="mt-2 text-xs text-danger">{totpMsg}</p>{/if}
     </div>
+
+    <SettingsTTSSection />
 
     <div class="rounded-[var(--radius-card)] border border-border bg-surface p-5">
       <div class="space-y-2">

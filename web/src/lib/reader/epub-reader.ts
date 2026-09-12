@@ -42,7 +42,7 @@ export type EpubContentsFrame = { document?: Document; window?: Window };
 
 export type EpubNarratorDecision =
   | { kind: "toggle-off" }
-  | { kind: "error"; key: "narrator.errUnavailable" | "narrator.errKokoro" }
+  | { kind: "error"; key: "narrator.errUnavailable" | "narrator.errKokoro" | "narrator.errServer" }
   | { kind: "start"; switchToBrowser: boolean };
 
 /** Maps UI spread mode to epubjs rendition spread. */
@@ -164,6 +164,7 @@ export function decideEpubNarration(input: {
   narratorActive: boolean;
   provider: string;
   kokoroEnabled: boolean;
+  serverEnabled: boolean;
   browserAvailable: boolean;
 }): EpubNarratorDecision {
   if (input.narratorActive) return { kind: "toggle-off" };
@@ -172,6 +173,10 @@ export function decideEpubNarration(input: {
   }
   if (input.provider === "kokoro" && !input.kokoroEnabled) {
     if (!input.browserAvailable) return { kind: "error", key: "narrator.errKokoro" };
+    return { kind: "start", switchToBrowser: true };
+  }
+  if (input.provider === "server" && !input.serverEnabled) {
+    if (!input.browserAvailable) return { kind: "error", key: "narrator.errServer" };
     return { kind: "start", switchToBrowser: true };
   }
   return { kind: "start", switchToBrowser: false };

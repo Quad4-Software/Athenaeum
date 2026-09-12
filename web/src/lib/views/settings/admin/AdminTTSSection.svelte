@@ -16,7 +16,9 @@
   let apiKey = $state("");
   let enabled = $state(false);
   let baseUrl = $state("");
+  let model = $state("kokoro");
   let defaultVoice = $state("af_heart");
+  let responseFormat = $state("mp3");
   let timeoutSec = $state(60);
 
   $effect(() => {
@@ -35,7 +37,9 @@
       cfg = next;
       enabled = next.enabled;
       baseUrl = next.baseUrl;
+      model = next.model || "kokoro";
       defaultVoice = next.defaultVoice || "af_heart";
+      responseFormat = next.responseFormat || "mp3";
       timeoutSec = next.timeoutSec || 60;
       apiKey = "";
     }
@@ -50,7 +54,9 @@
         saveTTSAdmin({
           enabled,
           baseUrl: baseUrl.trim(),
+          model: model.trim() || "kokoro",
           defaultVoice: defaultVoice.trim() || "af_heart",
+          responseFormat: responseFormat || "mp3",
           apiKey: apiKey || undefined,
           timeoutSec,
         }),
@@ -104,14 +110,36 @@
         bind:value={baseUrl}
         autocomplete="off"
       />
-      <input
-        type="text"
-        class="field-input"
-        placeholder={i18n.t("settings.ttsDefaultVoice")}
-        aria-label={i18n.t("settings.ttsDefaultVoice")}
-        bind:value={defaultVoice}
-        autocomplete="off"
-      />
+      <div class="grid gap-3 sm:grid-cols-2">
+        <input
+          type="text"
+          class="field-input"
+          placeholder={i18n.t("settings.ttsModel")}
+          aria-label={i18n.t("settings.ttsModel")}
+          bind:value={model}
+          autocomplete="off"
+        />
+        <input
+          type="text"
+          class="field-input"
+          placeholder={i18n.t("settings.ttsDefaultVoice")}
+          aria-label={i18n.t("settings.ttsDefaultVoice")}
+          bind:value={defaultVoice}
+          autocomplete="off"
+        />
+      </div>
+      <label class="block text-sm text-fg">
+        <span class="mb-1 block text-xs text-muted">{i18n.t("settings.ttsFormat")}</span>
+        <select class="field-input" bind:value={responseFormat}>
+          <option value="mp3">mp3</option>
+          <option value="wav">wav</option>
+          <option value="opus">opus</option>
+          <option value="flac">flac</option>
+          <option value="m4a">m4a</option>
+          <option value="aac">aac</option>
+          <option value="pcm">pcm</option>
+        </select>
+      </label>
       <input
         type="password"
         class="field-input"

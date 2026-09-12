@@ -225,7 +225,10 @@
     "ratingFailed": "Failed to save rating",
     "converting": "Converting to {target}…",
     "converted": "Converted to {target}",
-    "convertFailed": "Conversion failed"
+    "convertFailed": "Conversion failed",
+    "generateAudio": "Generate audiobook",
+    "generateAudioQueued": "Audiobook generation queued",
+    "generateAudioFailed": "Could not queue audiobook generation"
   },
   "confirm": {
     "confirm": "- Evet .",
@@ -309,7 +312,9 @@
     "errEmpty": "Bu sayfada okunur bir metin yok",
     "errSpeak": "Hikaye başarısız oldu .",
     "errKokoro": "Kokoro TTS kullanılamıyor.",
-    "kokoroLoading": "Loading Kokoro model (first time may take a while)…"
+    "kokoroLoading": "Loading Kokoro model (first time may take a while)…",
+    "providerServer": "Server",
+    "errServer": "Server narration failed or is not configured. Try again or switch provider."
   },
   "settings": {
     "title": "Ayarlar",
@@ -462,7 +467,31 @@
       "s3TestOk": "S3 connection OK",
       "s3TestFailed": "S3 test failed",
       "scanFailed": "Scan failed"
-    }
+    },
+    "ttsModel": "Model id (sent as model, e.g. kokoro)",
+    "ttsFormat": "Audio format for narration",
+    "ttsPrefsTitle": "Narration",
+    "ttsPrefsHint": "Defaults for server narration and audiobook generation.",
+    "ttsSpeed": "Speed",
+    "ttsSchedule": "Only generate audiobooks inside a daily window",
+    "ttsScheduleStart": "From",
+    "ttsScheduleEnd": "Until",
+    "ttsJobsTitle": "Audiobook generation",
+    "ttsJobsEmptyTitle": "No audiobook jobs",
+    "ttsJobsEmptyBody": "Queue a book from its page to generate narration.",
+    "ttsJobStatus": {
+      "queued": "Queued",
+      "running": "Running",
+      "done": "Done",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "ttsJobProgress": "{done} of {total} chapters",
+    "ttsJobCancel": "Cancel",
+    "ttsJobCancelTitle": "Cancel audiobook job?",
+    "ttsJobCancelBody": "Stop generating \"{title}\"? Chapters finished so far are kept.",
+    "ttsJobRetry": "Retry",
+    "ttsJobActionFailed": "Could not update job"
   },
   "sort": {
     "label": "Kitapları sıralamak",
@@ -580,7 +609,8 @@
   },
   "common": {
     "loading": "- Yüklenme...",
-    "dismiss": "İptal"
+    "dismiss": "İptal",
+    "refresh": "Refresh"
   },
   "folderBrowser": {
     "emptyTitle": "Dosya bulunamadı",

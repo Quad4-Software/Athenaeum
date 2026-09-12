@@ -1,8 +1,10 @@
 import { storageKey } from "$lib/brand/storage";
 import { PersistedState } from "runed";
 import { createBrowserEngine, isBrowserTTSAvailable } from "$lib/narrator/browser";
+import { createServerEngine } from "$lib/narrator/server";
 import {
   createKokoroEngine,
+  fetchTTSStatus,
   isKokoroWasmAvailable,
   onKokoroWasmLoading,
   preloadKokoroWasm,
@@ -18,14 +20,19 @@ const RATE_KEY = storageKey("narrator-rate");
 const SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 
 export type NarratorErrorCode =
-  "unavailable" | "empty" | "speak_failed" | "kokoro_unavailable" | "aborted";
+  | "unavailable"
+  | "empty"
+  | "speak_failed"
+  | "kokoro_unavailable"
+  | "server_unavailable"
+  | "aborted";
 
 class NarratorStore {
   #providerState = new PersistedState<NarratorProvider>(PROVIDER_KEY, "browser", {
     serializer: {
       // Stored as a bare provider string, not JSON.
       serialize: (value) => value,
-      deserialize: (value) => (value === "kokoro" ? "kokoro" : "browser"),
+      deserialize: (value) => (value === "kokoro" || value === "server" ? value : "browser"),
     },
   });
   #voiceState = new PersistedState<string>(VOICE_KEY, "", {
@@ -48,6 +55,8 @@ class NarratorStore {
   paused = $state(false);
   /** True when in-browser Kokoro WASM can run (WebAssembly present). */
   kokoroEnabled = $state(isKokoroWasmAvailable());
+  /** True when the server TTS sidecar is configured by an admin. */
+  serverEnabled = $state(false);
   kokoroLoading = $state(false);
   voices = $state<NarratorVoice[]>([]);
   voicesLoading = $state(false);
@@ -113,7 +122,16 @@ class NarratorStore {
 
   async refreshStatus(): Promise<void> {
     this.kokoroEnabled = isKokoroWasmAvailable();
+    try {
+      const status = await fetchTTSStatus();
+      this.serverEnabled = status.enabled;
+    } catch {
+      this.serverEnabled = false;
+    }
     if (!this.kokoroEnabled && this.provider === "kokoro") {
+      this.provider = this.serverEnabled ? "server" : "browser";
+    }
+    if (!this.serverEnabled && this.provider === "server") {
       this.provider = "browser";
     }
     this.statusLoaded = true;
@@ -145,6 +163,10 @@ class NarratorStore {
   setProvider(provider: NarratorProvider) {
     if (provider === "kokoro" && !isKokoroWasmAvailable()) {
       this.error = "kokoro_unavailable";
+      return;
+    }
+    if (provider === "server" && !this.serverEnabled) {
+      this.error = "server_unavailable";
       return;
     }
     if (provider === "browser" && !isBrowserTTSAvailable()) {
@@ -190,6 +212,10 @@ class NarratorStore {
     }
     if (this.provider === "kokoro" && !isKokoroWasmAvailable()) {
       this.error = "kokoro_unavailable";
+      return false;
+    }
+    if (this.provider === "server" && !this.serverEnabled) {
+      this.error = "server_unavailable";
       return false;
     }
 
@@ -288,7 +314,12 @@ class NarratorStore {
 
   private ensureEngine(): NarratorEngine {
     if (this.engine && this.engine.id === this.provider) return this.engine;
-    this.engine = this.provider === "kokoro" ? createKokoroEngine() : createBrowserEngine();
+    this.engine =
+      this.provider === "kokoro"
+        ? createKokoroEngine()
+        : this.provider === "server"
+          ? createServerEngine()
+          : createBrowserEngine();
     return this.engine;
   }
 
@@ -332,7 +363,12 @@ class NarratorStore {
         return;
       }
       if (result === "error") {
-        this.error = this.provider === "kokoro" ? "kokoro_unavailable" : "speak_failed";
+        this.error =
+          this.provider === "kokoro"
+            ? "kokoro_unavailable"
+            : this.provider === "server"
+              ? "server_unavailable"
+              : "speak_failed";
         this.playing = false;
         return;
       }

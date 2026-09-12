@@ -1,4 +1,13 @@
-import { Copy, FileOutput, FileText, Pencil, ScanSearch, Star, Trash2 } from "@lucide/svelte";
+import {
+  AudioLines,
+  Copy,
+  FileOutput,
+  FileText,
+  Pencil,
+  ScanSearch,
+  Star,
+  Trash2,
+} from "@lucide/svelte";
 import { api, ApiError } from "$lib/api/client";
 import { router } from "$lib/router.svelte";
 import { routes } from "$lib/routes";
@@ -10,6 +19,7 @@ import { i18n } from "$lib/stores/i18n.svelte";
 import { can } from "$lib/permissions";
 import { parseAudioLocation } from "$lib/audio/progress";
 import { bookOfflineCache } from "$lib/offline/book-cache";
+import { queueTTSJob } from "$lib/narrator/kokoro";
 import {
   isAudioFormat,
   isComicFormat,
@@ -220,6 +230,16 @@ export function resumeLabel(book: Book, progress: Progress | null): string | nul
   return null;
 }
 
+/** Queue a whole-book narration job on the server TTS sidecar. */
+export async function queueAudiobookJob(book: Book): Promise<void> {
+  try {
+    await queueTTSJob(book.id);
+    toast.success(i18n.t("book.generateAudioQueued"));
+  } catch (e) {
+    toast.error(e instanceof ApiError ? e.message : i18n.t("book.generateAudioFailed"));
+  }
+}
+
 export interface BuildMenuItemsParams {
   book: Book;
   isFavorite: boolean;
@@ -230,6 +250,7 @@ export interface BuildMenuItemsParams {
   onDownloadBibtex: () => void;
   onToggleFavorite: () => void;
   onDelete: () => void;
+  onGenerateAudio?: () => void;
 }
 
 export function buildMenuItems(params: BuildMenuItemsParams): MenuItem[] {
@@ -243,6 +264,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuItem[] {
     onDownloadBibtex,
     onToggleFavorite,
     onDelete,
+    onGenerateAudio,
   } = params;
   return [
     ...(can("edit_metadata")
@@ -294,6 +316,16 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuItem[] {
       active: isFavorite,
       onclick: onToggleFavorite,
     },
+    ...(onGenerateAudio && book.format === "epub"
+      ? [
+          {
+            id: "generate-audio",
+            label: i18n.t("book.generateAudio"),
+            icon: AudioLines,
+            onclick: onGenerateAudio,
+          },
+        ]
+      : []),
     ...(can("delete_books")
       ? [
           {

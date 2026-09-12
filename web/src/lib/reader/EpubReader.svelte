@@ -438,6 +438,7 @@
       narratorActive: narrator.active,
       provider: narrator.provider,
       kokoroEnabled: narrator.kokoroEnabled,
+      serverEnabled: narrator.serverEnabled,
       browserAvailable: isBrowserTTSAvailable(),
     });
     if (decision.kind === "toggle-off") {

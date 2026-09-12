@@ -22,7 +22,9 @@
           ? "narrator.errEmpty"
           : code === "kokoro_unavailable"
             ? "narrator.errKokoro"
-            : "narrator.errSpeak";
+            : code === "server_unavailable"
+              ? "narrator.errServer"
+              : "narrator.errSpeak";
     toast.error(i18n.t(key));
     narrator.error = null;
   });
@@ -157,12 +159,16 @@
           align="end"
           minWidth={180}
           items={[
-            {
-              id: "browser",
-              label: i18n.t("narrator.providerBrowser"),
-              active: narrator.provider === "browser",
-              onclick: () => narrator.setProvider("browser" as NarratorProvider),
-            },
+            ...(narrator.serverEnabled
+              ? [
+                  {
+                    id: "server",
+                    label: i18n.t("narrator.providerServer"),
+                    active: narrator.provider === "server",
+                    onclick: () => narrator.setProvider("server" as NarratorProvider),
+                  },
+                ]
+              : []),
             ...(narrator.kokoroEnabled
               ? [
                   {
@@ -173,6 +179,12 @@
                   },
                 ]
               : []),
+            {
+              id: "browser",
+              label: i18n.t("narrator.providerBrowser"),
+              active: narrator.provider === "browser",
+              onclick: () => narrator.setProvider("browser" as NarratorProvider),
+            },
           ]}
         >
           {#snippet trigger(props)}
@@ -184,7 +196,9 @@
             >
               {narrator.provider === "kokoro"
                 ? i18n.t("narrator.providerKokoro")
-                : i18n.t("narrator.providerBrowser")}
+                : narrator.provider === "server"
+                  ? i18n.t("narrator.providerServer")
+                  : i18n.t("narrator.providerBrowser")}
             </button>
           {/snippet}
         </Dropdown>

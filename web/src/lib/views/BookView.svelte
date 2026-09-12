@@ -28,6 +28,7 @@
   import { formatBytes, seriesLabel } from "$lib/utils/format";
   import { descriptionLooksLikeHtml } from "$lib/utils/sanitize-html";
   import { bookOfflineCache, type BookOfflineStatus } from "$lib/offline/book-cache";
+  import { narrator } from "$lib/stores/narrator.svelte";
   import { isAudioFormat, type Book, type Progress } from "$lib/api/types";
   import type { MenuItem } from "$lib/components/menu";
 
@@ -76,6 +77,7 @@
     editorOpen = false;
     editorPanel = "edit";
     ui.pageTitle = "";
+    if (!narrator.statusLoaded) void narrator.refreshStatus();
     Promise.all([api.getBook(bookId), api.getProgress(bookId)])
       .then(([b, p]) => {
         book = b;
@@ -249,6 +251,11 @@
     await bookViewActions.convertBook(book, target);
   }
 
+  function generateAudio() {
+    if (!book) return;
+    void bookViewActions.queueAudiobookJob(book);
+  }
+
   const menuItems = $derived<MenuItem[]>(
     book
       ? bookViewActions.buildMenuItems({
@@ -267,6 +274,8 @@
             void toggleFavorite();
           },
           onDelete: () => void deleteBook(),
+          onGenerateAudio:
+            narrator.serverEnabled && book.format === "epub" ? generateAudio : undefined,
         })
       : [],
   );

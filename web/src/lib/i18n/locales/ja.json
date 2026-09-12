@@ -225,7 +225,10 @@
     "ratingFailed": "Failed to save rating",
     "converting": "Converting to {target}…",
     "converted": "Converted to {target}",
-    "convertFailed": "Conversion failed"
+    "convertFailed": "Conversion failed",
+    "generateAudio": "Generate audiobook",
+    "generateAudioQueued": "Audiobook generation queued",
+    "generateAudioFailed": "Could not queue audiobook generation"
   },
   "confirm": {
     "confirm": "確認する",
@@ -444,7 +447,31 @@
       "s3TestOk": "S3 connection OK",
       "s3TestFailed": "S3 test failed",
       "scanFailed": "Scan failed"
-    }
+    },
+    "ttsModel": "Model id (sent as model, e.g. kokoro)",
+    "ttsFormat": "Audio format for narration",
+    "ttsPrefsTitle": "Narration",
+    "ttsPrefsHint": "Defaults for server narration and audiobook generation.",
+    "ttsSpeed": "Speed",
+    "ttsSchedule": "Only generate audiobooks inside a daily window",
+    "ttsScheduleStart": "From",
+    "ttsScheduleEnd": "Until",
+    "ttsJobsTitle": "Audiobook generation",
+    "ttsJobsEmptyTitle": "No audiobook jobs",
+    "ttsJobsEmptyBody": "Queue a book from its page to generate narration.",
+    "ttsJobStatus": {
+      "queued": "Queued",
+      "running": "Running",
+      "done": "Done",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "ttsJobProgress": "{done} of {total} chapters",
+    "ttsJobCancel": "Cancel",
+    "ttsJobCancelTitle": "Cancel audiobook job?",
+    "ttsJobCancelBody": "Stop generating \"{title}\"? Chapters finished so far are kept.",
+    "ttsJobRetry": "Retry",
+    "ttsJobActionFailed": "Could not update job"
   },
   "sort": {
     "label": "本を並べ替える",
@@ -562,7 +589,8 @@
   },
   "common": {
     "loading": "読み込み中...",
-    "dismiss": "解雇する"
+    "dismiss": "解雇する",
+    "refresh": "Refresh"
   },
   "folderBrowser": {
     "emptyTitle": "フォルダが見つかりません",
@@ -771,7 +799,9 @@
     "errEmpty": "No readable text on this page",
     "errSpeak": "Narration failed",
     "errKokoro": "Kokoro TTS is unavailable. Check Admin -> Narration settings.",
-    "kokoroLoading": "Loading Kokoro model (first time may take a while)…"
+    "kokoroLoading": "Loading Kokoro model (first time may take a while)…",
+    "providerServer": "Server",
+    "errServer": "Server narration failed or is not configured. Try again or switch provider."
   },
   "invite": {
     "title": "Accept invite",
