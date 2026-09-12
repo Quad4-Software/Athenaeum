@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS books (
 	language      TEXT    NOT NULL DEFAULT '',
 	description   TEXT    NOT NULL DEFAULT '',
 	mtime         INTEGER NOT NULL DEFAULT 0,
+	publisher        TEXT    NOT NULL DEFAULT '',
+	age_rating       TEXT    NOT NULL DEFAULT '',
+	reading_direction TEXT   NOT NULL DEFAULT '',
 	added_at      INTEGER NOT NULL,
 	modified_at   INTEGER NOT NULL
 );

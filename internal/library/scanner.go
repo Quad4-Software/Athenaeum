@@ -354,6 +354,7 @@ func (s *Scanner) process(ctx context.Context, fs libfs.LibraryFS, j job, indexe
 	var coverData []byte
 	var chapters []models.Chapter
 	var isbn, asin string
+	var comicTags []string
 
 	switch format {
 	case models.FormatEPUB:
@@ -388,6 +389,8 @@ func (s *Scanner) process(ctx context.Context, fs libfs.LibraryFS, j job, indexe
 		book.Title = filepath.Base(j.relPath)
 	case models.FormatCBZ, models.FormatCBR:
 		meta := parseComic(parsePath)
+		applyComicInfo(book, meta.Info)
+		comicTags = meta.Info.Tags
 		coverData = meta.CoverData
 		book.HasCover = len(coverData) > 0
 	default:
@@ -424,7 +427,9 @@ func (s *Scanner) process(ctx context.Context, fs libfs.LibraryFS, j job, indexe
 	}
 
 	skipCover := false
+	isNewBook := true
 	if existing, err := s.store.GetBookByPath(ctx, j.libraryID, j.relPath); err == nil {
+		isNewBook = false
 		book.MetaEdited = existing.MetaEdited
 		book.CoverEdited = existing.CoverEdited
 		if existing.CoverEdited {
@@ -442,6 +447,14 @@ func (s *Scanner) process(ctx context.Context, fs libfs.LibraryFS, j job, indexe
 
 	if len(coverData) > 0 && !skipCover {
 		s.writeCover(id, coverData)
+	}
+
+	// ComicInfo Genre/Tags seed tags only on first index so rescans never
+	// clobber user tag edits.
+	if isNewBook && len(comicTags) > 0 {
+		if _, err := s.store.SetBookTags(ctx, id, comicTags); err != nil {
+			s.log.Warn("comic tags save failed", "id", id, "err", err)
+		}
 	}
 
 	if err := s.store.ReplaceChapters(ctx, id, chapters); err != nil {

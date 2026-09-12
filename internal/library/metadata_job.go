@@ -167,6 +167,10 @@ func (m *MetadataMatcher) matchOne(ctx context.Context, book models.Book, applyC
 	}
 
 	update := MatchToBookUpdate(match)
+	// External matches do not carry comic fields; keep stored values.
+	update.Publisher = book.Publisher
+	update.AgeRating = book.AgeRating
+	update.ReadingDirection = book.ReadingDirection
 	if update.Title == "" {
 		m.progress.skipped.Add(1)
 		return
@@ -208,12 +212,15 @@ func CleanStoredSeriesNames(ctx context.Context, store *storage.Store) (int64, e
 			continue
 		}
 		if _, err := store.UpdateBookMetadata(ctx, b.ID, models.BookUpdate{
-			Title:       b.Title,
-			Author:      b.Author,
-			Series:      cleaned,
-			SeriesIndex: b.SeriesIndex,
-			Language:    b.Language,
-			Description: b.Description,
+			Title:            b.Title,
+			Author:           b.Author,
+			Series:           cleaned,
+			SeriesIndex:      b.SeriesIndex,
+			Language:         b.Language,
+			Description:      b.Description,
+			Publisher:        b.Publisher,
+			AgeRating:        b.AgeRating,
+			ReadingDirection: b.ReadingDirection,
 		}); err != nil {
 			return updated, err
 		}
@@ -244,12 +251,15 @@ func CleanStoredBookText(ctx context.Context, store *storage.Store) (int64, erro
 			continue
 		}
 		if _, err := store.UpdateBookMetadata(ctx, b.ID, models.BookUpdate{
-			Title:       newTitle,
-			Author:      newAuthor,
-			Series:      newSeries,
-			SeriesIndex: b.SeriesIndex,
-			Language:    b.Language,
-			Description: b.Description,
+			Title:            newTitle,
+			Author:           newAuthor,
+			Series:           newSeries,
+			SeriesIndex:      b.SeriesIndex,
+			Language:         b.Language,
+			Description:      b.Description,
+			Publisher:        b.Publisher,
+			AgeRating:        b.AgeRating,
+			ReadingDirection: b.ReadingDirection,
 		}); err != nil {
 			return updated, err
 		}

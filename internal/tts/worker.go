@@ -380,12 +380,15 @@ func (w *Worker) finishBook(ctx context.Context, book models.Book, outDir string
 		gen = entries[0]
 	}
 	_, err = w.store.UpdateBookMetadata(ctx, gen.ID, models.BookUpdate{
-		Title:       book.Title,
-		Author:      book.Author,
-		Series:      book.Series,
-		SeriesIndex: book.SeriesIndex,
-		Language:    book.Language,
-		Description: book.Description,
+		Title:            book.Title,
+		Author:           book.Author,
+		Series:           book.Series,
+		SeriesIndex:      book.SeriesIndex,
+		Language:         book.Language,
+		Description:      book.Description,
+		Publisher:        book.Publisher,
+		AgeRating:        book.AgeRating,
+		ReadingDirection: book.ReadingDirection,
 	})
 	if err != nil {
 		w.log.Warn("tts metadata copy failed", "err", err)

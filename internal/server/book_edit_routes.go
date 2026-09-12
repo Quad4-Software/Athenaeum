@@ -90,6 +90,10 @@ func (s *Server) handleMetadataApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	update := library.MatchToBookUpdate(req.Match)
+	// External matches do not carry comic fields; keep stored values.
+	update.Publisher = book.Publisher
+	update.AgeRating = book.AgeRating
+	update.ReadingDirection = book.ReadingDirection
 	if update.Title == "" {
 		writeError(w, http.StatusBadRequest, errors.New("match title is required"))
 		return

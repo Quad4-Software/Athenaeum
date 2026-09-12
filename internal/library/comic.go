@@ -28,6 +28,7 @@ type comicMeta struct {
 	PageCount int
 	CoverData []byte
 	Pages     []comicPageEntry
+	Info      comicInfo
 }
 
 type comicPageEntry struct {
@@ -138,8 +139,13 @@ func parseCBZ(path string) comicMeta {
 	}
 	defer zr.Close()
 	var pages []comicPageEntry
+	var info comicInfo
 	for _, f := range zr.File {
 		if f.FileInfo().IsDir() || strings.HasPrefix(filepath.Base(f.Name), ".") {
+			continue
+		}
+		if strings.EqualFold(f.Name, comicInfoName) {
+			info = readZipComicInfo(f)
 			continue
 		}
 		ext := strings.ToLower(filepath.Ext(f.Name))
@@ -150,11 +156,20 @@ func parseCBZ(path string) comicMeta {
 		pages = append(pages, comicPageEntry{Name: f.Name, Mime: mime})
 	}
 	sortComicPages(pages)
-	meta := comicMeta{Pages: pages, PageCount: len(pages)}
+	meta := comicMeta{Pages: pages, PageCount: len(pages), Info: info}
 	if len(pages) > 0 {
 		meta.CoverData = readZipImage(zr, pages[0].Name)
 	}
 	return meta
+}
+
+func readZipComicInfo(f *zip.File) comicInfo {
+	rc, err := f.Open()
+	if err != nil {
+		return comicInfo{}
+	}
+	defer rc.Close()
+	return parseComicInfo(rc)
 }
 
 func readZipImage(zr *zip.ReadCloser, name string) []byte {
@@ -188,6 +203,7 @@ func parseCBR(path string) comicMeta {
 	}
 	var pages []comicPageEntry
 	var cover []byte
+	var info comicInfo
 	for {
 		hdr, err := rr.Next()
 		if err == io.EOF {
@@ -198,6 +214,10 @@ func parseCBR(path string) comicMeta {
 		}
 		name := hdr.Name
 		if strings.HasPrefix(filepath.Base(name), ".") {
+			continue
+		}
+		if strings.EqualFold(name, comicInfoName) {
+			info = parseComicInfo(rr)
 			continue
 		}
 		ext := strings.ToLower(filepath.Ext(name))
@@ -211,7 +231,7 @@ func parseCBR(path string) comicMeta {
 		}
 	}
 	sortComicPages(pages)
-	return comicMeta{Pages: pages, PageCount: len(pages), CoverData: cover}
+	return comicMeta{Pages: pages, PageCount: len(pages), CoverData: cover, Info: info}
 }
 
 func sortComicPages(pages []comicPageEntry) {

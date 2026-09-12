@@ -73,34 +73,47 @@ func IsPaper(b Book) bool {
 // AnonymousUserID is used for progress and collections when auth is disabled.
 const AnonymousUserID int64 = 0
 
+// Reading direction values stored on Book.ReadingDirection.
+const (
+	ReadingDirectionLTR = "ltr"
+	ReadingDirectionRTL = "rtl"
+)
+
 // Book represents a single item in the library.
 type Book struct {
-	ID            int64     `json:"id"`
-	LibraryID     int64     `json:"libraryId,omitempty"`
-	Title         string    `json:"title"`
-	Author        string    `json:"author"`
-	Series        string    `json:"series,omitempty"`
-	SeriesIndex   float64   `json:"seriesIndex,omitempty"`
-	Format        string    `json:"format"`
-	RelPath       string    `json:"relPath"`
-	FileSize      int64     `json:"fileSize"`
-	HasCover      bool      `json:"hasCover"`
-	Language      string    `json:"language,omitempty"`
-	Description   string    `json:"description,omitempty"`
-	DOI           string    `json:"doi,omitempty"`
-	ArxivID       string    `json:"arxivId,omitempty"`
-	PubmedID      string    `json:"pubmedId,omitempty"`
-	Journal       string    `json:"journal,omitempty"`
-	Volume        string    `json:"volume,omitempty"`
-	Issue         string    `json:"issue,omitempty"`
-	Pages         string    `json:"pages,omitempty"`
-	PublishedYear int       `json:"publishedYear,omitempty"`
-	AddedAt       time.Time `json:"addedAt"`
-	ModifiedAt    time.Time `json:"modifiedAt"`
-	MetaEdited    bool      `json:"metaEdited,omitempty"`
-	CoverEdited   bool      `json:"coverEdited,omitempty"`
-	ContentHash   string    `json:"contentHash,omitempty"`
-	DuplicateOf   int64     `json:"duplicateOf,omitempty"`
+	ID            int64   `json:"id"`
+	LibraryID     int64   `json:"libraryId,omitempty"`
+	Title         string  `json:"title"`
+	Author        string  `json:"author"`
+	Series        string  `json:"series,omitempty"`
+	SeriesIndex   float64 `json:"seriesIndex,omitempty"`
+	Format        string  `json:"format"`
+	RelPath       string  `json:"relPath"`
+	FileSize      int64   `json:"fileSize"`
+	HasCover      bool    `json:"hasCover"`
+	Language      string  `json:"language,omitempty"`
+	Description   string  `json:"description,omitempty"`
+	DOI           string  `json:"doi,omitempty"`
+	ArxivID       string  `json:"arxivId,omitempty"`
+	PubmedID      string  `json:"pubmedId,omitempty"`
+	Journal       string  `json:"journal,omitempty"`
+	Volume        string  `json:"volume,omitempty"`
+	Issue         string  `json:"issue,omitempty"`
+	Pages         string  `json:"pages,omitempty"`
+	PublishedYear int     `json:"publishedYear,omitempty"`
+
+	// Publisher, AgeRating and ReadingDirection come from comic archive
+	// metadata (ComicInfo.xml) or manual edits.
+	Publisher        string `json:"publisher,omitempty"`
+	AgeRating        string `json:"ageRating,omitempty"`
+	ReadingDirection string `json:"readingDirection,omitempty"`
+
+	AddedAt     time.Time `json:"addedAt"`
+	ModifiedAt  time.Time `json:"modifiedAt"`
+	MetaEdited  bool      `json:"metaEdited,omitempty"`
+	CoverEdited bool      `json:"coverEdited,omitempty"`
+	ContentHash string    `json:"contentHash,omitempty"`
+	DuplicateOf int64     `json:"duplicateOf,omitempty"`
 
 	// ProgressPercent is the reader's completion for this book (0–1), when listing with a user context.
 	ProgressPercent float64 `json:"progressPercent,omitempty"`
@@ -120,20 +133,23 @@ type Book struct {
 
 // BookUpdate carries user-edited metadata fields.
 type BookUpdate struct {
-	Title         string  `json:"title"`
-	Author        string  `json:"author"`
-	Series        string  `json:"series,omitempty"`
-	SeriesIndex   float64 `json:"seriesIndex,omitempty"`
-	Language      string  `json:"language,omitempty"`
-	Description   string  `json:"description,omitempty"`
-	DOI           string  `json:"doi,omitempty"`
-	ArxivID       string  `json:"arxivId,omitempty"`
-	PubmedID      string  `json:"pubmedId,omitempty"`
-	Journal       string  `json:"journal,omitempty"`
-	Volume        string  `json:"volume,omitempty"`
-	Issue         string  `json:"issue,omitempty"`
-	Pages         string  `json:"pages,omitempty"`
-	PublishedYear int     `json:"publishedYear,omitempty"`
+	Title            string  `json:"title"`
+	Author           string  `json:"author"`
+	Series           string  `json:"series,omitempty"`
+	SeriesIndex      float64 `json:"seriesIndex,omitempty"`
+	Language         string  `json:"language,omitempty"`
+	Description      string  `json:"description,omitempty"`
+	DOI              string  `json:"doi,omitempty"`
+	ArxivID          string  `json:"arxivId,omitempty"`
+	PubmedID         string  `json:"pubmedId,omitempty"`
+	Journal          string  `json:"journal,omitempty"`
+	Volume           string  `json:"volume,omitempty"`
+	Issue            string  `json:"issue,omitempty"`
+	Pages            string  `json:"pages,omitempty"`
+	PublishedYear    int     `json:"publishedYear,omitempty"`
+	Publisher        string  `json:"publisher,omitempty"`
+	AgeRating        string  `json:"ageRating,omitempty"`
+	ReadingDirection string  `json:"readingDirection,omitempty"`
 }
 
 // Progress captures a reader's position within a book so reading can be

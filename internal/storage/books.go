@@ -21,8 +21,8 @@ func (s *Store) UpsertBook(ctx context.Context, b *models.Book, mtime int64) (in
 	return s.insertID(ctx, `
 INSERT INTO books (library_id, title, author, series, series_index, format, rel_path, abs_path,
 	file_size, has_cover, language, description, doi, arxiv_id, pubmed_id, journal, volume, issue, pages,
-	published_year, mtime, added_at, modified_at, meta_edited, cover_edited)
-VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+	published_year, publisher, age_rating, reading_direction, mtime, added_at, modified_at, meta_edited, cover_edited)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 ON CONFLICT(library_id, rel_path) DO UPDATE SET
 	title=CASE WHEN books.meta_edited=1 THEN books.title ELSE excluded.title END,
 	author=CASE WHEN books.meta_edited=1 THEN books.author ELSE excluded.author END,
@@ -42,12 +42,16 @@ ON CONFLICT(library_id, rel_path) DO UPDATE SET
 	issue=CASE WHEN books.meta_edited=1 THEN books.issue ELSE excluded.issue END,
 	pages=CASE WHEN books.meta_edited=1 THEN books.pages ELSE excluded.pages END,
 	published_year=CASE WHEN books.meta_edited=1 THEN books.published_year ELSE excluded.published_year END,
+	publisher=CASE WHEN books.meta_edited=1 THEN books.publisher ELSE excluded.publisher END,
+	age_rating=CASE WHEN books.meta_edited=1 THEN books.age_rating ELSE excluded.age_rating END,
+	reading_direction=CASE WHEN books.meta_edited=1 THEN books.reading_direction ELSE excluded.reading_direction END,
 	mtime=excluded.mtime,
 	modified_at=excluded.modified_at
 RETURNING id`,
 		b.LibraryID, b.Title, b.Author, b.Series, b.SeriesIndex, b.Format, b.RelPath, b.AbsPath,
 		b.FileSize, boolToInt(b.HasCover), b.Language, b.Description,
 		b.DOI, b.ArxivID, b.PubmedID, b.Journal, b.Volume, b.Issue, b.Pages, b.PublishedYear,
+		b.Publisher, b.AgeRating, b.ReadingDirection,
 		mtime, now, now, boolToInt(b.MetaEdited), boolToInt(b.CoverEdited))
 }
 
@@ -124,12 +128,13 @@ func (s *Store) DeleteBook(ctx context.Context, id int64) error {
 
 const selectColumns = `SELECT id, library_id, title, author, series, series_index, format, rel_path,
 	abs_path, file_size, has_cover, language, description, doi, arxiv_id, pubmed_id, journal, volume, issue, pages,
-	published_year, added_at, modified_at, meta_edited, cover_edited,
+	published_year, publisher, age_rating, reading_direction, added_at, modified_at, meta_edited, cover_edited,
 	content_hash, duplicate_of, hidden, audiobook_set_id FROM books`
 
 const listSelectColumns = `SELECT books.id, books.library_id, books.title, books.author, books.series, books.series_index, books.format, books.rel_path,
 	'' AS abs_path, books.file_size, books.has_cover, books.language, '' AS description,
 	books.doi, books.arxiv_id, books.pubmed_id, books.journal, books.volume, books.issue, books.pages, books.published_year,
+	books.publisher, books.age_rating, books.reading_direction,
 	books.added_at, books.modified_at, books.meta_edited, books.cover_edited,
 	books.content_hash, books.duplicate_of, COALESCE(progress.percent, 0) FROM books`
 
@@ -162,11 +167,15 @@ UPDATE books SET
 	issue=?,
 	pages=?,
 	published_year=?,
+	publisher=?,
+	age_rating=?,
+	reading_direction=?,
 	meta_edited=1,
 	modified_at=?
 WHERE id=?`,
 		u.Title, u.Author, u.Series, u.SeriesIndex, u.Language, u.Description,
 		u.DOI, u.ArxivID, u.PubmedID, u.Journal, u.Volume, u.Issue, u.Pages, u.PublishedYear,
+		u.Publisher, u.AgeRating, u.ReadingDirection,
 		now, id)
 	if err != nil {
 		return models.Book{}, err
@@ -558,6 +567,7 @@ func scanBook(row scanner) (models.Book, error) {
 	err := row.Scan(&b.ID, &b.LibraryID, &b.Title, &b.Author, &b.Series, &b.SeriesIndex, &b.Format,
 		&b.RelPath, &b.AbsPath, &b.FileSize, &hasCover, &b.Language, &b.Description,
 		&b.DOI, &b.ArxivID, &b.PubmedID, &b.Journal, &b.Volume, &b.Issue, &b.Pages, &b.PublishedYear,
+		&b.Publisher, &b.AgeRating, &b.ReadingDirection,
 		&added, &modified, &metaEdited, &coverEdited, &b.ContentHash, &b.DuplicateOf, &hidden, &setID)
 	if err != nil {
 		return models.Book{}, err
@@ -579,6 +589,7 @@ func scanListBook(row scanner) (models.Book, error) {
 	err := row.Scan(&b.ID, &b.LibraryID, &b.Title, &b.Author, &b.Series, &b.SeriesIndex, &b.Format,
 		&b.RelPath, &b.AbsPath, &b.FileSize, &hasCover, &b.Language, &b.Description,
 		&b.DOI, &b.ArxivID, &b.PubmedID, &b.Journal, &b.Volume, &b.Issue, &b.Pages, &b.PublishedYear,
+		&b.Publisher, &b.AgeRating, &b.ReadingDirection,
 		&added, &modified, &metaEdited, &coverEdited, &b.ContentHash, &b.DuplicateOf, &progress)
 	if err != nil {
 		return models.Book{}, err
@@ -614,6 +625,7 @@ func (s *Store) ListBooksForMetadata(ctx context.Context, libraryID int64, ids [
 SELECT id, library_id, title, author, series, series_index, format, rel_path, abs_path,
 	file_size, content_hash, has_cover, meta_edited, cover_edited, language, description,
 	doi, arxiv_id, pubmed_id, journal, volume, issue, pages, published_year,
+	publisher, age_rating, reading_direction,
 	added_at, modified_at, duplicate_of
 FROM books WHERE id IN (%s) ORDER BY id ASC`, placeholders), args...)
 		if err != nil {
@@ -633,6 +645,7 @@ FROM books WHERE id IN (%s) ORDER BY id ASC`, placeholders), args...)
 SELECT id, library_id, title, author, series, series_index, format, rel_path, abs_path,
 	file_size, content_hash, has_cover, meta_edited, cover_edited, language, description,
 	doi, arxiv_id, pubmed_id, journal, volume, issue, pages, published_year,
+	publisher, age_rating, reading_direction,
 	added_at, modified_at, duplicate_of
 FROM books`+clause+` ORDER BY id ASC`, args...)
 	if err != nil {
@@ -654,6 +667,7 @@ func scanMetadataBooks(rows *sql.Rows) ([]models.Book, error) {
 			&b.RelPath, &b.AbsPath, &b.FileSize, &b.ContentHash, &hasCover, &metaEdited,
 			&coverEdited, &b.Language, &b.Description,
 			&b.DOI, &b.ArxivID, &b.PubmedID, &b.Journal, &b.Volume, &b.Issue, &b.Pages, &b.PublishedYear,
+			&b.Publisher, &b.AgeRating, &b.ReadingDirection,
 			&added, &modified, &dup,
 		); err != nil {
 			return nil, err
