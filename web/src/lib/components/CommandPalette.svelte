@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { tick } from "svelte";
   import { Search, CornerDownLeft } from "@lucide/svelte";
+  import { Command, Dialog } from "bits-ui";
   import { api } from "$lib/api/client";
   import { router } from "$lib/router.svelte";
   import { commandPalette } from "$lib/stores/commandPalette.svelte";
@@ -17,9 +17,6 @@
   type BookRow = { kind: "book"; id: string; book: RecentBook; title: string };
   type PaletteRow = CommandRow | BookRow;
 
-  let inputEl = $state<HTMLInputElement | null>(null);
-  let listEl = $state<HTMLDivElement | null>(null);
-  let activeIndex = $state(0);
   let bookHits = $state<Book[]>([]);
   let searching = $state(false);
   let searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -53,14 +50,6 @@
     }));
   });
 
-  let rows = $derived<PaletteRow[]>([...bookRows, ...commandRows]);
-
-  $effect(() => {
-    if (!commandPalette.open) return;
-    activeIndex = 0;
-    void tick().then(() => inputEl?.focus());
-  });
-
   $effect(() => {
     const q = query.trim();
     if (!commandPalette.open) return;
@@ -89,54 +78,8 @@
     };
   });
 
-  $effect(() => {
-    void rows;
-    if (activeIndex >= rows.length) activeIndex = Math.max(0, rows.length - 1);
-  });
-
   function close() {
     commandPalette.hide();
-  }
-
-  function onOverlayKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      close();
-    }
-  }
-
-  function onInputKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      close();
-      return;
-    }
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      if (rows.length === 0) return;
-      activeIndex = (activeIndex + 1) % rows.length;
-      scrollActive();
-      return;
-    }
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      if (rows.length === 0) return;
-      activeIndex = (activeIndex - 1 + rows.length) % rows.length;
-      scrollActive();
-      return;
-    }
-    if (event.key === "Enter") {
-      event.preventDefault();
-      const row = rows[activeIndex];
-      if (row) void activate(row);
-    }
-  }
-
-  function scrollActive() {
-    void tick().then(() => {
-      const el = listEl?.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`);
-      el?.scrollIntoView({ block: "nearest" });
-    });
   }
 
   async function activate(row: PaletteRow) {
@@ -162,136 +105,112 @@
   }
 </script>
 
-{#if commandPalette.open}
-  <div class="palette-root" role="presentation" onkeydown={onOverlayKeydown}>
-    <button
-      type="button"
-      class="palette-backdrop"
-      aria-label={i18n.t("commands.close")}
-      onclick={close}
-    ></button>
-    <div
-      class="palette-panel"
-      role="dialog"
-      aria-modal="true"
-      aria-label={i18n.t("commands.paletteTitle")}
-    >
-      <div class="palette-input-wrap">
-        <Search size={18} class="text-subtle" />
-        <input
-          bind:this={inputEl}
-          class="palette-input"
-          type="search"
-          placeholder={i18n.t("commands.palettePlaceholder")}
-          value={query}
-          oninput={(e) => {
-            commandPalette.query = e.currentTarget.value;
-            activeIndex = 0;
-          }}
-          onkeydown={onInputKeydown}
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <kbd class="palette-kbd">{isMac ? "esc" : "Esc"}</kbd>
-      </div>
+<Dialog.Root
+  open={commandPalette.open}
+  onOpenChange={(next) => {
+    if (!next) close();
+  }}
+>
+  <Dialog.Portal>
+    <Dialog.Overlay class="palette-backdrop" />
+    <Dialog.Content class="palette-panel" aria-label={i18n.t("commands.paletteTitle")}>
+      <Command.Root shouldFilter={false} loop label={i18n.t("commands.paletteTitle")}>
+        <div class="palette-input-wrap">
+          <Search size={18} class="text-subtle" />
+          <Command.Input
+            bind:value={commandPalette.query}
+            class="palette-input"
+            placeholder={i18n.t("commands.palettePlaceholder")}
+            autofocus
+            spellcheck="false"
+          />
+          <kbd class="palette-kbd">{isMac ? "esc" : "Esc"}</kbd>
+        </div>
 
-      <div
-        class="palette-list"
-        bind:this={listEl}
-        role="listbox"
-        aria-label={i18n.t("commands.results")}
-      >
-        {#if rows.length === 0}
-          <p class="palette-empty">
-            {searching ? i18n.t("common.loading") : i18n.t("commands.noResults")}
-          </p>
-        {:else}
-          {#if bookRows.length > 0}
-            <p class="palette-section">
-              {query.trim() ? i18n.t("commands.sectionBooks") : i18n.t("commands.sectionRecent")}
-            </p>
-            {#each bookRows as row, i (row.id)}
-              <button
-                type="button"
-                role="option"
-                data-index={i}
-                class="palette-row"
-                class:palette-row--active={i === activeIndex}
-                aria-selected={i === activeIndex}
-                onclick={() => void activate(row)}
-                onmouseenter={() => (activeIndex = i)}
-              >
-                <span class="palette-thumb">
-                  {#if row.book.hasCover}
-                    <img
-                      src={api.coverUrl(row.book.id, row.book.modifiedAt)}
-                      alt=""
-                      loading="lazy"
-                    />
-                  {:else}
-                    <span class="palette-thumb-fallback"></span>
-                  {/if}
-                </span>
-                <span class="min-w-0 flex-1 text-left">
-                  <span class="block truncate text-sm text-fg">{row.title}</span>
-                  {#if row.book.author}
-                    <span class="block truncate text-xs text-muted">{row.book.author}</span>
-                  {/if}
-                </span>
-                <CornerDownLeft size={14} class="text-subtle opacity-60" />
-              </button>
-            {/each}
-          {/if}
+        <Command.List class="palette-list" aria-label={i18n.t("commands.results")}>
+          <Command.Viewport>
+            <Command.Empty class="palette-empty">
+              {searching ? i18n.t("common.loading") : i18n.t("commands.noResults")}
+            </Command.Empty>
 
-          {#if commandRows.length > 0}
-            <p class="palette-section">{i18n.t("commands.sectionCommands")}</p>
-            {#each commandRows as row, j (row.id)}
-              {@const i = bookRows.length + j}
-              <button
-                type="button"
-                role="option"
-                data-index={i}
-                class="palette-row"
-                class:palette-row--active={i === activeIndex}
-                aria-selected={i === activeIndex}
-                onclick={() => void activate(row)}
-                onmouseenter={() => (activeIndex = i)}
-              >
-                <span class="min-w-0 flex-1 text-left text-sm text-fg">{row.title}</span>
-                {#if chordLabel(row.command)}
-                  <kbd class="palette-chord">{chordLabel(row.command)}</kbd>
-                {/if}
-              </button>
-            {/each}
-          {/if}
-        {/if}
-      </div>
-    </div>
-  </div>
-{/if}
+            {#if bookRows.length > 0}
+              <Command.Group value="books">
+                <Command.GroupHeading class="palette-section">
+                  {query.trim()
+                    ? i18n.t("commands.sectionBooks")
+                    : i18n.t("commands.sectionRecent")}
+                </Command.GroupHeading>
+                {#each bookRows as row (row.id)}
+                  <Command.Item
+                    class="palette-row"
+                    value={row.id}
+                    onSelect={() => void activate(row)}
+                  >
+                    <span class="palette-thumb">
+                      {#if row.book.hasCover}
+                        <img
+                          src={api.coverUrl(row.book.id, row.book.modifiedAt)}
+                          alt=""
+                          loading="lazy"
+                        />
+                      {:else}
+                        <span class="palette-thumb-fallback"></span>
+                      {/if}
+                    </span>
+                    <span class="min-w-0 flex-1 text-left">
+                      <span class="block truncate text-sm text-fg">{row.title}</span>
+                      {#if row.book.author}
+                        <span class="block truncate text-xs text-muted">{row.book.author}</span>
+                      {/if}
+                    </span>
+                    <CornerDownLeft size={14} class="text-subtle opacity-60" />
+                  </Command.Item>
+                {/each}
+              </Command.Group>
+            {/if}
+
+            {#if commandRows.length > 0}
+              <Command.Group value="commands">
+                <Command.GroupHeading class="palette-section">
+                  {i18n.t("commands.sectionCommands")}
+                </Command.GroupHeading>
+                {#each commandRows as row (row.id)}
+                  <Command.Item
+                    class="palette-row"
+                    value={row.id}
+                    onSelect={() => void activate(row)}
+                  >
+                    <span class="min-w-0 flex-1 text-left text-sm text-fg">{row.title}</span>
+                    {#if chordLabel(row.command)}
+                      <kbd class="palette-chord">{chordLabel(row.command)}</kbd>
+                    {/if}
+                  </Command.Item>
+                {/each}
+              </Command.Group>
+            {/if}
+          </Command.Viewport>
+        </Command.List>
+      </Command.Root>
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
 
 <style>
-  .palette-root {
+  :global(.palette-backdrop) {
     position: fixed;
     inset: 0;
     z-index: 80;
-    display: grid;
-    place-items: start center;
-    padding: 12vh 1rem 1rem;
-  }
-
-  .palette-backdrop {
-    position: absolute;
-    inset: 0;
-    border: 0;
     background: var(--overlay);
-    cursor: default;
+    animation: fade-in 140ms ease-out;
   }
 
-  .palette-panel {
-    position: relative;
-    z-index: 1;
-    width: min(36rem, 100%);
+  :global(.palette-panel) {
+    position: fixed;
+    top: 12vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 81;
+    width: min(36rem, calc(100vw - 2rem));
     overflow: hidden;
     border-radius: 0.85rem;
     border: 1px solid var(--border);
@@ -308,7 +227,7 @@
     padding: 0.85rem 1rem;
   }
 
-  .palette-input {
+  :global(.palette-input) {
     flex: 1;
     min-width: 0;
     border: 0;
@@ -318,7 +237,7 @@
     outline: none;
   }
 
-  .palette-input::placeholder {
+  :global(.palette-input)::placeholder {
     color: var(--fg-subtle);
   }
 
@@ -334,13 +253,13 @@
     color: var(--fg-subtle);
   }
 
-  .palette-list {
+  :global(.palette-list) {
     max-height: min(24rem, 55vh);
     overflow: auto;
     padding: 0.4rem;
   }
 
-  .palette-section {
+  :global(.palette-section) {
     margin: 0.35rem 0.5rem 0.2rem;
     font-family: var(--font-display);
     font-size: 0.7rem;
@@ -350,7 +269,7 @@
     color: var(--fg-subtle);
   }
 
-  .palette-row {
+  :global(.palette-row) {
     display: flex;
     width: 100%;
     align-items: center;
@@ -363,7 +282,7 @@
     color: inherit;
   }
 
-  .palette-row--active {
+  :global(.palette-row[data-selected]) {
     background: color-mix(in oklch, var(--primary) 14%, var(--surface-hover));
   }
 
@@ -388,7 +307,7 @@
     background: color-mix(in oklch, var(--border) 55%, var(--bg));
   }
 
-  .palette-empty {
+  :global(.palette-empty) {
     margin: 0;
     padding: 1.5rem 1rem;
     text-align: center;

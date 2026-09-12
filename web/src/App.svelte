@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { tick } from "svelte";
-  import { fade, fly } from "svelte/transition";
   import { X } from "@lucide/svelte";
+  import { Dialog, Tooltip } from "bits-ui";
   import Sidebar from "$lib/components/Sidebar.svelte";
   import Topbar from "$lib/components/Topbar.svelte";
   import ToastHost from "$lib/components/ToastHost.svelte";
@@ -40,42 +39,6 @@
   import { errorCodeFromSlug } from "$lib/errors";
   import { captureException } from "$lib/telemetry/sentry";
 
-  let mobileNavPanel = $state<HTMLDivElement | null>(null);
-  let mobileNavCloseBtn = $state<HTMLButtonElement | null>(null);
-
-  const FOCUSABLE =
-    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-  function focusableIn(root: HTMLElement): HTMLElement[] {
-    return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-      (el) => el.getClientRects().length > 0,
-    );
-  }
-
-  function onMobileNavKeydown(e: KeyboardEvent) {
-    if (!ui.mobileNavOpen) return;
-    if (e.key === "Escape") {
-      e.preventDefault();
-      ui.closeMobileNav();
-      return;
-    }
-    if (e.key !== "Tab" || !mobileNavPanel) return;
-    const focusables = focusableIn(mobileNavPanel);
-    if (focusables.length === 0) return;
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    const active = document.activeElement;
-    if (e.shiftKey) {
-      if (active === first || !mobileNavPanel.contains(active)) {
-        e.preventDefault();
-        last.focus();
-      }
-    } else if (active === last || !mobileNavPanel.contains(active)) {
-      e.preventDefault();
-      first.focus();
-    }
-  }
-
   function onCrash(error: unknown) {
     captureException(error);
   }
@@ -83,16 +46,6 @@
   function reloadPage() {
     window.location.reload();
   }
-
-  $effect(() => {
-    if (!ui.mobileNavOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    void tick().then(() => mobileNavCloseBtn?.focus());
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  });
 
   $effect(() => {
     void auth.init();
@@ -176,178 +129,163 @@
   });
 </script>
 
-<svelte:window
-  onkeydown={(e) => {
-    onMobileNavKeydown(e);
-    handleShellKeydown(e);
-  }}
-/>
+<svelte:window onkeydown={handleShellKeydown} />
 
 <svelte:boundary onerror={onCrash}>
-  {#if route.name === "reader"}
-    {#if auth.loading || auth.needsLogin}
-      <div class="grid h-[100dvh] place-items-center text-sm text-muted">
-        {i18n.t("common.loading")}
-      </div>
-    {:else}
-      {#await import("$lib/views/ReaderView.svelte")}
+  <Tooltip.Provider>
+    {#if route.name === "reader"}
+      {#if auth.loading || auth.needsLogin}
         <div class="grid h-[100dvh] place-items-center text-sm text-muted">
           {i18n.t("common.loading")}
         </div>
-      {:then { default: ReaderView }}
-        <ReaderView id={bookId} />
-      {:catch}
-        <ErrorView
-          title={i18n.t("error.chunkTitle")}
-          message={i18n.t("error.chunkMessage")}
-          onRetry={reloadPage}
-        />
-      {/await}
-    {/if}
-  {:else if route.name === "setup"}
-    <SetupView />
-  {:else if route.name === "login"}
-    <LoginView />
-  {:else if route.name === "invite"}
-    <InviteView />
-  {:else if route.name === "error"}
-    <ErrorView code={errorCodeFromSlug(route.params.code || "not-found")} />
-  {:else if auth.loading || auth.needsLogin}
-    <div class="flex h-[100dvh] flex-col gap-4 p-6">
-      <Skeleton height="2.5rem" width="12rem" rounded="lg" />
-      <div class="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-        {#each Array(12) as _, i (i)}
-          <div class="space-y-2">
-            <Skeleton rounded="card" height="0" class="aspect-[2/3] w-full" />
-            <Skeleton height="0.875rem" width="80%" />
+      {:else}
+        {#await import("$lib/views/ReaderView.svelte")}
+          <div class="grid h-[100dvh] place-items-center text-sm text-muted">
+            {i18n.t("common.loading")}
           </div>
-        {/each}
-      </div>
-    </div>
-  {:else}
-    <a
-      href="#main-content"
-      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-fg"
-    >
-      {i18n.t("a11y.skipToContent")}
-    </a>
-    <div class="flex h-[100dvh] overflow-hidden">
-      <aside
-        class="hidden h-full min-h-0 shrink-0 overflow-hidden border-r border-border bg-bg-elevated transition-[width] duration-200 md:block
-        {ui.sidebarCollapsed ? 'w-16' : 'w-60'}"
-      >
-        <Sidebar collapsed={ui.sidebarCollapsed} />
-      </aside>
-
-      <div class="flex min-h-0 min-w-0 flex-1 flex-col">
-        <ConnectivityBanner />
-        <PwaUpdateBanner />
-        <Topbar bookTitle={ui.pageTitle} />
-        <main
-          id="main-content"
-          tabindex="-1"
-          class="min-h-0 flex-1 outline-none pb-bottom-chrome
-            {route.name === 'settings' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'}"
-        >
-          {#if route.name === "library" || route.name === "collection"}
-            <LibraryView />
-          {:else if route.name === "book"}
-            {#await import("$lib/views/BookView.svelte")}
-              <div class="grid place-items-center p-8 text-sm text-muted">
-                {i18n.t("common.loading")}
-              </div>
-            {:then { default: BookView }}
-              <BookView id={bookId} />
-            {:catch}
-              <ErrorView
-                title={i18n.t("error.chunkTitle")}
-                message={i18n.t("error.chunkMessage")}
-                onRetry={reloadPage}
-              />
-            {/await}
-          {:else if route.name === "settings"}
-            {#await import("$lib/views/SettingsView.svelte")}
-              <div class="grid place-items-center p-8 text-sm text-muted">
-                {i18n.t("common.loading")}
-              </div>
-            {:then { default: SettingsView }}
-              <SettingsView tab={route.params.tab || "library"} />
-            {:catch}
-              <ErrorView
-                title={i18n.t("error.chunkTitle")}
-                message={i18n.t("error.chunkMessage")}
-                onRetry={reloadPage}
-              />
-            {/await}
-          {:else if route.name === "collections"}
-            {#await import("$lib/views/CollectionsView.svelte")}
-              <div class="grid place-items-center p-8 text-sm text-muted">
-                {i18n.t("common.loading")}
-              </div>
-            {:then { default: CollectionsView }}
-              <CollectionsView />
-            {:catch}
-              <ErrorView
-                title={i18n.t("error.chunkTitle")}
-                message={i18n.t("error.chunkMessage")}
-                onRetry={reloadPage}
-              />
-            {/await}
-          {:else if route.name === "notfound"}
-            <ErrorView code={404} />
-          {:else}
-            <ErrorView code={404} />
-          {/if}
-        </main>
-      </div>
-    </div>
-
-    {#if ui.mobileNavOpen}
-      <div class="fixed inset-0 z-50 md:hidden">
-        <button
-          type="button"
-          tabindex="-1"
-          aria-label={i18n.t("topbar.closeNav")}
-          class="absolute inset-0 bg-overlay"
-          transition:fade={{ duration: 150 }}
-          onclick={() => ui.closeMobileNav()}
-        ></button>
-        <div
-          id="mobile-nav"
-          bind:this={mobileNavPanel}
-          role="dialog"
-          aria-modal="true"
-          aria-label={i18n.t("a11y.navigation")}
-          class="absolute left-0 top-0 flex h-full min-h-0 w-64 flex-col overflow-hidden border-r border-border bg-bg-elevated"
-          transition:fly={{ x: -260, duration: 200 }}
-        >
-          <button
-            type="button"
-            class="btn btn-ghost absolute right-2 top-2 z-10"
-            bind:this={mobileNavCloseBtn}
-            aria-label={i18n.t("topbar.closeNav")}
-            onclick={() => ui.closeMobileNav()}
-          >
-            <X size={18} />
-          </button>
-          <Sidebar onnavigate={() => ui.closeMobileNav()} />
+        {:then { default: ReaderView }}
+          <ReaderView id={bookId} />
+        {:catch}
+          <ErrorView
+            title={i18n.t("error.chunkTitle")}
+            message={i18n.t("error.chunkMessage")}
+            onRetry={reloadPage}
+          />
+        {/await}
+      {/if}
+    {:else if route.name === "setup"}
+      <SetupView />
+    {:else if route.name === "login"}
+      <LoginView />
+    {:else if route.name === "invite"}
+      <InviteView />
+    {:else if route.name === "error"}
+      <ErrorView code={errorCodeFromSlug(route.params.code || "not-found")} />
+    {:else if auth.loading || auth.needsLogin}
+      <div class="flex h-[100dvh] flex-col gap-4 p-6">
+        <Skeleton height="2.5rem" width="12rem" rounded="lg" />
+        <div class="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+          {#each Array(12) as _, i (i)}
+            <div class="space-y-2">
+              <Skeleton rounded="card" height="0" class="aspect-[2/3] w-full" />
+              <Skeleton height="0.875rem" width="80%" />
+            </div>
+          {/each}
         </div>
       </div>
+    {:else}
+      <a
+        href="#main-content"
+        class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-fg"
+      >
+        {i18n.t("a11y.skipToContent")}
+      </a>
+      <div class="flex h-[100dvh] overflow-hidden">
+        <aside
+          class="hidden h-full min-h-0 shrink-0 overflow-hidden border-r border-border bg-bg-elevated transition-[width] duration-200 md:block
+        {ui.sidebarCollapsed ? 'w-16' : 'w-60'}"
+        >
+          <Sidebar collapsed={ui.sidebarCollapsed} />
+        </aside>
+
+        <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+          <ConnectivityBanner />
+          <PwaUpdateBanner />
+          <Topbar bookTitle={ui.pageTitle} />
+          <main
+            id="main-content"
+            tabindex="-1"
+            class="min-h-0 flex-1 outline-none pb-bottom-chrome
+            {route.name === 'settings' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'}"
+          >
+            {#if route.name === "library" || route.name === "collection"}
+              <LibraryView />
+            {:else if route.name === "book"}
+              {#await import("$lib/views/BookView.svelte")}
+                <div class="grid place-items-center p-8 text-sm text-muted">
+                  {i18n.t("common.loading")}
+                </div>
+              {:then { default: BookView }}
+                <BookView id={bookId} />
+              {:catch}
+                <ErrorView
+                  title={i18n.t("error.chunkTitle")}
+                  message={i18n.t("error.chunkMessage")}
+                  onRetry={reloadPage}
+                />
+              {/await}
+            {:else if route.name === "settings"}
+              {#await import("$lib/views/SettingsView.svelte")}
+                <div class="grid place-items-center p-8 text-sm text-muted">
+                  {i18n.t("common.loading")}
+                </div>
+              {:then { default: SettingsView }}
+                <SettingsView tab={route.params.tab || "library"} />
+              {:catch}
+                <ErrorView
+                  title={i18n.t("error.chunkTitle")}
+                  message={i18n.t("error.chunkMessage")}
+                  onRetry={reloadPage}
+                />
+              {/await}
+            {:else if route.name === "collections"}
+              {#await import("$lib/views/CollectionsView.svelte")}
+                <div class="grid place-items-center p-8 text-sm text-muted">
+                  {i18n.t("common.loading")}
+                </div>
+              {:then { default: CollectionsView }}
+                <CollectionsView />
+              {:catch}
+                <ErrorView
+                  title={i18n.t("error.chunkTitle")}
+                  message={i18n.t("error.chunkMessage")}
+                  onRetry={reloadPage}
+                />
+              {/await}
+            {:else if route.name === "notfound"}
+              <ErrorView code={404} />
+            {:else}
+              <ErrorView code={404} />
+            {/if}
+          </main>
+        </div>
+      </div>
+
+      <Dialog.Root
+        open={ui.mobileNavOpen}
+        onOpenChange={(next) => {
+          if (!next) ui.closeMobileNav();
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay class="nav-drawer-overlay" />
+          <Dialog.Content id="mobile-nav" class="nav-drawer" aria-label={i18n.t("a11y.navigation")}>
+            <Dialog.Close
+              type="button"
+              class="btn btn-ghost nav-drawer-close"
+              aria-label={i18n.t("topbar.closeNav")}
+            >
+              <X size={18} />
+            </Dialog.Close>
+            <Sidebar onnavigate={() => ui.closeMobileNav()} />
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <BottomNav />
     {/if}
 
-    <BottomNav />
-  {/if}
+    {#if audioPlayer.active}
+      <AudioMiniPlayer />
+    {/if}
+    {#if narrator.showBar}
+      <NarratorBar />
+    {/if}
 
-  {#if audioPlayer.active}
-    <AudioMiniPlayer />
-  {/if}
-  {#if narrator.showBar}
-    <NarratorBar />
-  {/if}
-
-  <ConfirmDialogHost />
-  <ToastHost />
-  <CommandPalette />
+    <ConfirmDialogHost />
+    <ToastHost />
+    <CommandPalette />
+  </Tooltip.Provider>
 
   {#snippet failed(_error, reset)}
     <ErrorView
@@ -357,3 +295,53 @@
     />
   {/snippet}
 </svelte:boundary>
+
+<style>
+  :global(.nav-drawer-overlay) {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: var(--color-overlay);
+    animation: fade-in 150ms ease-out;
+  }
+
+  :global(.nav-drawer) {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 51;
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    width: 16rem;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-bg-elevated);
+    outline: none;
+    animation: nav-drawer-in 200ms ease-out;
+  }
+
+  :global(.nav-drawer-close) {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    z-index: 1;
+  }
+
+  @media (min-width: 48rem) {
+    :global(.nav-drawer-overlay),
+    :global(.nav-drawer) {
+      display: none;
+    }
+  }
+
+  @keyframes nav-drawer-in {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+</style>

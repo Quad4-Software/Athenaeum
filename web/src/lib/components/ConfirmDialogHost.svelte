@@ -1,133 +1,81 @@
 <script lang="ts">
-  import { tick } from "svelte";
-  import { fade, scale } from "svelte/transition";
+  import { AlertDialog } from "bits-ui";
   import { CircleAlert } from "@lucide/svelte";
   import Button from "./Button.svelte";
   import { confirmDialog } from "$lib/stores/confirm.svelte";
 
-  let panelEl = $state<HTMLDivElement | null>(null);
   let confirmBtn = $state<HTMLButtonElement | null>(null);
 
-  const FOCUSABLE =
-    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-  function focusables(): HTMLElement[] {
-    if (!panelEl) return [];
-    return Array.from(panelEl.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-      (el) => el.getClientRects().length > 0,
-    );
+  function onOpenChange(next: boolean) {
+    if (!next) confirmDialog.cancel();
   }
 
-  function onKeydown(e: KeyboardEvent) {
-    if (!confirmDialog.open) return;
-    if (e.key === "Escape") {
-      e.preventDefault();
-      confirmDialog.cancel();
-      return;
-    }
-    if (e.key !== "Tab" || !panelEl) return;
-    const items = focusables();
-    if (items.length === 0) return;
-    const first = items[0];
-    const last = items[items.length - 1];
-    const active = document.activeElement;
-    if (e.shiftKey) {
-      if (active === first || !panelEl.contains(active)) {
-        e.preventDefault();
-        last.focus();
-      }
-    } else if (active === last || !panelEl.contains(active)) {
-      e.preventDefault();
-      first.focus();
-    }
+  function onOpenAutoFocus(event: Event) {
+    event.preventDefault();
+    confirmBtn?.focus();
   }
-
-  $effect(() => {
-    if (!confirmDialog.open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    void tick().then(() => confirmBtn?.focus());
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  });
 </script>
 
-<svelte:window onkeydown={onKeydown} />
-
-{#if confirmDialog.open}
-  <div class="confirm-root" role="presentation">
-    <button
-      type="button"
-      class="confirm-backdrop"
-      tabindex="-1"
-      aria-label={confirmDialog.cancelLabel}
-      transition:fade={{ duration: 140 }}
-      onclick={() => confirmDialog.cancel()}
-    ></button>
-    <div
-      bind:this={panelEl}
-      class="confirm-panel"
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="confirm-title"
-      aria-describedby="confirm-message"
-      transition:scale={{ duration: 160, start: 0.96 }}
-    >
-      <h2 id="confirm-title" class="confirm-title">
+<AlertDialog.Root open={confirmDialog.open} {onOpenChange}>
+  <AlertDialog.Portal>
+    <AlertDialog.Overlay class="confirm-backdrop" />
+    <AlertDialog.Content class="confirm-panel" interactOutsideBehavior="close" {onOpenAutoFocus}>
+      <AlertDialog.Title class="confirm-title">
         {#if confirmDialog.danger}
           <CircleAlert size={18} class="confirm-title-icon" aria-hidden="true" />
         {/if}
         {confirmDialog.title}
-      </h2>
-      <p id="confirm-message" class="confirm-message">{confirmDialog.message}</p>
+      </AlertDialog.Title>
+      <AlertDialog.Description class="confirm-message">
+        {confirmDialog.message}
+      </AlertDialog.Description>
       <div class="confirm-actions">
-        <Button variant="ghost" class="ring-1 ring-border" onclick={() => confirmDialog.cancel()}>
-          {confirmDialog.cancelLabel}
-        </Button>
-        <button
-          type="button"
-          bind:this={confirmBtn}
+        <AlertDialog.Cancel>
+          {#snippet child({ props })}
+            <Button {...props} variant="ghost" class="ring-1 ring-border">
+              {confirmDialog.cancelLabel}
+            </Button>
+          {/snippet}
+        </AlertDialog.Cancel>
+        <AlertDialog.Action
+          bind:ref={confirmBtn}
           class="btn min-h-11 min-w-[5.5rem] {confirmDialog.danger ? 'btn-danger' : 'btn-primary'}"
           onclick={() => confirmDialog.accept()}
         >
           {confirmDialog.confirmLabel}
-        </button>
+        </AlertDialog.Action>
       </div>
-    </div>
-  </div>
-{/if}
+    </AlertDialog.Content>
+  </AlertDialog.Portal>
+</AlertDialog.Root>
 
 <style>
-  .confirm-root {
+  :global(.confirm-backdrop) {
     position: fixed;
     inset: 0;
     z-index: 70;
-    display: grid;
-    place-items: center;
-    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
-      max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
-  }
-
-  .confirm-backdrop {
-    position: absolute;
-    inset: 0;
     border: 0;
     background: var(--overlay);
-    cursor: pointer;
+    animation: confirm-fade 140ms ease-out;
   }
 
-  .confirm-panel {
-    position: relative;
-    width: min(100%, 24rem);
+  :global(.confirm-panel) {
+    position: fixed;
+    z-index: 70;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(100% - 2rem, 24rem);
     border-radius: 0.75rem;
     border: 1px solid var(--color-border);
     background: var(--color-bg-elevated);
     box-shadow: var(--shadow);
     padding: 1.25rem;
+    outline: none;
+    animation: confirm-in 160ms ease-out;
   }
 
-  .confirm-title {
+  :global(.confirm-title) {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -137,12 +85,12 @@
     color: var(--color-fg);
   }
 
-  .confirm-title :global(.confirm-title-icon) {
+  :global(.confirm-title .confirm-title-icon) {
     flex-shrink: 0;
     color: var(--color-danger);
   }
 
-  .confirm-message {
+  :global(.confirm-message) {
     margin: 0.5rem 0 0;
     font-size: 0.875rem;
     line-height: 1.5;
@@ -155,5 +103,25 @@
     justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 1.25rem;
+  }
+
+  @keyframes confirm-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes confirm-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
   }
 </style>

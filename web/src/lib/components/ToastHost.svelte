@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fly } from "svelte/transition";
+  import { Progress } from "bits-ui";
   import { CheckCircle2, CircleAlert, Info, Loader2, X } from "@lucide/svelte";
   import { toast } from "$lib/stores/toast.svelte";
   import type { ToastKind } from "$lib/stores/toast.svelte";
@@ -57,18 +58,16 @@
         </button>
       </div>
       {#if item.kind === "loading" && item.progress !== undefined}
-        <div
+        <Progress.Root
           class="toast-progress h-1.5 w-full overflow-hidden rounded-full bg-border/60"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(item.progress * 100)}
+          value={Math.round(item.progress * 100)}
+          max={100}
         >
           <div
             class="h-full rounded-full bg-accent transition-[width] duration-200"
             style:width="{Math.round(item.progress * 100)}%"
           ></div>
-        </div>
+        </Progress.Root>
       {:else if item.kind === "loading"}
         <div class="toast-progress h-1 w-full overflow-hidden rounded-full bg-border/60">
           <div class="toast-indeterminate h-full rounded-full bg-accent/80"></div>

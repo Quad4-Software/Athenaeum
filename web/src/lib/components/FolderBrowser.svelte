@@ -3,6 +3,7 @@
   import { api, ApiError } from "$lib/api/client";
   import Button from "$lib/components/Button.svelte";
   import EmptyState from "$lib/components/EmptyState.svelte";
+  import Modal from "$lib/components/Modal.svelte";
   import Skeleton from "$lib/components/Skeleton.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
   import type { FSBrowseResult } from "$lib/api/types";
@@ -54,87 +55,66 @@
   }
 </script>
 
-{#if open}
-  <div class="browser-backdrop" role="presentation" onclick={close}></div>
-  <div class="browser-panel" role="dialog" aria-modal="true" aria-label="Choose folder">
-    <div class="browser-header">
-      <div class="min-w-0">
-        <p class="browser-title">Choose folder</p>
-        <p class="browser-path">{currentPath || "Starting locations"}</p>
-      </div>
-      <button type="button" class="browser-close" aria-label="Close" onclick={close}>
-        <X size={18} />
-      </button>
+<Modal bind:open label="Choose folder" class="browser-modal" {onclose}>
+  <div class="browser-header">
+    <div class="min-w-0">
+      <p class="browser-title">Choose folder</p>
+      <p class="browser-path">{currentPath || "Starting locations"}</p>
     </div>
-
-    <div class="browser-body">
-      {#if loading}
-        <div class="browser-loading">
-          {#each Array(6) as _, i (i)}
-            <Skeleton height="2.25rem" rounded="lg" />
-          {/each}
-        </div>
-      {:else if error}
-        <p class="browser-error">{error}</p>
-      {:else}
-        {#if parentPath}
-          <button type="button" class="browser-row" onclick={() => loadBrowse(parentPath)}>
-            <ChevronUp size={16} />
-            <span>Parent folder</span>
-          </button>
-        {/if}
-        {#each entries as entry (entry.path)}
-          <button type="button" class="browser-row" onclick={() => loadBrowse(entry.path)}>
-            <Folder size={16} />
-            <span class="truncate">{entry.name}</span>
-            <span class="browser-row-path">{entry.path}</span>
-          </button>
-        {/each}
-        {#if entries.length === 0 && !parentPath}
-          <EmptyState
-            size="sm"
-            title={i18n.t("folderBrowser.emptyTitle")}
-            body={i18n.t("folderBrowser.emptyBody")}
-          >
-            {#snippet icon(size)}
-              <Folder {size} />
-            {/snippet}
-          </EmptyState>
-        {/if}
-      {/if}
-    </div>
-
-    <div class="browser-footer">
-      <Button variant="ghost" class="ring-1 ring-border" onclick={close}>Cancel</Button>
-      {#if currentPath}
-        <Button onclick={() => selectPath(currentPath)}>Select this folder</Button>
-      {/if}
-    </div>
+    <button type="button" class="browser-close" aria-label="Close" onclick={close}>
+      <X size={18} />
+    </button>
   </div>
-{/if}
+
+  <div class="browser-body">
+    {#if loading}
+      <div class="browser-loading">
+        {#each Array(6) as _, i (i)}
+          <Skeleton height="2.25rem" rounded="lg" />
+        {/each}
+      </div>
+    {:else if error}
+      <p class="browser-error">{error}</p>
+    {:else}
+      {#if parentPath}
+        <button type="button" class="browser-row" onclick={() => loadBrowse(parentPath)}>
+          <ChevronUp size={16} />
+          <span>Parent folder</span>
+        </button>
+      {/if}
+      {#each entries as entry (entry.path)}
+        <button type="button" class="browser-row" onclick={() => loadBrowse(entry.path)}>
+          <Folder size={16} />
+          <span class="truncate">{entry.name}</span>
+          <span class="browser-row-path">{entry.path}</span>
+        </button>
+      {/each}
+      {#if entries.length === 0 && !parentPath}
+        <EmptyState
+          size="sm"
+          title={i18n.t("folderBrowser.emptyTitle")}
+          body={i18n.t("folderBrowser.emptyBody")}
+        >
+          {#snippet icon(size)}
+            <Folder {size} />
+          {/snippet}
+        </EmptyState>
+      {/if}
+    {/if}
+  </div>
+
+  <div class="browser-footer">
+    <Button variant="ghost" class="ring-1 ring-border" onclick={close}>Cancel</Button>
+    {#if currentPath}
+      <Button onclick={() => selectPath(currentPath)}>Select this folder</Button>
+    {/if}
+  </div>
+</Modal>
 
 <style>
-  .browser-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    background: var(--color-overlay);
-  }
-
-  .browser-panel {
-    position: fixed;
-    z-index: 70;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+  :global(.modal-panel.browser-modal) {
     display: flex;
-    width: min(32rem, calc(100vw - 2rem));
-    max-height: min(28rem, calc(100vh - 2rem));
     flex-direction: column;
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    box-shadow: var(--shadow);
-    border: 1px solid var(--color-border);
   }
 
   .browser-header {
