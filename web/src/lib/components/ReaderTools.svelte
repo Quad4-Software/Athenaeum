@@ -71,6 +71,7 @@
         class="btn btn-ghost text-xs"
         class:ring-1={chaptersOpen}
         class:ring-border={chaptersOpen}
+        aria-label={i18n.t("reader.chapters")}
       >
         <BookOpen size={14} />
         <span class="hidden sm:inline">{i18n.t("reader.chapters")}</span>
@@ -88,6 +89,7 @@
         class="btn btn-ghost text-xs"
         class:ring-1={searchOpen}
         class:ring-border={searchOpen}
+        aria-label={i18n.t("reader.search")}
       >
         <Search size={14} />
         <span class="hidden sm:inline">{i18n.t("reader.search")}</span>
@@ -104,6 +106,7 @@
         type="search"
         class="field-input text-sm"
         placeholder={i18n.t("reader.searchPlaceholder")}
+        aria-label={i18n.t("reader.search")}
         bind:value={searchQuery}
       />
       <button type="submit" class="btn btn-primary w-full text-xs" disabled={searchBusy}>

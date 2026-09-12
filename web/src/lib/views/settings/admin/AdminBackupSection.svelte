@@ -89,6 +89,7 @@
       type="file"
       accept=".zip,application/zip"
       class="field-input"
+      aria-label={i18n.t("admin.backup.restore")}
       onchange={(e) => {
         const input = e.currentTarget;
         restoreFile = input.files?.[0] ?? null;
@@ -109,7 +110,8 @@
     <textarea
       bind:value={configImportText}
       class="field-input font-mono text-xs"
-      placeholder={i18n.t("admin.backup.importPlaceholder")}></textarea>
+      placeholder={i18n.t("admin.backup.importPlaceholder")}
+      aria-label={i18n.t("admin.backup.importConfig")}></textarea>
     <div class="pt-1">
       <button
         type="submit"

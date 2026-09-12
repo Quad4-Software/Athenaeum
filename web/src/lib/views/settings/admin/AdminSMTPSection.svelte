@@ -91,12 +91,14 @@
         type="text"
         class="field-input"
         placeholder={i18n.t("settings.smtpHost")}
+        aria-label={i18n.t("settings.smtpHost")}
         bind:value={host}
       />
       <input
         type="number"
         class="field-input"
         placeholder={i18n.t("settings.smtpPort")}
+        aria-label={i18n.t("settings.smtpPort")}
         bind:value={port}
         min="1"
         max="65535"
@@ -105,6 +107,7 @@
         type="text"
         class="field-input"
         placeholder={i18n.t("settings.smtpUsername")}
+        aria-label={i18n.t("settings.smtpUsername")}
         bind:value={username}
         autocomplete="off"
       />
@@ -114,6 +117,7 @@
         placeholder={cfg?.passwordSet
           ? i18n.t("settings.smtpPasswordKeep")
           : i18n.t("settings.smtpPassword")}
+        aria-label={i18n.t("settings.smtpPassword")}
         bind:value={password}
         autocomplete="new-password"
       />
@@ -121,6 +125,7 @@
         type="email"
         class="field-input"
         placeholder={i18n.t("settings.smtpFrom")}
+        aria-label={i18n.t("settings.smtpFrom")}
         bind:value={fromAddr}
       />
       <label class="flex items-center gap-2 text-sm text-fg">

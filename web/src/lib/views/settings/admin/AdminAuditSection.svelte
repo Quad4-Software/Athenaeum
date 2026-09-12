@@ -118,10 +118,12 @@
       type="search"
       class="field-input min-w-[12rem] flex-1 text-xs"
       placeholder={i18n.t("admin.audit.searchPlaceholder")}
+      aria-label={i18n.t("admin.audit.searchPlaceholder")}
       bind:value={auditQueryDraft}
     />
     <select
       class="field-input w-auto min-w-[10rem] text-xs"
+      aria-label="Filter by action"
       bind:value={auditAction}
       onchange={() => {
         auditPage = 0;

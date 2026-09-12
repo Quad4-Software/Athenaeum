@@ -257,8 +257,20 @@
     </div>
     <form class="space-y-3" onsubmit={register}>
       <p class="text-sm font-medium text-fg">Create user</p>
-      <input type="text" placeholder="Username" bind:value={regUser} class="field-input" />
-      <input type="password" placeholder="Password" bind:value={regPass} class="field-input" />
+      <input
+        type="text"
+        placeholder="Username"
+        aria-label="Username"
+        bind:value={regUser}
+        class="field-input"
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        aria-label="Password"
+        bind:value={regPass}
+        class="field-input"
+      />
       <PasswordStrength password={regPass} policy={auth.passwordPolicy} />
       <div class="pt-1">
         <button
@@ -280,6 +292,7 @@
       <input
         type="text"
         placeholder="Username (optional, auto-generated if empty)"
+        aria-label="Username (optional)"
         bind:value={guestUser}
         class="field-input"
       />
@@ -399,6 +412,7 @@
                     required
                     class="field-input"
                     placeholder="New password for {u.username}"
+                    aria-label="New password"
                   />
                   <PasswordStrength password={resetPass} policy={auth.passwordPolicy} />
                   <Button

@@ -1,17 +1,24 @@
 <script lang="ts">
-  import { Pencil, Search, Trash2, Upload } from "@lucide/svelte";
+  import { Pencil } from "@lucide/svelte";
   import { Collapsible } from "bits-ui";
   import { tick } from "svelte";
-  import Cover from "$lib/components/Cover.svelte";
+  import MetadataIdentifyPanel from "$lib/components/metadata/MetadataIdentifyPanel.svelte";
+  import CoverUpload from "$lib/components/metadata/CoverUpload.svelte";
+  import BookEditForm from "$lib/components/metadata/BookEditForm.svelte";
+  import {
+    bookToEditFields,
+    bookToSearchFields,
+    emptyEditFields,
+    emptySearchFields,
+    hasSearchInput,
+    providerLabel,
+    type BookEditFields,
+    type MetadataSearchFields,
+  } from "$lib/components/metadata/fields";
   import { api, ApiError } from "$lib/api/client";
   import { toast } from "$lib/stores/toast.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
-  import {
-    isAudioFormat,
-    type Book,
-    type MetadataMatch,
-    type MetadataProvider,
-  } from "$lib/api/types";
+  import type { Book, MetadataMatch, MetadataProvider } from "$lib/api/types";
 
   interface Props {
     book: Book;
@@ -29,73 +36,22 @@
 
   let identifySection = $state<HTMLElement>();
   let saving = $state(false);
-  let uploading = $state(false);
   let searching = $state(false);
 
-  let title = $state("");
-  let author = $state("");
-  let series = $state("");
-  let seriesIndex = $state("");
-  let language = $state("");
-  let description = $state("");
-  let doi = $state("");
-  let arxivId = $state("");
-  let pubmedId = $state("");
-  let journal = $state("");
-  let volume = $state("");
-  let issue = $state("");
-  let pages = $state("");
-  let publishedYear = $state("");
-
-  let searchTitle = $state("");
-  let searchAuthor = $state("");
-  let searchISBN = $state("");
-  let searchASIN = $state("");
-  let searchDOI = $state("");
-  let searchArxiv = $state("");
-  let searchPubmed = $state("");
+  let fields = $state<BookEditFields>(emptyEditFields());
+  let search = $state<MetadataSearchFields>(emptySearchFields());
   let providers = $state<MetadataProvider[]>([]);
   let selectedProviders = $state<string[]>([]);
   let matches = $state<MetadataMatch[]>([]);
   let matchCoverUrl = $state("");
   let applyCoverOnSave = $state(true);
 
-  let providerHint = $derived(
-    providers.length > 0
-      ? i18n.t("book.providerHint", { providers: providers.map((p) => p.label).join(", ") })
-      : i18n.t("book.providerHintEmpty"),
-  );
-
-  let needsAsin = $derived(
-    isAudioFormat(book.format) ||
-      providers.some((p) => p.requiresAsin && selectedProviders.includes(p.id)),
-  );
-
   let coverKey = $state(0);
   let formSyncKey = $derived(open ? book.id : 0);
 
   function loadForm(b: Book) {
-    title = b.title;
-    author = b.author;
-    series = b.series ?? "";
-    seriesIndex = b.seriesIndex != null && b.seriesIndex > 0 ? String(b.seriesIndex) : "";
-    language = b.language ?? "";
-    description = b.description ?? "";
-    doi = b.doi ?? "";
-    arxivId = b.arxivId ?? "";
-    pubmedId = b.pubmedId ?? "";
-    journal = b.journal ?? "";
-    volume = b.volume ?? "";
-    issue = b.issue ?? "";
-    pages = b.pages ?? "";
-    publishedYear = b.publishedYear != null && b.publishedYear > 0 ? String(b.publishedYear) : "";
-    searchTitle = b.title;
-    searchAuthor = b.author;
-    searchISBN = "";
-    searchASIN = "";
-    searchDOI = b.doi ?? "";
-    searchArxiv = b.arxivId ?? "";
-    searchPubmed = b.pubmedId ?? "";
+    fields = bookToEditFields(b);
+    search = bookToSearchFields(b);
     matches = [];
     matchCoverUrl = "";
   }
@@ -119,28 +75,8 @@
     void tick().then(() => identifySection?.scrollIntoView({ block: "nearest" }));
   });
 
-  function toggleProvider(id: string) {
-    if (selectedProviders.includes(id)) {
-      selectedProviders = selectedProviders.filter((p) => p !== id);
-    } else {
-      selectedProviders = [...selectedProviders, id];
-    }
-  }
-
-  function providerLabel(id: string): string {
-    return providers.find((p) => p.id === id)?.label ?? id;
-  }
-
   async function runSearch() {
-    if (
-      !searchTitle.trim() &&
-      !searchAuthor.trim() &&
-      !searchISBN.trim() &&
-      !searchASIN.trim() &&
-      !searchDOI.trim() &&
-      !searchArxiv.trim() &&
-      !searchPubmed.trim()
-    ) {
+    if (!hasSearchInput(search)) {
       toast.error(i18n.t("book.searchNeedInput"));
       return;
     }
@@ -152,13 +88,13 @@
     matches = [];
     try {
       const res = await api.searchMetadata(book.id, {
-        title: searchTitle.trim(),
-        author: searchAuthor.trim(),
-        isbn: searchISBN.trim(),
-        asin: searchASIN.trim(),
-        doi: searchDOI.trim(),
-        arxivId: searchArxiv.trim(),
-        pubmedId: searchPubmed.trim(),
+        title: search.title.trim(),
+        author: search.author.trim(),
+        isbn: search.isbn.trim(),
+        asin: search.asin.trim(),
+        doi: search.doi.trim(),
+        arxivId: search.arxivId.trim(),
+        pubmedId: search.pubmedId.trim(),
         providers: selectedProviders,
       });
       matches = res.matches;
@@ -173,41 +109,33 @@
   }
 
   function useMatch(match: MetadataMatch) {
-    title = match.title;
-    author = match.author;
-    if (match.series) series = match.series;
+    fields.title = match.title;
+    fields.author = match.author;
+    if (match.series) fields.series = match.series;
     if (match.seriesIndex != null && match.seriesIndex > 0) {
-      seriesIndex = String(match.seriesIndex);
+      fields.seriesIndex = String(match.seriesIndex);
     }
-    if (match.language) language = match.language;
-    if (match.description) description = match.description;
-    if (match.doi) doi = match.doi;
-    if (match.arxivId) arxivId = match.arxivId;
-    if (match.pubmedId) pubmedId = match.pubmedId;
-    if (match.journal) journal = match.journal;
-    if (match.volume) volume = match.volume;
-    if (match.issue) issue = match.issue;
-    if (match.pages) pages = match.pages;
+    if (match.language) fields.language = match.language;
+    if (match.description) fields.description = match.description;
+    if (match.doi) fields.doi = match.doi;
+    if (match.arxivId) fields.arxivId = match.arxivId;
+    if (match.pubmedId) fields.pubmedId = match.pubmedId;
+    if (match.journal) fields.journal = match.journal;
+    if (match.volume) fields.volume = match.volume;
+    if (match.issue) fields.issue = match.issue;
+    if (match.pages) fields.pages = match.pages;
     if (match.publishedYear != null && match.publishedYear > 0) {
-      publishedYear = String(match.publishedYear);
+      fields.publishedYear = String(match.publishedYear);
     }
     matchCoverUrl = match.coverUrl ?? "";
-    toast.success(i18n.t("book.filledFrom", { provider: providerLabel(match.source) }));
+    toast.success(i18n.t("book.filledFrom", { provider: providerLabel(providers, match.source) }));
   }
 
   async function applyMatchNow(match: MetadataMatch) {
     saving = true;
     try {
       const updated = await api.applyMetadataMatch(book.id, match, applyCoverOnSave);
-      title = updated.title;
-      author = updated.author;
-      series = updated.series ?? "";
-      seriesIndex =
-        updated.seriesIndex != null && updated.seriesIndex > 0 ? String(updated.seriesIndex) : "";
-      language = updated.language ?? "";
-      description = updated.description ?? "";
       coverKey += 1;
-      matchCoverUrl = "";
       loadForm(updated);
       onsaved?.(updated);
       toast.success(i18n.t("book.metadataApplied"));
@@ -220,28 +148,28 @@
 
   async function save(event: Event) {
     event.preventDefault();
-    if (!title.trim()) {
+    if (!fields.title.trim()) {
       toast.error(i18n.t("book.titleRequired"));
       return;
     }
     saving = true;
     try {
-      const idx = seriesIndex.trim() ? Number(seriesIndex) : 0;
-      const year = publishedYear.trim() ? Number(publishedYear) : 0;
+      const idx = fields.seriesIndex.trim() ? Number(fields.seriesIndex) : 0;
+      const year = fields.publishedYear.trim() ? Number(fields.publishedYear) : 0;
       let updated = await api.updateBook(book.id, {
-        title: title.trim(),
-        author: author.trim(),
-        series: series.trim(),
+        title: fields.title.trim(),
+        author: fields.author.trim(),
+        series: fields.series.trim(),
         seriesIndex: Number.isFinite(idx) ? idx : 0,
-        language: language.trim(),
-        description: description.trim(),
-        doi: doi.trim(),
-        arxivId: arxivId.trim(),
-        pubmedId: pubmedId.trim(),
-        journal: journal.trim(),
-        volume: volume.trim(),
-        issue: issue.trim(),
-        pages: pages.trim(),
+        language: fields.language.trim(),
+        description: fields.description.trim(),
+        doi: fields.doi.trim(),
+        arxivId: fields.arxivId.trim(),
+        pubmedId: fields.pubmedId.trim(),
+        journal: fields.journal.trim(),
+        volume: fields.volume.trim(),
+        issue: fields.issue.trim(),
+        pages: fields.pages.trim(),
         publishedYear: Number.isFinite(year) ? year : 0,
       });
       if (applyCoverOnSave && matchCoverUrl) {
@@ -259,39 +187,6 @@
       saving = false;
     }
   }
-
-  async function onCoverSelected(event: Event) {
-    const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = "";
-    if (!file) return;
-    uploading = true;
-    try {
-      const updated = await api.uploadCover(book.id, file);
-      coverKey += 1;
-      matchCoverUrl = "";
-      onsaved?.(updated);
-      toast.success(i18n.t("book.coverUpdated"));
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : i18n.t("book.coverUploadFailed"));
-    } finally {
-      uploading = false;
-    }
-  }
-
-  async function removeCover() {
-    uploading = true;
-    try {
-      const updated = await api.deleteCover(book.id);
-      coverKey += 1;
-      onsaved?.(updated);
-      toast.success(i18n.t("book.coverRemoved"));
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : i18n.t("book.coverRemoveFailed"));
-    } finally {
-      uploading = false;
-    }
-  }
 </script>
 
 <Collapsible.Root bind:open class="mt-6 rounded-[var(--radius-card)] border border-border">
@@ -307,245 +202,36 @@
 
   <Collapsible.Content>
     <form class="space-y-4 border-t border-border px-4 py-4" onsubmit={save}>
-      <section class="identify-panel" bind:this={identifySection}>
-        <div class="identify-header">
-          <Search size={16} />
-          <div>
-            <p class="identify-title">Identify from external sources</p>
-            <p class="identify-hint">{providerHint}</p>
-          </div>
-        </div>
-
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label class="block sm:col-span-2">
-            <span class="text-xs text-muted">Search title</span>
-            <input class="input mt-1 w-full" bind:value={searchTitle} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Search author</span>
-            <input class="input mt-1 w-full" bind:value={searchAuthor} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">ISBN</span>
-            <input class="input mt-1 w-full" bind:value={searchISBN} placeholder="Optional" />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">DOI</span>
-            <input class="input mt-1 w-full" bind:value={searchDOI} placeholder="Optional" />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">arXiv ID</span>
-            <input class="input mt-1 w-full" bind:value={searchArxiv} placeholder="Optional" />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">PubMed ID</span>
-            <input class="input mt-1 w-full" bind:value={searchPubmed} placeholder="Optional" />
-          </label>
-          {#if needsAsin}
-            <label class="block sm:col-span-2">
-              <span class="text-xs text-muted">ASIN (Audnexus / Audible)</span>
-              <input class="input mt-1 w-full" bind:value={searchASIN} placeholder="B00XXXXXXXX" />
-            </label>
-          {/if}
-        </div>
-
-        {#if providers.length > 0}
-          <div class="provider-row">
-            {#each providers as provider (provider.id)}
-              <label class="provider-chip">
-                <input
-                  type="checkbox"
-                  checked={selectedProviders.includes(provider.id)}
-                  onchange={() => toggleProvider(provider.id)}
-                />
-                <span>{provider.label}</span>
-              </label>
-            {/each}
-          </div>
-        {/if}
-
-        <div class="identify-actions">
-          <label class="cover-check">
-            <input type="checkbox" bind:checked={applyCoverOnSave} />
-            <span>Apply cover from match</span>
-          </label>
-          <button
-            type="button"
-            class="btn btn-ghost ring-1 ring-border"
-            disabled={searching}
-            onclick={runSearch}
-          >
-            {searching ? "Searching..." : "Search"}
-          </button>
-        </div>
-
-        {#if matches.length > 0}
-          <ul class="match-list">
-            {#each matches as match, i (i)}
-              <li class="match-item">
-                {#if match.coverUrl}
-                  <img src={match.coverUrl} alt="" class="match-cover" loading="lazy" />
-                {:else}
-                  <div class="match-cover match-cover--empty"></div>
-                {/if}
-                <div class="match-body">
-                  <p class="match-title">{match.title}</p>
-                  {#if match.author}
-                    <p class="match-author">{match.author}</p>
-                  {/if}
-                  <p class="match-meta">
-                    <span class="match-source">{providerLabel(match.source)}</span>
-                    {#if match.publishedYear}
-                      <span>{match.publishedYear}</span>
-                    {/if}
-                    {#if match.isbn}
-                      <span>ISBN {match.isbn}</span>
-                    {/if}
-                    {#if match.asin}
-                      <span>ASIN {match.asin}</span>
-                    {/if}
-                    {#if match.doi}
-                      <span>DOI {match.doi}</span>
-                    {/if}
-                    {#if match.arxivId}
-                      <span>arXiv {match.arxivId}</span>
-                    {/if}
-                    {#if match.pubmedId}
-                      <span>PMID {match.pubmedId}</span>
-                    {/if}
-                    {#if match.journal}
-                      <span>{match.journal}</span>
-                    {/if}
-                  </p>
-                  {#if match.description}
-                    <p class="match-desc">{match.description}</p>
-                  {/if}
-                </div>
-                <div class="match-actions">
-                  <button
-                    type="button"
-                    class="btn btn-ghost text-xs"
-                    onclick={() => useMatch(match)}
-                  >
-                    Use
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-primary text-xs"
-                    disabled={saving}
-                    onclick={() => applyMatchNow(match)}
-                  >
-                    Apply
-                  </button>
-                </div>
-              </li>
-            {/each}
-          </ul>
-        {/if}
-      </section>
+      <MetadataIdentifyPanel
+        {book}
+        {providers}
+        bind:selectedProviders
+        {search}
+        {matches}
+        {searching}
+        {saving}
+        bind:applyCoverOnSave
+        bind:sectionEl={identifySection}
+        onsearch={() => void runSearch()}
+        onuse={useMatch}
+        onapply={(match) => void applyMatchNow(match)}
+      />
 
       <div class="flex flex-col gap-4 sm:flex-row">
-        <div class="w-32 shrink-0">
-          {#key coverKey}
-            <Cover book={{ ...book, modifiedAt: book.modifiedAt }} />
-          {/key}
-          <div class="mt-2 flex flex-col gap-2">
-            <label class="btn btn-ghost ring-1 ring-border cursor-pointer text-xs">
-              <Upload size={14} />
-              {uploading ? "Uploading..." : "Upload cover"}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                class="sr-only"
-                disabled={uploading}
-                onchange={onCoverSelected}
-              />
-            </label>
-            {#if book.hasCover}
-              <button
-                type="button"
-                class="btn btn-ghost text-xs text-danger"
-                disabled={uploading}
-                onclick={removeCover}
-              >
-                <Trash2 size={14} />
-                Remove cover
-              </button>
-            {/if}
-          </div>
-        </div>
-
-        <div class="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
-          {#if book.contentHash}
-            <div class="sm:col-span-2 rounded-lg border border-border bg-bg-elevated px-3 py-2">
-              <p class="text-xs text-muted">Content hash</p>
-              <p class="mt-0.5 break-all font-mono text-xs text-fg">{book.contentHash}</p>
-            </div>
-          {/if}
-          <label class="block sm:col-span-2">
-            <span class="text-xs text-muted">Title</span>
-            <input class="input mt-1 w-full" bind:value={title} required />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Author</span>
-            <input class="input mt-1 w-full" bind:value={author} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Language</span>
-            <input class="input mt-1 w-full" bind:value={language} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Series</span>
-            <input class="input mt-1 w-full" bind:value={series} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Series index</span>
-            <input
-              class="input mt-1 w-full"
-              type="number"
-              step="any"
-              min="0"
-              bind:value={seriesIndex}
-            />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Journal</span>
-            <input class="input mt-1 w-full" bind:value={journal} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Year</span>
-            <input class="input mt-1 w-full" type="number" min="0" bind:value={publishedYear} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Volume</span>
-            <input class="input mt-1 w-full" bind:value={volume} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Issue</span>
-            <input class="input mt-1 w-full" bind:value={issue} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">Pages</span>
-            <input class="input mt-1 w-full" bind:value={pages} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">DOI</span>
-            <input class="input mt-1 w-full" bind:value={doi} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">arXiv ID</span>
-            <input class="input mt-1 w-full" bind:value={arxivId} />
-          </label>
-          <label class="block">
-            <span class="text-xs text-muted">PubMed ID</span>
-            <input class="input mt-1 w-full" bind:value={pubmedId} />
-          </label>
-          <label class="block sm:col-span-2">
-            <span class="text-xs text-muted">Description</span>
-            <textarea class="input mt-1 min-h-24 w-full resize-y" bind:value={description}
-            ></textarea>
-          </label>
-        </div>
+        <CoverUpload
+          {book}
+          {coverKey}
+          onuploaded={(updated) => {
+            coverKey += 1;
+            matchCoverUrl = "";
+            onsaved?.(updated);
+          }}
+          onremoved={(updated) => {
+            coverKey += 1;
+            onsaved?.(updated);
+          }}
+        />
+        <BookEditForm {book} {fields} />
       </div>
 
       <div class="flex justify-end gap-2">
@@ -557,155 +243,3 @@
     </form>
   </Collapsible.Content>
 </Collapsible.Root>
-
-<style>
-  .identify-panel {
-    border-radius: var(--radius-card);
-    background: var(--color-bg-elevated);
-    padding: 1rem;
-    box-shadow: inset 0 0 0 1px var(--color-border);
-  }
-
-  .identify-header {
-    display: flex;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    color: var(--color-muted);
-  }
-
-  .identify-title {
-    margin: 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-fg);
-  }
-
-  .identify-hint {
-    margin: 0.25rem 0 0;
-    font-size: 0.75rem;
-    line-height: 1.45;
-    color: var(--color-muted);
-  }
-
-  .provider-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-  }
-
-  .provider-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    border-radius: 9999px;
-    padding: 0.25rem 0.625rem;
-    font-size: 0.75rem;
-    background: var(--color-surface);
-    box-shadow: inset 0 0 0 1px var(--color-border);
-    cursor: pointer;
-  }
-
-  .identify-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-top: 0.75rem;
-  }
-
-  .cover-check {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.75rem;
-    color: var(--color-muted);
-    cursor: pointer;
-  }
-
-  .match-list {
-    list-style: none;
-    margin: 1rem 0 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    max-height: 18rem;
-    overflow-y: auto;
-  }
-
-  .match-item {
-    display: flex;
-    gap: 0.75rem;
-    align-items: flex-start;
-    padding: 0.625rem;
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    box-shadow: inset 0 0 0 1px var(--color-border);
-  }
-
-  .match-cover {
-    width: 3rem;
-    height: 4.5rem;
-    flex-shrink: 0;
-    object-fit: cover;
-    border-radius: 4px;
-    background: var(--color-bg);
-  }
-
-  .match-cover--empty {
-    box-shadow: inset 0 0 0 1px var(--color-border);
-  }
-
-  .match-body {
-    min-width: 0;
-    flex: 1;
-  }
-
-  .match-title {
-    margin: 0;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--color-fg);
-  }
-
-  .match-author {
-    margin: 0.15rem 0 0;
-    font-size: 0.75rem;
-    color: var(--color-muted);
-  }
-
-  .match-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem 0.5rem;
-    margin: 0.35rem 0 0;
-    font-size: 0.6875rem;
-    color: var(--color-subtle);
-  }
-
-  .match-source {
-    font-weight: 600;
-    color: var(--color-primary);
-  }
-
-  .match-desc {
-    margin: 0.35rem 0 0;
-    font-size: 0.6875rem;
-    line-height: 1.4;
-    color: var(--color-muted);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .match-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    flex-shrink: 0;
-  }
-</style>

@@ -48,6 +48,7 @@
         type="text"
         class="field-input h-8 w-28 text-xs"
         placeholder={i18n.t("book.addTagPlaceholder")}
+        aria-label={i18n.t("book.addTagPlaceholder")}
         bind:value={tagInput}
         disabled={addingTag}
       />
@@ -55,6 +56,7 @@
         type="submit"
         class="btn btn-ghost min-h-8 px-2 text-xs ring-1 ring-border"
         disabled={addingTag || !tagInput.trim()}
+        aria-label={i18n.t("book.addTagPlaceholder")}
       >
         <Plus size={14} />
       </button>

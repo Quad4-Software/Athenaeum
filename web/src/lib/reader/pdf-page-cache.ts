@@ -52,10 +52,13 @@ export class PdfPageCache {
   }
 }
 
+/** Fallback when --color-bg-elevated cannot be read (SSR or missing token). */
+const READER_VIEWPORT_FALLBACK_BG = "#16161a";
+
 export function readerViewportFillColor(): string {
-  if (typeof document === "undefined") return "#16161a";
+  if (typeof document === "undefined") return READER_VIEWPORT_FALLBACK_BG;
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue("--color-bg-elevated")
     .trim();
-  return value || "#16161a";
+  return value || READER_VIEWPORT_FALLBACK_BG;
 }

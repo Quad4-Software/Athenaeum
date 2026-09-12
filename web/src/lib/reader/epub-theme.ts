@@ -1,5 +1,7 @@
 export type ReaderTheme = "light" | "dark" | "sepia" | "night";
 
+// Fixed reader palette: these themes intentionally do not follow the app theme
+// tokens so book content stays readable regardless of UI theme.
 export const EPUB_PALETTE: Record<ReaderTheme, { fg: string; bg: string }> = {
   light: { fg: "#1a1a1a", bg: "#ffffff" },
   dark: { fg: "#e6e6e6", bg: "#16161a" },

@@ -149,9 +149,11 @@
       </button>
     </div>
     <ul class="divide-y divide-border rounded-lg border border-border">
-      <li class="flex items-center gap-2 px-3 py-2 text-xs text-muted">
-        <input type="checkbox" checked={selected.size === guests.length} onchange={toggleAll} />
-        {i18n.t("admin.guests.selectAll")}
+      <li class="px-3 py-2 text-xs text-muted">
+        <label class="flex items-center gap-2">
+          <input type="checkbox" checked={selected.size === guests.length} onchange={toggleAll} />
+          {i18n.t("admin.guests.selectAll")}
+        </label>
       </li>
       {#each guests as g (g.id)}
         <li class="flex flex-wrap items-center justify-between gap-2 px-3 py-2">

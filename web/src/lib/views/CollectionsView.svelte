@@ -105,6 +105,7 @@
     <input
       type="text"
       placeholder={i18n.t("collections.manualPlaceholder")}
+      aria-label={i18n.t("collections.manualPlaceholder")}
       bind:value={name}
       class="input flex-1"
     />
@@ -118,6 +119,7 @@
     <input
       type="text"
       placeholder={i18n.t("collections.readingPlaceholder")}
+      aria-label={i18n.t("collections.readingPlaceholder")}
       bind:value={readingName}
       class="input flex-1"
     />
@@ -135,11 +137,12 @@
     <input
       type="text"
       placeholder={i18n.t("collections.namePlaceholder")}
+      aria-label={i18n.t("collections.namePlaceholder")}
       bind:value={smartName}
       class="input w-full"
     />
     <div class="grid gap-2 sm:grid-cols-3">
-      <select bind:value={smartFormat} class="input">
+      <select bind:value={smartFormat} class="input" aria-label={i18n.t("collections.anyFormat")}>
         <option value="">{i18n.t("collections.anyFormat")}</option>
         <option value="epub">EPUB</option>
         <option value="pdf">PDF</option>
@@ -149,6 +152,7 @@
       <input
         type="text"
         placeholder={i18n.t("collections.authorPlaceholder")}
+        aria-label={i18n.t("collections.authorPlaceholder")}
         bind:value={smartAuthor}
         class="input"
       />
@@ -156,6 +160,7 @@
         type="number"
         min="1"
         placeholder={i18n.t("collections.addedDaysPlaceholder")}
+        aria-label={i18n.t("collections.addedDaysPlaceholder")}
         bind:value={smartAddedDays}
         class="input"
       />

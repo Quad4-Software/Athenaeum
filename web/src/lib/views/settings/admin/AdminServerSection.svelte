@@ -88,6 +88,7 @@
           type="text"
           bind:value={serverConfig.metricsUsername}
           placeholder="Metrics username"
+          aria-label="Metrics username"
           class="field-input"
           disabled={!serverConfig.metricsAuth}
         />
@@ -97,6 +98,7 @@
           placeholder={serverConfig.metricsPasswordSet
             ? "Metrics password (unchanged)"
             : "Metrics password"}
+          aria-label="Metrics password"
           class="field-input"
           disabled={!serverConfig.metricsAuth}
         />
@@ -111,6 +113,7 @@
           type="text"
           bind:value={serverConfig.trustedProxies}
           placeholder="127.0.0.1, ::1"
+          aria-label="Trusted proxies"
           class="field-input"
         />
       </div>
@@ -124,6 +127,7 @@
           type="text"
           bind:value={serverConfig.corsOrigins}
           placeholder="https://app.example.com, https://other.example.com"
+          aria-label="Allowed CORS origins"
           class="field-input"
           disabled={!serverConfig.corsEnabled}
         />
@@ -137,6 +141,7 @@
         <textarea
           bind:value={serverConfig.cspPolicy}
           placeholder="Leave empty for the default self-hosted policy"
+          aria-label="Content Security Policy"
           class="field-input font-mono text-xs"
           disabled={!serverConfig.cspEnabled}></textarea>
       </div>

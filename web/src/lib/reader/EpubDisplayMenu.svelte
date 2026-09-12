@@ -54,6 +54,7 @@
   class="sr-only"
   bind:this={fontInput}
   onchange={onFontUpload}
+  aria-label={i18n.t("reader.fontUpload")}
 />
 
 <Popover bind:open placement="bottom" align="end" minWidth={288}>

@@ -116,6 +116,7 @@
           type="url"
           bind:value={oidcConfig.issuerUrl}
           placeholder="Issuer URL"
+          aria-label="Issuer URL"
           class="field-input flex-1"
         />
         <Button type="button" size="sm" loading={oidcDiscovering} onclick={discoverOIDC}>
@@ -126,45 +127,52 @@
         type="url"
         bind:value={oidcConfig.authorizeUrl}
         placeholder="Authorize URL"
+        aria-label="Authorize URL"
         class="field-input"
       />
       <input
         type="url"
         bind:value={oidcConfig.tokenUrl}
         placeholder="Token URL"
+        aria-label="Token URL"
         class="field-input"
       />
       <input
         type="url"
         bind:value={oidcConfig.userinfoUrl}
         placeholder="Userinfo URL"
+        aria-label="Userinfo URL"
         class="field-input"
       />
       <input
         type="url"
         bind:value={oidcConfig.jwksUrl}
         placeholder="JWKS URL"
+        aria-label="JWKS URL"
         class="field-input"
       />
       <input
         type="text"
         bind:value={oidcConfig.clientId}
         placeholder="Client ID"
+        aria-label="Client ID"
         class="field-input"
       />
       <input
         type="password"
         bind:value={oidcSecret}
         placeholder={oidcConfig.clientSecretSet ? "Client secret (unchanged)" : "Client secret"}
+        aria-label="Client secret"
         class="field-input"
       />
       <input
         type="text"
         bind:value={oidcConfig.buttonText}
         placeholder="Sign-in button text"
+        aria-label="Sign-in button text"
         class="field-input"
       />
-      <select bind:value={oidcConfig.matchBy} class="field-input">
+      <select bind:value={oidcConfig.matchBy} class="field-input" aria-label="Match users by">
         <option value="username">Match existing users by username</option>
         <option value="email">Match existing users by email</option>
         <option value="sub">Match only by OIDC subject</option>
@@ -173,12 +181,14 @@
         type="text"
         bind:value={oidcConfig.groupClaim}
         placeholder="Group claim (default: groups)"
+        aria-label="Group claim"
         class="field-input"
       />
       <input
         type="text"
         bind:value={oidcConfig.adminGroups}
         placeholder="Admin groups (comma-separated)"
+        aria-label="Admin groups"
         class="field-input"
       />
       <div class="pt-1">

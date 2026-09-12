@@ -133,6 +133,7 @@
   </button>
   <select
     class="field-input w-auto py-1 text-xs"
+    aria-label="Pages per view"
     value={String(pagesPerView)}
     onchange={(e) => onPagesPerView(Number(e.currentTarget.value) as PagesPerView)}
   >

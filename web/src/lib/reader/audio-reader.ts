@@ -1,9 +1,8 @@
 import type { AudiobookTrack, Chapter } from "$lib/api/types";
 import { isTypingTarget } from "./reader-keys";
 
-export const AUDIO_SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3] as const;
-export const AUDIO_SKIP_OPTIONS = [10, 15, 30, 60] as const;
-export const AUDIO_SLEEP_OPTIONS = [5, 15, 30, 45, 60, 90] as const;
+// Re-exported from the shared audio options module so existing reader imports keep working.
+export { AUDIO_SKIP_OPTIONS, AUDIO_SLEEP_OPTIONS, AUDIO_SPEEDS } from "$lib/audio/options";
 
 /** Milliseconds left on a sleep timer, or 0 when unset/expired. */
 export function sleepRemainingMs(endsAt: number | null | undefined, nowMs: number): number {

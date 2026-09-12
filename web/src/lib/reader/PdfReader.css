@@ -66,6 +66,7 @@
 
 .pdf-page .textLayer mark.pdf-highlight-mark,
 .pdf-page .pdf-text-layer mark.pdf-highlight-mark {
+  /* Fixed reader highlight yellow; matches EPUB_HIGHLIGHT_STYLES.yellow in epub-reader.ts. */
   background: color-mix(in srgb, #fde047 55%, transparent);
   color: transparent;
   border-radius: 2px;

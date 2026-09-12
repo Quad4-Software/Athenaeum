@@ -210,7 +210,13 @@
           {#if editingId === lib.id}
             <form class="space-y-3" onsubmit={saveEdit}>
               <p class="text-sm font-medium text-fg">Edit library</p>
-              <input type="text" bind:value={editName} required class="field-input" />
+              <input
+                type="text"
+                bind:value={editName}
+                required
+                class="field-input"
+                aria-label="Library name"
+              />
               <div class="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -238,11 +244,13 @@
                     bind:value={editPath}
                     required
                     class="field-input font-mono flex-1"
+                    aria-label="Mount path"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     class="ring-1 ring-border"
+                    aria-label="Browse folders"
                     onclick={() => openBrowse("edit")}
                   >
                     <FolderOpen size={14} />
@@ -253,6 +261,7 @@
                   <input
                     type="text"
                     placeholder="Endpoint (minio:9000)"
+                    aria-label="S3 endpoint"
                     bind:value={editS3.endpoint}
                     class="field-input font-mono sm:col-span-2"
                     required
@@ -260,6 +269,7 @@
                   <input
                     type="text"
                     placeholder="Bucket"
+                    aria-label="Bucket"
                     bind:value={editS3.bucket}
                     class="field-input"
                     required
@@ -267,18 +277,21 @@
                   <input
                     type="text"
                     placeholder="Prefix (optional)"
+                    aria-label="Prefix"
                     bind:value={editS3.prefix}
                     class="field-input font-mono"
                   />
                   <input
                     type="text"
                     placeholder="Region"
+                    aria-label="Region"
                     bind:value={editS3.region}
                     class="field-input"
                   />
                   <input
                     type="text"
                     placeholder="Access key"
+                    aria-label="Access key"
                     bind:value={editS3.accessKey}
                     class="field-input font-mono"
                     required
@@ -286,6 +299,7 @@
                   <input
                     type="password"
                     placeholder="Secret key (leave blank to keep)"
+                    aria-label="Secret key"
                     bind:value={editS3.secretKey}
                     class="field-input font-mono sm:col-span-2"
                   />
@@ -392,6 +406,7 @@
                 <button
                   type="button"
                   class="btn btn-ghost text-xs ring-1 ring-border"
+                  aria-label="Edit library"
                   onclick={() => startEdit(lib)}
                 >
                   <Pencil size={14} />
@@ -420,6 +435,7 @@
     <input
       type="text"
       placeholder="Name (e.g. Audiobooks)"
+      aria-label="Library name"
       bind:value={libName}
       class="field-input"
     />
@@ -448,6 +464,7 @@
         <input
           type="text"
           placeholder="Mount path (e.g. /mnt/media/books)"
+          aria-label="Mount path"
           bind:value={libPath}
           class="field-input font-mono flex-1"
         />
@@ -455,6 +472,7 @@
           type="button"
           variant="ghost"
           class="ring-1 ring-border"
+          aria-label="Browse folders"
           onclick={() => openBrowse("add")}
         >
           <FolderOpen size={14} />
@@ -465,26 +483,42 @@
         <input
           type="text"
           placeholder="Endpoint (minio:9000)"
+          aria-label="S3 endpoint"
           bind:value={libS3.endpoint}
           class="field-input font-mono sm:col-span-2"
         />
-        <input type="text" placeholder="Bucket" bind:value={libS3.bucket} class="field-input" />
+        <input
+          type="text"
+          placeholder="Bucket"
+          aria-label="Bucket"
+          bind:value={libS3.bucket}
+          class="field-input"
+        />
         <input
           type="text"
           placeholder="Prefix (optional)"
+          aria-label="Prefix"
           bind:value={libS3.prefix}
           class="field-input font-mono"
         />
-        <input type="text" placeholder="Region" bind:value={libS3.region} class="field-input" />
+        <input
+          type="text"
+          placeholder="Region"
+          aria-label="Region"
+          bind:value={libS3.region}
+          class="field-input"
+        />
         <input
           type="text"
           placeholder="Access key"
+          aria-label="Access key"
           bind:value={libS3.accessKey}
           class="field-input font-mono"
         />
         <input
           type="password"
           placeholder="Secret key"
+          aria-label="Secret key"
           bind:value={libS3.secretKey}
           class="field-input font-mono sm:col-span-2"
         />

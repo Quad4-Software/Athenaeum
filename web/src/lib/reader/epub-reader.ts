@@ -16,6 +16,7 @@ export const EPUB_DEFAULT_LINE_HEIGHT = 1.6;
 export const EPUB_DEFAULT_MARGIN_PX = 24;
 export const EPUB_DEFAULT_SPREAD: EpubSpreadMode = "auto";
 
+// Fixed highlight presets applied inside book content; not tied to app theme tokens.
 export const EPUB_HIGHLIGHT_STYLES: Record<string, Record<string, string>> = {
   yellow: { fill: "#fde047", "fill-opacity": "0.45", "mix-blend-mode": "multiply" },
   green: { fill: "#86efac", "fill-opacity": "0.45", "mix-blend-mode": "multiply" },

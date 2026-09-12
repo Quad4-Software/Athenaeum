@@ -152,6 +152,7 @@
       type="url"
       class="field-input"
       placeholder={i18n.t("settings.webhooksUrl")}
+      aria-label={i18n.t("settings.webhooksUrl")}
       bind:value={url}
       required
     />
@@ -159,6 +160,7 @@
       type="text"
       class="field-input"
       placeholder={i18n.t("settings.webhooksSecret")}
+      aria-label={i18n.t("settings.webhooksSecret")}
       bind:value={secret}
       autocomplete="off"
     />

@@ -144,6 +144,7 @@
           maxlength="128"
           class="field-input min-w-[12rem] flex-1"
           placeholder="Key name (e.g. sync script)"
+          aria-label="Key name"
         />
         <Button type="submit" size="sm" loading={apiKeyCreating} disabled={!apiKeyName.trim()}>
           <Key size={14} /> Create key

@@ -266,6 +266,7 @@
           minlength="2"
           class="field-input"
           placeholder="Username"
+          aria-label="Username"
         />
         <div class="pt-1">
           <Button
@@ -294,6 +295,7 @@
             autocomplete="current-password"
             class="field-input"
             placeholder="Current password"
+            aria-label="Current password"
           />
           <input
             type="password"
@@ -302,6 +304,7 @@
             autocomplete="new-password"
             class="field-input"
             placeholder="New password"
+            aria-label="New password"
           />
           <PasswordStrength password={newPass} policy={auth.passwordPolicy} />
           <div class="pt-1">
@@ -329,6 +332,7 @@
             bind:value={totpPass}
             class="field-input"
             placeholder="Current password"
+            aria-label="Current password"
             required={auth.user.localAuth !== false}
           />
           <input
@@ -337,6 +341,7 @@
             bind:value={totpCode}
             class="field-input"
             placeholder="Authenticator code"
+            aria-label="Authenticator code"
             required
           />
           <Button type="submit" size="sm" loading={totpBusy}>Disable 2FA</Button>
@@ -365,6 +370,7 @@
             bind:value={totpCode}
             class="field-input"
             placeholder="Enter code to confirm"
+            aria-label="Enter code to confirm"
             required
           />
           <Button type="submit" size="sm" loading={totpBusy}>Enable 2FA</Button>

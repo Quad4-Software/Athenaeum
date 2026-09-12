@@ -100,6 +100,7 @@
         type="url"
         class="field-input"
         placeholder={i18n.t("settings.ttsBaseUrl")}
+        aria-label={i18n.t("settings.ttsBaseUrl")}
         bind:value={baseUrl}
         autocomplete="off"
       />
@@ -107,6 +108,7 @@
         type="text"
         class="field-input"
         placeholder={i18n.t("settings.ttsDefaultVoice")}
+        aria-label={i18n.t("settings.ttsDefaultVoice")}
         bind:value={defaultVoice}
         autocomplete="off"
       />
@@ -116,6 +118,7 @@
         placeholder={cfg?.apiKeySet
           ? i18n.t("settings.ttsApiKeyKeep")
           : i18n.t("settings.ttsApiKey")}
+        aria-label={i18n.t("settings.ttsApiKey")}
         bind:value={apiKey}
         autocomplete="new-password"
       />

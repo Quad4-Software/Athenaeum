@@ -110,6 +110,7 @@
         type="url"
         class="field-input"
         placeholder={i18n.t("settings.pocketidBaseUrl")}
+        aria-label={i18n.t("settings.pocketidBaseUrl")}
         bind:value={baseUrl}
       />
       <input
@@ -118,6 +119,7 @@
         placeholder={cfg?.apiKeySet
           ? i18n.t("settings.pocketidApiKeyKeep")
           : i18n.t("settings.pocketidApiKey")}
+        aria-label={i18n.t("settings.pocketidApiKey")}
         bind:value={apiKey}
         autocomplete="new-password"
       />
@@ -125,6 +127,7 @@
         type="text"
         class="field-input"
         placeholder={i18n.t("settings.pocketidDefaultGroupIds")}
+        aria-label={i18n.t("settings.pocketidDefaultGroupIds")}
         bind:value={defaultGroupIds}
       />
       <div class="flex flex-wrap gap-2 pt-1">

@@ -120,12 +120,14 @@
     <input
       type="email"
       placeholder={i18n.t("admin.invites.email")}
+      aria-label={i18n.t("admin.invites.email")}
       bind:value={email}
       class="field-input"
     />
     <input
       type="text"
       placeholder={i18n.t("admin.invites.usernameOptional")}
+      aria-label={i18n.t("admin.invites.usernameOptional")}
       bind:value={username}
       class="field-input"
     />

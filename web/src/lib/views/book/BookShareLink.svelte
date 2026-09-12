@@ -20,6 +20,7 @@
     type="text"
     readonly
     value={url}
+    aria-label={i18n.t("book.share")}
     onclick={(e) => {
       const el = e.currentTarget;
       if (el instanceof HTMLInputElement) el.select();

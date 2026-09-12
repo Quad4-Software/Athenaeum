@@ -63,6 +63,12 @@
     animation: dropdown-in 120ms ease-out;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    :global(.dropdown-panel) {
+      animation: none;
+    }
+  }
+
   @keyframes dropdown-in {
     from {
       opacity: 0;

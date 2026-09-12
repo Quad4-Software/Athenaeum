@@ -7,14 +7,13 @@
   import Slider from "$lib/components/Slider.svelte";
   import { audioPlayer } from "$lib/stores/audioPlayer.svelte";
   import { formatAudioTime, formatSleepRemaining } from "$lib/audio/format";
+  import { AUDIO_SLEEP_OPTIONS, AUDIO_SPEEDS } from "$lib/audio/options";
   import { router } from "$lib/router.svelte";
   import { routes } from "$lib/routes";
   import { i18n } from "$lib/stores/i18n.svelte";
   import { MQ_XS_UP } from "$lib/breakpoints";
 
   const MINI_SKIP = 10;
-  const SLEEP_OPTIONS = [5, 15, 30, 45, 60, 90];
-  const SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 
   let audioEl = $state<HTMLAudioElement | null>(null);
   let sleepOpen = $state(false);
@@ -151,7 +150,7 @@
           align="end"
           minWidth={120}
           title={i18n.t("audio.speedTitle")}
-          items={SPEEDS.map((speed) => ({
+          items={AUDIO_SPEEDS.map((speed) => ({
             id: String(speed),
             label: `${speed}x`,
             active: audioPlayer.rate === speed,
@@ -197,7 +196,7 @@
             <section class="sleep-menu">
               <p class="sleep-menu-label">{i18n.t("audio.sleepTimer")}</p>
               <div class="chip-row">
-                {#each SLEEP_OPTIONS as min (min)}
+                {#each AUDIO_SLEEP_OPTIONS as min (min)}
                   <button
                     type="button"
                     class="chip"
