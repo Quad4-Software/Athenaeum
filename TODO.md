@@ -9,4 +9,8 @@
 - AI tagging and metadata enhancement. Opt-in. Local first.
 - Extensions system (WASM or native Go)
 - Update system
+- Readium-based EPUB reader with streaming (replaces epubjs)
+- Kobo device sync API
+- Book clubs (shared reading, discussions)
+- Reading session history and per-book time stats
 - Reticulum-Go (https://reticulum-go.quad4.io/) for decentralization and peer-to-peer sharing
