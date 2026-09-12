@@ -77,10 +77,12 @@
     "@lucide/svelte": "^1.42.0",
     "@sentry/svelte": "^10.73.0",
     "altcha": "^3.2.2",
+    "bits-ui": "2.19.0",
     "epubjs": "^0.3.93",
     "kokoro-js": "^1.2.1",
     "pdfjs-dist": "^6.3.289",
     "qrcode": "^1.5.4",
+    "runed": "0.37.1",
     "workbox-window": "^7.4.1"
   }
 }
