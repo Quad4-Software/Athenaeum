@@ -193,12 +193,19 @@ under Books, Authentication, and Admin above. Public endpoints:
 
 | Method | Path | Description |
 | ------ | ---- | ----------- |
-| GET | /api/admin/tts | Kokoro TTS settings |
-| PUT | /api/admin/tts | Update Kokoro TTS settings |
-| POST | /api/admin/tts/test | Ping Kokoro sidecar |
-| GET | /api/tts/status | Whether Kokoro TTS is enabled |
-| POST | /api/tts/synthesize | Synthesize speech via Kokoro |
-| GET | /api/tts/voices | List Kokoro voices |
+| GET | /api/admin/tts | TTS sidecar settings |
+| PUT | /api/admin/tts | Update TTS settings |
+| POST | /api/admin/tts/test | Ping TTS sidecar |
+| GET | /api/tts/status | Whether server TTS is enabled |
+| POST | /api/tts/synthesize | Synthesize speech through the TTS endpoint |
+| GET | /api/tts/voices | List TTS voices |
+| GET | /api/tts/prefs | Your narration preferences and schedule |
+| PUT | /api/tts/prefs | Save narration preferences |
+| GET | /api/tts/jobs | List your audiobook jobs (admins can pass `?all=1`) |
+| POST | /api/tts/jobs | Queue a whole-book narration job (`{bookId, voice?, speed?}`) |
+| POST | /api/tts/jobs/{id}/cancel | Cancel a queued or running job |
+| POST | /api/tts/jobs/{id}/retry | Requeue a finished, failed, or cancelled job |
+| DELETE | /api/tts/jobs/{id} | Delete a finished job record |
 
 ## Admin and maintenance
 

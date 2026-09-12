@@ -19,7 +19,9 @@
 #   ATHENAEUM_DATABASE_URL=postgres://athenaeum:athenaeum@postgres:5432/athenaeum?sslmode=disable
 #
 # Kokoro: Admin -> Narration base URL http://kokoro:8880 (same network)
-#   or http://127.0.0.1:8880 from the host.
+#   or http://127.0.0.1:8880 from the host. Powers server narration and
+#   audiobook generation; any OpenAI-compatible /v1/audio/speech endpoint
+#   works in its place.
 #
 # Coolify: use docker-compose.coolify.yml instead.
 

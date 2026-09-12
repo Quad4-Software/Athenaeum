@@ -18,16 +18,24 @@ description: Readers, narration, library tools, auth, OPDS, and operations.
 - **PWA**: install to home screen. Service worker stays update-safe and does not
   cache API responses.
 
-## Narration with Kokoro
+## Narration
 
-- Listen to EPUBs with **in-browser Kokoro TTS** (ONNX Runtime Web WASM, q8
-  weights) when WebAssembly is available. The full release binary embeds the
-  runtime, model, and voices; the **slim** binary (`athenaeum-slim-*`) leaves
-  that stack out.
-- Fall back to the browser **SpeechSynthesis** voice if needed.
-- Optional **Kokoro sidecar** for server-side TTS
-  (`docker compose --profile kokoro`). Works with full and slim binaries.
-  Configure under Settings -> Administration -> Narration (TTS).
+- Listen to EPUBs with three engines: **server TTS** (when an admin configures
+  an endpoint), in-browser **Kokoro TTS** (ONNX Runtime Web WASM, q8 weights;
+  the full release binary embeds the runtime, model, and voices; the **slim**
+  binary `athenaeum-slim-*` leaves that stack out), and the browser
+  **SpeechSynthesis** voice.
+- Server TTS is the practical choice for phones and weak hardware: the client
+  only downloads audio, no model download or WASM inference.
+- **Audiobook generation**: queue a whole EPUB from its book page. The server
+  renders each chapter to MP3 in the background, resumes after restarts, and
+  writes the result under `audiobooks/` inside the library, where the scanner
+  picks it up as a multi-file audiobook. Per-user voice, speed, and an
+  optional daily time window live under Settings -> Profile -> Narration.
+- Optional **Kokoro sidecar** (`docker compose --profile kokoro`) or any
+  OpenAI-compatible `/v1/audio/speech` endpoint such as Kokoro-FastAPI or
+  Speaches. Works with full and slim binaries. Configure under
+  Settings -> Administration -> Narration (TTS).
 
 Details: [Library and readers](./library) and [Deploying](./deploying).
 

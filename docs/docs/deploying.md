@@ -121,11 +121,17 @@ docker compose --profile postgres up -d --build
 - **altcha**: ALTCHA Sentinel backend (trial/license). Set Athenaeum to
   `ATHENAEUM_ALTCHA_MODE=sentinel` and point challenge/verify URLs at the
   Sentinel service. See ALTCHA docs.
-- **kokoro**: Optional Kokoro TTS sidecar for server-side EPUB narration.
-  In-browser Kokoro (and browser SpeechSynthesis) work without this profile.
-  In Settings -> Administration -> Narration (TTS) set base URL to
-  `http://kokoro:8880` (same Compose network) or `http://127.0.0.1:8880`
-  from the host. First start downloads model weights and may take a few minutes.
+- **kokoro**: Optional Kokoro TTS sidecar for server-side EPUB narration and
+  whole-book audiobook generation. In-browser Kokoro (and browser
+  SpeechSynthesis) work without this profile. In Settings -> Administration ->
+  Narration (TTS) set base URL to `http://kokoro:8880` (same Compose network)
+  or `http://127.0.0.1:8880` from the host. First start downloads model
+  weights and may take a few minutes. The sidecar speaks the OpenAI
+  `/v1/audio/speech` shape, so any compatible endpoint works instead:
+  Kokoro-FastAPI, Speaches, or a hosted API. Audiobook generation always
+  requests MP3 output; the endpoint must be able to produce it (the bundled
+  image encodes with ffmpeg). Generated books land in `audiobooks/` inside the
+  library and appear after the next scan.
 - **postgres**: Postgres 16 instead of SQLite. Also set in `.env`:
   `ATHENAEUM_DATABASE_DRIVER=postgres` and
   `ATHENAEUM_DATABASE_URL=postgres://athenaeum:athenaeum@postgres:5432/athenaeum?sslmode=disable`.
