@@ -34,9 +34,9 @@ INSERT INTO books (library_id, title, author, series, series_index, format, rel_
 	file_size, has_cover, language, description, mtime, added_at, modified_at, meta_edited, cover_edited, hidden)
 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)
 ON CONFLICT(library_id, rel_path) DO UPDATE SET
-	title=excluded.title,
-	author=excluded.author,
-	series=excluded.series,
+	title=CASE WHEN books.meta_edited=1 THEN books.title ELSE excluded.title END,
+	author=CASE WHEN books.meta_edited=1 THEN books.author ELSE excluded.author END,
+	series=CASE WHEN books.meta_edited=1 THEN books.series ELSE excluded.series END,
 	format=excluded.format,
 	abs_path=excluded.abs_path,
 	file_size=excluded.file_size,
