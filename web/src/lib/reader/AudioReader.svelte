@@ -21,8 +21,12 @@
   } from "@lucide/svelte";
   import MenuList from "$lib/components/MenuList.svelte";
   import Popover from "$lib/components/Popover.svelte";
+  import Dropdown from "$lib/components/Dropdown.svelte";
+  import Slider from "$lib/components/Slider.svelte";
+  import type { MenuItem } from "$lib/components/menu";
+  import { PersistedState } from "runed";
   import "$lib/reader/AudioReader.css";
-  import type { Book, Chapter } from "$lib/api/types";
+  import type { Book } from "$lib/api/types";
   import { audioCache } from "$lib/audio/cache";
   import { formatAudioTime, formatSleepRemaining } from "$lib/audio/format";
   import {
@@ -56,6 +60,7 @@
   let { book, url, initialLocation = "", onProgress }: Props = $props();
 
   const SKIP_KEY = storageKey("audio-skip");
+  const skipPref = new PersistedState<number>(SKIP_KEY, audioPlayer.skipSeconds);
 
   let showMore = $state(false);
   let chaptersOpen = $state(false);
@@ -74,20 +79,37 @@
     audioCachePill(audioPlayer.usingOffline, audioPlayer.cacheStatus.complete, audioPlayer.online),
   );
   let multiTrack = $derived(audioPlayer.playlist.length > 1);
-  let trackItems = $derived(
+  let trackMenuItems = $derived<MenuItem[]>(
     buildTrackMenuItems(audioPlayer.playlist, audioPlayer.trackIndex, (n) =>
       i18n.t("audio.trackN", { n: String(n) }),
-    ),
+    ).map((item) => ({
+      id: item.id,
+      label: item.label,
+      active: item.active,
+      onclick: () => audioPlayer.selectTrack(item.trackIndex),
+    })),
   );
-  let chapterItems = $derived(
-    buildChapterMenuItems(audioPlayer.chapters, audioPlayer.currentChapter?.index, formatAudioTime),
+  let chapterMenuItems = $derived<MenuItem[]>(
+    buildChapterMenuItems(
+      audioPlayer.chapters,
+      audioPlayer.currentChapter?.index,
+      formatAudioTime,
+    ).map((item) => ({
+      id: item.id,
+      label: item.label,
+      hint: item.hint,
+      active: item.active,
+      onclick: () => audioPlayer.seekToChapter(item.chapter),
+    })),
   );
-  let speedItems = $derived(buildSpeedMenuItems(AUDIO_SPEEDS, audioPlayer.rate));
-
-  function seekToChapter(chapter: Chapter) {
-    audioPlayer.seekToChapter(chapter);
-    chaptersOpen = false;
-  }
+  let speedMenuItems = $derived<MenuItem[]>(
+    buildSpeedMenuItems(AUDIO_SPEEDS, audioPlayer.rate).map((item) => ({
+      id: item.id,
+      label: item.label,
+      active: item.active,
+      onclick: () => audioPlayer.setRate(item.speed),
+    })),
+  );
 
   function onKey(event: KeyboardEvent) {
     handleAudioKeys(event, {
@@ -188,23 +210,21 @@
         <div class="seek-layer seek-cache" style:width={`${audioPlayer.cachePercent}%`}></div>
         <div class="seek-layer seek-buffer" style:width={`${audioPlayer.bufferedPercent}%`}></div>
         <div class="seek-layer seek-played" style:width={`${playedPct}%`}></div>
-        <input
-          type="range"
-          class="seek-input"
-          min={0}
-          max={audioPlayer.duration || 0}
-          step={0.1}
+        <Slider
+          class="seek-slider"
           value={seekTime}
+          min={0}
+          max={audioPlayer.duration || 1}
+          step={0.1}
           disabled={!audioPlayer.duration}
-          aria-label={i18n.t("audio.seek")}
-          onpointerdown={() => {
-            audioPlayer.scrubbing = true;
-            audioPlayer.scrubValue = audioPlayer.current;
+          ariaLabel={i18n.t("audio.seek")}
+          onchange={(v) => {
+            if (!audioPlayer.scrubbing) audioPlayer.scrubbing = true;
+            audioPlayer.scrubValue = v;
           }}
-          oninput={(e) => (audioPlayer.scrubValue = Number(e.currentTarget.value))}
-          onchange={() => audioPlayer.applyScrub()}
-          onkeyup={(e) => {
-            if (e.key === "Enter") audioPlayer.applyScrub();
+          oncommit={(v) => {
+            audioPlayer.scrubValue = v;
+            audioPlayer.applyScrub();
           }}
         />
       </div>
@@ -278,96 +298,79 @@
 
     <div class="toolbar">
       {#if multiTrack}
-        <Popover bind:open={tracksOpen} placement="top" align="center" minWidth={260}>
-          {#snippet trigger(toggle)}
+        <Dropdown
+          bind:open={tracksOpen}
+          side="top"
+          align="center"
+          minWidth={260}
+          title={i18n.t("audio.tracks")}
+          items={trackMenuItems}
+        >
+          {#snippet trigger(props)}
             <button
               type="button"
               class="toolbar-item"
               class:toolbar-item--active={tracksOpen}
-              aria-expanded={tracksOpen}
-              onclick={toggle}
+              {...props}
             >
               <ListMusic size={15} class="toolbar-icon" />
               <span>{i18n.t("audio.tracks")}</span>
             </button>
           {/snippet}
-          <MenuList
-            title={i18n.t("audio.tracks")}
-            items={trackItems.map((item) => ({
-              id: item.id,
-              label: item.label,
-              active: item.active,
-              onclick: () => {
-                audioPlayer.selectTrack(item.trackIndex);
-                tracksOpen = false;
-              },
-            }))}
-          />
-        </Popover>
+        </Dropdown>
       {/if}
 
       {#if audioPlayer.chapters.length > 0}
-        <Popover bind:open={chaptersOpen} placement="top" align="center" minWidth={240}>
-          {#snippet trigger(toggle)}
+        <Dropdown
+          bind:open={chaptersOpen}
+          side="top"
+          align="center"
+          minWidth={240}
+          title={i18n.t("audio.chapters")}
+          items={chapterMenuItems}
+        >
+          {#snippet trigger(props)}
             <button
               type="button"
               class="toolbar-item"
               class:toolbar-item--active={chaptersOpen}
-              aria-expanded={chaptersOpen}
-              onclick={toggle}
+              {...props}
             >
               <ListMusic size={15} class="toolbar-icon" />
               <span>{i18n.t("audio.chapters")}</span>
             </button>
           {/snippet}
-          <MenuList
-            title={i18n.t("audio.chapters")}
-            items={chapterItems.map((item) => ({
-              id: item.id,
-              label: item.label,
-              hint: item.hint,
-              active: item.active,
-              onclick: () => seekToChapter(item.chapter),
-            }))}
-          />
-        </Popover>
+        </Dropdown>
       {/if}
 
-      <Popover bind:open={speedOpen} placement="top" align="center" minWidth={120}>
-        {#snippet trigger(toggle)}
+      <Dropdown
+        bind:open={speedOpen}
+        side="top"
+        align="center"
+        minWidth={120}
+        title={i18n.t("audio.speedTitle")}
+        items={speedMenuItems}
+      >
+        {#snippet trigger(props)}
           <button
             type="button"
             class="toolbar-item"
             class:toolbar-item--active={speedOpen}
-            aria-expanded={speedOpen}
-            onclick={toggle}
+            {...props}
           >
             <Gauge size={15} class="toolbar-icon" />
             <span>{audioPlayer.rate}x</span>
           </button>
         {/snippet}
-        <MenuList
-          title={i18n.t("audio.speedTitle")}
-          items={speedItems.map((item) => ({
-            id: item.id,
-            label: item.label,
-            active: item.active,
-            onclick: () => {
-              audioPlayer.setRate(item.speed);
-              speedOpen = false;
-            },
-          }))}
-        />
-      </Popover>
+      </Dropdown>
 
       <Popover bind:open={sleepOpen} placement="top" align="center" minWidth={220}>
-        {#snippet trigger(toggle)}
+        {#snippet trigger(props)}
           <button
             type="button"
             class="toolbar-item"
             class:toolbar-item--active={sleepOpen || !!audioPlayer.sleepEndsAt}
-            aria-expanded={sleepOpen}
-            onclick={toggle}
+            {...props}
           >
             <Moon size={15} class="toolbar-icon" />
             <span>{i18n.t("audio.sleepTimer")}</span>
@@ -420,26 +423,24 @@
             <Volume2 size={15} />
           {/if}
         </button>
-        <input
-          type="range"
-          class="volume-input"
+        <Slider
+          class="volume-slider"
+          value={volumeSliderValue(audioPlayer.muted, audioPlayer.volume)}
           min={0}
           max={1}
           step={0.05}
-          value={volumeSliderValue(audioPlayer.muted, audioPlayer.volume)}
-          aria-label={i18n.t("audio.volume")}
-          oninput={(e) => audioPlayer.setVolume(Number(e.currentTarget.value))}
+          ariaLabel={i18n.t("audio.volume")}
+          onchange={(v) => audioPlayer.setVolume(v)}
         />
       </div>
 
       <Popover bind:open={showMore} placement="top" align="center" minWidth={260}>
-        {#snippet trigger(toggle)}
+        {#snippet trigger(props)}
           <button
             type="button"
             class="toolbar-item"
             class:toolbar-item--active={showMore}
-            aria-expanded={showMore}
-            onclick={toggle}
+            {...props}
           >
             <span>{i18n.t("audio.more")}</span>
           </button>
@@ -455,7 +456,7 @@
                   class:chip--active={audioPlayer.skipSeconds === sec}
                   onclick={() => {
                     audioPlayer.skipSeconds = sec;
-                    localStorage.setItem(SKIP_KEY, String(sec));
+                    skipPref.current = sec;
                   }}
                 >
                   {sec}s
@@ -501,3 +502,53 @@
     </div>
   </div>
 </div>
+
+<style>
+  /* Seek bar keeps its layered cache/buffer/played track; the slider only
+     supplies the hit area and thumb. */
+  :global(.slider.seek-slider) {
+    z-index: 1;
+    height: 1.35rem;
+  }
+
+  :global(.slider.seek-slider::before) {
+    height: 5px;
+    background: transparent;
+  }
+
+  :global(.slider.seek-slider .slider-range) {
+    height: 5px;
+    background: transparent;
+  }
+
+  :global(.slider.seek-slider .slider-thumb) {
+    width: 15px;
+    height: 15px;
+    border-color: var(--color-primary-fg);
+    background: var(--color-primary);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  }
+
+  :global(.slider.volume-slider) {
+    flex: 1;
+    min-width: 3.5rem;
+    height: 1rem;
+  }
+
+  :global(.slider.volume-slider::before) {
+    height: 3px;
+  }
+
+  :global(.slider.volume-slider .slider-range) {
+    height: 3px;
+    background: transparent;
+  }
+
+  :global(.slider.volume-slider .slider-thumb) {
+    width: 10px;
+    height: 10px;
+    border: 0;
+    background: var(--color-fg);
+    box-shadow: none;
+  }
+</style>

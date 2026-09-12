@@ -1,5 +1,6 @@
 <script lang="ts">
   import ePub, { type Rendition } from "epubjs";
+  import { PersistedState } from "runed";
   import {
     epubOpenOptions,
     epubRenderOptions,
@@ -76,15 +77,36 @@
     resolveLoadedCustomFont,
     scheduleEpubLocationsGenerate,
     takeFileInput,
+    EPUB_DEFAULT_FONT_PCT,
+    EPUB_DEFAULT_LINE_HEIGHT,
+    EPUB_DEFAULT_MARGIN_PX,
+    EPUB_DEFAULT_SPREAD,
     type EpubSpreadMode,
   } from "$lib/reader/epub-reader";
 
   const PREF_KEYS = buildEpubPrefKeys(storageKey);
   const palette = EPUB_PALETTE;
-  const initialPrefs = loadInitialEpubDisplayPrefs(
-    typeof localStorage !== "undefined" ? localStorage : null,
-    PREF_KEYS,
-  );
+
+  const rawString = {
+    serialize: (value: string) => value,
+    deserialize: (value: string) => value,
+  };
+  const prefStates = {
+    font: new PersistedState<string>(PREF_KEYS.font, String(EPUB_DEFAULT_FONT_PCT), {
+      serializer: rawString,
+    }),
+    theme: new PersistedState<string>(PREF_KEYS.theme, "light", { serializer: rawString }),
+    line: new PersistedState<string>(PREF_KEYS.line, String(EPUB_DEFAULT_LINE_HEIGHT), {
+      serializer: rawString,
+    }),
+    margin: new PersistedState<string>(PREF_KEYS.margin, String(EPUB_DEFAULT_MARGIN_PX), {
+      serializer: rawString,
+    }),
+    spread: new PersistedState<string>(PREF_KEYS.spread, EPUB_DEFAULT_SPREAD, {
+      serializer: rawString,
+    }),
+  };
+  const initialPrefs = loadInitialEpubDisplayPrefs(prefStates);
 
   interface Props {
     url: string;
@@ -144,7 +166,7 @@
         lineHeight = merged.lineHeight;
         marginPx = merged.marginPx;
         spreadMode = merged.spread;
-        persistEpubDisplayPrefs(PREF_KEYS, merged);
+        persistEpubDisplayPrefs(prefStates, merged);
       })
       .catch(() => undefined)
       .finally(() => {
@@ -173,7 +195,7 @@
     const { fg, bg } = palette[resolvedTheme()];
     applyEpubThemeOverrides(rendition.themes, { fg, bg, lineHeight, marginPx });
     applyEpubSurfaceBackground(container, () => rendition?.getContents(), bg);
-    persistEpubThemePrefs(PREF_KEYS, { theme: readerTheme, lineHeight, marginPx });
+    persistEpubThemePrefs(prefStates, { theme: readerTheme, lineHeight, marginPx });
     prefsSaver.queue();
   }
 
@@ -184,7 +206,7 @@
 
   function applyFont(pct = fontPct) {
     if (!rendition) return;
-    applyEpubFontPct(rendition.themes, pct, PREF_KEYS.font);
+    applyEpubFontPct(rendition.themes, pct, prefStates.font);
     prefsSaver.queue();
   }
 
@@ -215,7 +237,7 @@
 
   function setSpreadMode(mode: EpubSpreadMode) {
     spreadMode = mode;
-    persistEpubSpreadMode(PREF_KEYS.spread, mode);
+    persistEpubSpreadMode(prefStates.spread, mode);
     prefsSaver.queue();
   }
 

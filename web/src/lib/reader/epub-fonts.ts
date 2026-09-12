@@ -1,4 +1,5 @@
 import type { Rendition } from "epubjs";
+import { PersistedState } from "runed";
 import { IDB_FONTS, storageKey } from "$lib/brand/storage";
 
 import sourceSerifUrl from "@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2?url";
@@ -202,16 +203,22 @@ export function isBuiltInFontId(value: string): value is BuiltInFontId {
   return BUILTIN_EPUB_FONTS.some((f) => f.id === value);
 }
 
+const fontPreference = new PersistedState<string>(EPUB_FONT_KEY, "book", {
+  serializer: {
+    serialize: (value) => value,
+    deserialize: (value) => value,
+  },
+});
+
 export function loadFontPreference(): EpubFontId {
-  if (typeof localStorage === "undefined") return "book";
-  const saved = localStorage.getItem(EPUB_FONT_KEY);
+  const saved = fontPreference.current;
   if (saved === "custom") return "custom";
   if (saved && isBuiltInFontId(saved)) return saved;
   return "book";
 }
 
 export function saveFontPreference(id: EpubFontId): void {
-  localStorage.setItem(EPUB_FONT_KEY, id);
+  fontPreference.current = id;
 }
 
 function openFontDb(): Promise<IDBDatabase> {

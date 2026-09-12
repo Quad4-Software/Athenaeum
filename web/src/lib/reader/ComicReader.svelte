@@ -12,6 +12,8 @@
     StretchVertical,
   } from "@lucide/svelte";
   import { api, ApiError } from "$lib/api/client";
+  import { MediaQuery } from "svelte/reactivity";
+  import { PersistedState } from "runed";
   import EmptyState from "$lib/components/EmptyState.svelte";
   import Popover from "$lib/components/Popover.svelte";
   import ReaderAnnotations from "$lib/components/ReaderAnnotations.svelte";
@@ -49,18 +51,20 @@
   let annotationsOpen = $state(false);
   let annotationsRevision = $state(0);
   let pageSrc = $state<Record<number, string>>({});
-  let wide = $state(typeof window !== "undefined" ? window.matchMedia(WIDE_QUERY).matches : false);
+  const wideQuery = new MediaQuery(WIDE_QUERY);
+  let wide = $derived(wideQuery.current);
 
-  let fit = $state<ComicFit>(
-    (typeof localStorage !== "undefined" ? (localStorage.getItem(FIT_KEY) as ComicFit) : null) ||
-      "contain",
-  );
-  let spreadEnabled = $state(
-    typeof localStorage !== "undefined" ? localStorage.getItem(SPREAD_KEY) === "1" : false,
-  );
-  let rtl = $state(
-    typeof localStorage !== "undefined" ? localStorage.getItem(RTL_KEY) === "1" : false,
-  );
+  const rawString = {
+    serialize: (value: string) => value,
+    deserialize: (value: string) => value,
+  };
+  const fitPref = new PersistedState<string>(FIT_KEY, "contain", { serializer: rawString });
+  const spreadPref = new PersistedState<string>(SPREAD_KEY, "0", { serializer: rawString });
+  const rtlPref = new PersistedState<string>(RTL_KEY, "0", { serializer: rawString });
+
+  let fit = $derived(fitPref.current as ComicFit);
+  let spreadEnabled = $derived(spreadPref.current === "1");
+  let rtl = $derived(rtlPref.current === "1");
 
   let spreadPages = $derived(comicSpreadPages(page, total, spreadEnabled, wide));
   let displayPages = $derived(rtl ? [...spreadPages].reverse() : spreadPages);
@@ -100,15 +104,6 @@
       .catch(() => {
         loading = false;
       });
-  });
-
-  $effect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia(WIDE_QUERY);
-    const apply = () => (wide = mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
   });
 
   $effect(() => {
@@ -160,18 +155,15 @@
   }
 
   function setFit(value: ComicFit) {
-    fit = value;
-    localStorage.setItem(FIT_KEY, value);
+    fitPref.current = value;
   }
 
   function toggleSpread() {
-    spreadEnabled = !spreadEnabled;
-    localStorage.setItem(SPREAD_KEY, spreadEnabled ? "1" : "0");
+    spreadPref.current = spreadEnabled ? "0" : "1";
   }
 
   function toggleRtl() {
-    rtl = !rtl;
-    localStorage.setItem(RTL_KEY, rtl ? "1" : "0");
+    rtlPref.current = rtl ? "0" : "1";
   }
 
   async function addBookmark() {
@@ -223,15 +215,14 @@
     <span class="mx-1 h-5 w-px bg-border"></span>
 
     <Popover bind:open={displayOpen} placement="bottom" align="end" minWidth={220}>
-      {#snippet trigger(toggle)}
+      {#snippet trigger(props)}
         <button
           type="button"
           class="btn btn-ghost text-xs"
           class:ring-1={displayOpen}
           class:ring-border={displayOpen}
-          aria-expanded={displayOpen}
           aria-label={i18n.t("reader.display")}
-          onclick={toggle}
+          {...props}
         >
           <Columns2 size={16} />
         </button>

@@ -1,3 +1,5 @@
+import { untrack } from "svelte";
+import { useDebounce } from "runed";
 import type { PageKeyHandlers } from "$lib/reader/reader-keys";
 import { injectEpubContentBackground, type ReaderTheme } from "$lib/reader/epub-theme";
 import { spinePreloadIndices } from "$lib/reader/reader-navigation";
@@ -198,21 +200,26 @@ export function epubLoadErrorMessage(message: string | undefined, fallback: stri
   return message?.trim() || fallback;
 }
 
-export function persistEpubDisplayPrefs(
-  keys: {
-    font: string;
-    theme: string;
-    line: string;
-    margin: string;
-    spread: string;
-  },
-  prefs: EpubDisplayPrefs,
-): void {
-  localStorage.setItem(keys.font, String(prefs.fontPct));
-  localStorage.setItem(keys.theme, prefs.theme);
-  localStorage.setItem(keys.line, String(prefs.lineHeight));
-  localStorage.setItem(keys.margin, String(prefs.marginPx));
-  localStorage.setItem(keys.spread, prefs.spread);
+/** A persisted string slot, e.g. runed PersistedState<string>. */
+export interface EpubPrefSlot {
+  current: string;
+}
+
+/** The five persisted display-pref slots used by the EPUB reader. */
+export interface EpubPrefStates {
+  font: EpubPrefSlot;
+  theme: EpubPrefSlot;
+  line: EpubPrefSlot;
+  margin: EpubPrefSlot;
+  spread: EpubPrefSlot;
+}
+
+export function persistEpubDisplayPrefs(store: EpubPrefStates, prefs: EpubDisplayPrefs): void {
+  store.font.current = String(prefs.fontPct);
+  store.theme.current = prefs.theme;
+  store.line.current = String(prefs.lineHeight);
+  store.margin.current = String(prefs.marginPx);
+  store.spread.current = prefs.spread;
 }
 
 export function canSelectEpubFont(fontId: string, hasCustomFont: boolean): boolean {
@@ -228,12 +235,11 @@ export interface EpubPrefKeys {
   spread: string;
 }
 
-/** Load display prefs from localStorage-like storage with defaults. */
+/** Load display prefs from persisted slots with defaults. */
 export function loadInitialEpubDisplayPrefs(
-  storage: { getItem(key: string): string | null } | null | undefined,
-  keys: EpubPrefKeys,
+  store: EpubPrefStates | null | undefined,
 ): EpubDisplayPrefs {
-  if (!storage) {
+  if (!store) {
     return {
       fontPct: EPUB_DEFAULT_FONT_PCT,
       theme: "light",
@@ -243,11 +249,11 @@ export function loadInitialEpubDisplayPrefs(
     };
   }
   return {
-    fontPct: loadStoredNumber(storage.getItem(keys.font), EPUB_DEFAULT_FONT_PCT),
-    theme: loadReaderTheme(storage.getItem(keys.theme)),
-    lineHeight: loadStoredNumber(storage.getItem(keys.line), EPUB_DEFAULT_LINE_HEIGHT),
-    marginPx: loadStoredNumber(storage.getItem(keys.margin), EPUB_DEFAULT_MARGIN_PX),
-    spread: loadEpubSpreadMode(storage.getItem(keys.spread)),
+    fontPct: loadStoredNumber(store.font.current, EPUB_DEFAULT_FONT_PCT),
+    theme: loadReaderTheme(store.theme.current),
+    lineHeight: loadStoredNumber(store.line.current, EPUB_DEFAULT_LINE_HEIGHT),
+    marginPx: loadStoredNumber(store.margin.current, EPUB_DEFAULT_MARGIN_PX),
+    spread: loadEpubSpreadMode(store.spread.current),
   };
 }
 
@@ -328,14 +334,14 @@ export function applyEpubSurfaceBackground(
   }
 }
 
-/** Persist theme, line-height, and margin keys used by applyReaderTheme. */
+/** Persist theme, line-height, and margin slots used by applyReaderTheme. */
 export function persistEpubThemePrefs(
-  keys: Pick<EpubPrefKeys, "theme" | "line" | "margin">,
+  store: Pick<EpubPrefStates, "theme" | "line" | "margin">,
   prefs: Pick<EpubDisplayPrefs, "theme" | "lineHeight" | "marginPx">,
 ): void {
-  localStorage.setItem(keys.theme, prefs.theme);
-  localStorage.setItem(keys.line, String(prefs.lineHeight));
-  localStorage.setItem(keys.margin, String(prefs.marginPx));
+  store.theme.current = prefs.theme;
+  store.line.current = String(prefs.lineHeight);
+  store.margin.current = String(prefs.marginPx);
 }
 
 /** Gather iframe contents for narration, swallowing getContents failures. */
@@ -376,18 +382,18 @@ export function createEpubPrefsSaver(opts: {
   getPrefs: () => EpubDisplayPrefs;
   save: (prefs: EpubDisplayPrefs) => Promise<unknown>;
 }): { queue: () => void; clear: () => void } {
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  const debounced = useDebounce(() => {
+    void opts.save(opts.getPrefs()).catch(() => undefined);
+  }, opts.delayMs ?? 600);
   return {
     queue() {
       if (!opts.isReady()) return;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        void opts.save(opts.getPrefs()).catch(() => undefined);
-      }, opts.delayMs ?? 600);
+      // debounced() touches runed $state internally; untrack so callers inside
+      // $effect are not invalidated when the timer context mutates.
+      untrack(() => void debounced());
     },
     clear() {
-      if (timer) clearTimeout(timer);
-      timer = null;
+      untrack(() => debounced.cancel());
     },
   };
 }
@@ -407,15 +413,15 @@ export function buildEpubPrefKeys(keyFn: (name: string) => string): EpubPrefKeys
 export function applyEpubFontPct(
   themes: { fontSize(value: string): void },
   pct: number,
-  fontKey: string,
+  font: EpubPrefSlot,
 ): void {
   themes.fontSize(`${pct}%`);
-  localStorage.setItem(fontKey, String(pct));
+  font.current = String(pct);
 }
 
-/** Persist spread mode to localStorage. */
-export function persistEpubSpreadMode(key: string, mode: EpubSpreadMode): void {
-  localStorage.setItem(key, mode);
+/** Persist spread mode to its slot. */
+export function persistEpubSpreadMode(spread: EpubPrefSlot, mode: EpubSpreadMode): void {
+  spread.current = mode;
 }
 
 /** Paint a list of highlights onto the annotations API. */

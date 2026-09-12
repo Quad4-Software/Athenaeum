@@ -267,47 +267,37 @@ describe("canSelectEpubFont", () => {
   });
 });
 
+function prefStates(values: Partial<Record<string, string>> = {}) {
+  return {
+    font: { current: values.font ?? "" },
+    theme: { current: values.theme ?? "" },
+    line: { current: values.line ?? "" },
+    margin: { current: values.margin ?? "" },
+    spread: { current: values.spread ?? "" },
+  };
+}
+
 describe("persistEpubDisplayPrefs", () => {
-  it("writes all display prefs to localStorage", () => {
-    const store = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
-      setItem(key: string, value: string) {
-        store.set(key, value);
-      },
-      getItem(key: string) {
-        return store.get(key) ?? null;
-      },
+  it("writes all display prefs to the persisted slots", () => {
+    const store = prefStates();
+    persistEpubDisplayPrefs(store, {
+      fontPct: 110,
+      theme: "sepia",
+      lineHeight: 1.7,
+      marginPx: 28,
+      spread: "always",
     });
-    persistEpubDisplayPrefs(
-      { font: "f", theme: "t", line: "l", margin: "m", spread: "s" },
-      {
-        fontPct: 110,
-        theme: "sepia",
-        lineHeight: 1.7,
-        marginPx: 28,
-        spread: "always",
-      },
-    );
-    expect(store.get("f")).toBe("110");
-    expect(store.get("t")).toBe("sepia");
-    expect(store.get("l")).toBe("1.7");
-    expect(store.get("m")).toBe("28");
-    expect(store.get("s")).toBe("always");
-    vi.unstubAllGlobals();
+    expect(store.font.current).toBe("110");
+    expect(store.theme.current).toBe("sepia");
+    expect(store.line.current).toBe("1.7");
+    expect(store.margin.current).toBe("28");
+    expect(store.spread.current).toBe("always");
   });
 });
 
 describe("loadInitialEpubDisplayPrefs", () => {
   it("returns defaults without storage", () => {
-    expect(
-      loadInitialEpubDisplayPrefs(null, {
-        font: "f",
-        theme: "t",
-        line: "l",
-        margin: "m",
-        spread: "s",
-      }),
-    ).toEqual({
+    expect(loadInitialEpubDisplayPrefs(null)).toEqual({
       fontPct: 100,
       theme: "light",
       lineHeight: 1.6,
@@ -317,17 +307,9 @@ describe("loadInitialEpubDisplayPrefs", () => {
   });
 
   it("reads stored values", () => {
-    const store = new Map([
-      ["f", "120"],
-      ["t", "night"],
-      ["l", "1.8"],
-      ["m", "32"],
-      ["s", "single"],
-    ]);
     expect(
       loadInitialEpubDisplayPrefs(
-        { getItem: (k) => store.get(k) ?? null },
-        { font: "f", theme: "t", line: "l", margin: "m", spread: "s" },
+        prefStates({ font: "120", theme: "night", line: "1.8", margin: "32", spread: "single" }),
       ),
     ).toEqual({
       fontPct: 120,
@@ -400,20 +382,11 @@ describe("applyEpubSurfaceBackground", () => {
 
 describe("persistEpubThemePrefs", () => {
   it("writes theme line and margin only", () => {
-    const store = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
-      setItem(key: string, value: string) {
-        store.set(key, value);
-      },
-    });
-    persistEpubThemePrefs(
-      { theme: "t", line: "l", margin: "m" },
-      { theme: "sepia", lineHeight: 1.5, marginPx: 18 },
-    );
-    expect(store.get("t")).toBe("sepia");
-    expect(store.get("l")).toBe("1.5");
-    expect(store.get("m")).toBe("18");
-    vi.unstubAllGlobals();
+    const store = prefStates();
+    persistEpubThemePrefs(store, { theme: "sepia", lineHeight: 1.5, marginPx: 18 });
+    expect(store.theme.current).toBe("sepia");
+    expect(store.line.current).toBe("1.5");
+    expect(store.margin.current).toBe("18");
   });
 });
 
@@ -515,30 +488,18 @@ describe("buildEpubPrefKeys", () => {
 describe("applyEpubFontPct", () => {
   it("sets font size and persists", () => {
     const fontSize = vi.fn();
-    const store = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
-      setItem(key: string, value: string) {
-        store.set(key, value);
-      },
-    });
-    applyEpubFontPct({ fontSize }, 110, "font-key");
+    const font = { current: "" };
+    applyEpubFontPct({ fontSize }, 110, font);
     expect(fontSize).toHaveBeenCalledWith("110%");
-    expect(store.get("font-key")).toBe("110");
-    vi.unstubAllGlobals();
+    expect(font.current).toBe("110");
   });
 });
 
 describe("persistEpubSpreadMode", () => {
   it("writes spread mode", () => {
-    const store = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
-      setItem(key: string, value: string) {
-        store.set(key, value);
-      },
-    });
-    persistEpubSpreadMode("spread", "always");
-    expect(store.get("spread")).toBe("always");
-    vi.unstubAllGlobals();
+    const spread = { current: "" };
+    persistEpubSpreadMode(spread, "always");
+    expect(spread.current).toBe("always");
   });
 });
 

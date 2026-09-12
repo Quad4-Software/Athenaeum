@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Bookmark, Highlighter, List, MoreVertical, Volume2 } from "@lucide/svelte";
-  import Popover from "$lib/components/Popover.svelte";
+  import Dropdown from "$lib/components/Dropdown.svelte";
+  import type { MenuItem } from "$lib/components/menu";
   import { i18n } from "$lib/stores/i18n.svelte";
   import { narrator } from "$lib/stores/narrator.svelte";
 
@@ -25,6 +26,43 @@
     onToggleAnnotations,
     onOpenShortcuts,
   }: Props = $props();
+
+  let menuItems = $derived<MenuItem[]>([
+    ...(bookId
+      ? [
+          {
+            id: "narrate",
+            label: narrator.active ? i18n.t("narrator.stop") : i18n.t("narrator.play"),
+            icon: Volume2,
+            onclick: () => void onNarrate(),
+          },
+          {
+            id: "bookmark",
+            label: i18n.t("reader.bookmarkLabel"),
+            icon: Bookmark,
+            onclick: onBookmark,
+          },
+          {
+            id: "highlight",
+            label: "Highlight",
+            icon: Highlighter,
+            disabled: !selectionCfi,
+            onclick: onHighlight,
+          },
+          {
+            id: "annotations",
+            label: "Annotations",
+            icon: List,
+            onclick: onToggleAnnotations,
+          },
+        ]
+      : []),
+    {
+      id: "shortcuts",
+      label: "Keyboard shortcuts",
+      onclick: onOpenShortcuts,
+    },
+  ]);
 </script>
 
 <div class="hidden items-center gap-1 md:flex">
@@ -57,70 +95,17 @@
   </button>
 </div>
 
-<Popover bind:open placement="bottom" align="end" minWidth={200}>
-  {#snippet trigger(toggle)}
+<Dropdown bind:open side="bottom" align="end" minWidth={200} items={menuItems}>
+  {#snippet trigger(props)}
     <button
       type="button"
       class="btn btn-ghost md:hidden"
       class:ring-1={open}
       class:ring-border={open}
-      aria-expanded={open}
       aria-label="More options"
-      onclick={toggle}
+      {...props}
     >
       <MoreVertical size={16} />
     </button>
   {/snippet}
-  <div class="flex flex-col gap-1 p-1 md:hidden">
-    {#if bookId}
-      <button
-        class="btn btn-ghost w-full justify-start text-xs"
-        onclick={() => {
-          open = false;
-          void onNarrate();
-        }}
-      >
-        <Volume2 size={14} />
-        {narrator.active ? i18n.t("narrator.stop") : i18n.t("narrator.play")}
-      </button>
-      <button
-        class="btn btn-ghost w-full justify-start text-xs"
-        onclick={() => {
-          open = false;
-          void onBookmark();
-        }}
-      >
-        <Bookmark size={14} />
-        {i18n.t("reader.bookmarkLabel")}
-      </button>
-      <button
-        class="btn btn-ghost w-full justify-start text-xs"
-        onclick={() => {
-          open = false;
-          void onHighlight();
-        }}
-        disabled={!selectionCfi}
-      >
-        <Highlighter size={14} /> Highlight
-      </button>
-      <button
-        class="btn btn-ghost w-full justify-start text-xs"
-        onclick={() => {
-          open = false;
-          onToggleAnnotations();
-        }}
-      >
-        <List size={14} /> Annotations
-      </button>
-    {/if}
-    <button
-      class="btn btn-ghost w-full justify-start text-xs"
-      onclick={() => {
-        open = false;
-        onOpenShortcuts();
-      }}
-    >
-      Keyboard shortcuts
-    </button>
-  </div>
-</Popover>
+</Dropdown>

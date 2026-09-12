@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Check, Minus, Plus, Type } from "@lucide/svelte";
   import Popover from "$lib/components/Popover.svelte";
+  import Slider from "$lib/components/Slider.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
   import {
     BUILTIN_EPUB_FONTS,
@@ -56,15 +57,14 @@
 />
 
 <Popover bind:open placement="bottom" align="end" minWidth={288}>
-  {#snippet trigger(toggle)}
+  {#snippet trigger(props)}
     <button
       type="button"
       class="btn btn-ghost text-xs"
       class:ring-1={open}
       class:ring-border={open}
-      aria-expanded={open}
       aria-label={i18n.t("reader.display")}
-      onclick={toggle}
+      {...props}
     >
       <Type size={16} />
       <span class="tabular-nums">{fontPct}%</span>
@@ -174,21 +174,35 @@
       </div>
     </div>
 
-    <label class="block">
+    <div class="block">
       <span class="mb-1.5 flex items-center justify-between text-xs font-medium text-muted">
         <span>{i18n.t("reader.lineSpacing")}</span>
         <span class="tabular-nums">{lineHeight.toFixed(1)}</span>
       </span>
-      <input type="range" min="1.2" max="2.2" step="0.1" bind:value={lineHeight} class="w-full" />
-    </label>
+      <Slider
+        bind:value={lineHeight}
+        min={1.2}
+        max={2.2}
+        step={0.1}
+        ariaLabel={i18n.t("reader.lineSpacing")}
+        class="w-full"
+      />
+    </div>
 
-    <label class="block">
+    <div class="block">
       <span class="mb-1.5 flex items-center justify-between text-xs font-medium text-muted">
         <span>{i18n.t("reader.margins")}</span>
         <span class="tabular-nums">{marginPx}px</span>
       </span>
-      <input type="range" min="8" max="64" step="4" bind:value={marginPx} class="w-full" />
-    </label>
+      <Slider
+        bind:value={marginPx}
+        min={8}
+        max={64}
+        step={4}
+        ariaLabel={i18n.t("reader.margins")}
+        class="w-full"
+      />
+    </div>
 
     <label class="block">
       <span class="mb-1.5 block text-xs font-medium text-muted">{i18n.t("reader.spread")}</span>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte";
+  import { PersistedState, useResizeObserver } from "runed";
   import * as pdfjs from "pdfjs-dist";
   import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from "pdfjs-dist";
   import type { TextLayer } from "pdfjs-dist";
@@ -79,11 +80,13 @@
   let loading = $state(true);
   let autoFit = $state(true);
   let fitTick = $state(0);
-  let pagesPerView = $state<PagesPerView>(
-    untrack(() =>
-      typeof localStorage === "undefined" ? 1 : parsePagesPerView(localStorage.getItem(PAGES_KEY)),
-    ),
-  );
+  const pagesPref = new PersistedState<string>(PAGES_KEY, "1", {
+    serializer: {
+      serialize: (value) => value,
+      deserialize: (value) => value,
+    },
+  });
+  let pagesPerView = $derived(parsePagesPerView(pagesPref.current));
   let chapters = $state<ReaderChapter[]>([]);
   let viewport = $state<HTMLDivElement>();
   let selectionLocation = $state("");
@@ -300,8 +303,7 @@
   }
 
   function setPagesPerView(value: PagesPerView) {
-    pagesPerView = value;
-    localStorage.setItem(PAGES_KEY, String(value));
+    pagesPref.current = String(value);
     spreadPage = clampSpreadStart(spreadPage, value, total);
     page = spreadPage;
   }
@@ -373,15 +375,12 @@
     annotationsOpen = false;
   }
 
-  $effect(() => {
-    const wrap = viewport;
-    if (!wrap) return;
-    const ro = new ResizeObserver(() => {
+  useResizeObserver(
+    () => viewport,
+    () => {
       if (autoFit) fitTick += 1;
-    });
-    ro.observe(wrap);
-    return () => ro.disconnect();
-  });
+    },
+  );
 </script>
 
 <svelte:window onkeydown={onKey} />

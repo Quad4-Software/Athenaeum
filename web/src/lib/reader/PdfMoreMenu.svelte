@@ -39,15 +39,14 @@
 </script>
 
 <Popover bind:open placement="bottom" align="end" minWidth={220}>
-  {#snippet trigger(toggle)}
+  {#snippet trigger(props)}
     <button
       type="button"
       class="btn btn-ghost"
       class:ring-1={open}
       class:ring-border={open}
-      aria-expanded={open}
       aria-label="More options"
-      onclick={toggle}
+      {...props}
     >
       <MoreVertical size={18} />
     </button>
