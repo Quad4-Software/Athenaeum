@@ -23,9 +23,11 @@ Installable agent skills live under `.agents/skills/`:
 | Skill | Use when |
 | ----- | -------- |
 | `no-ai-slop` | Writing or editing any prose (docs, README, PR text, comments that are sentences) |
-| `rossmann-voice` | Explicitly asked for that voice profile |
 | `athenaeum-conventions` | Any code or UI change in this repo |
 | `athenaeum-docs` | Editing `docs/` or user-facing install/feature copy |
+| `code-quality` | Writing or refactoring any code |
+| `testing` | Writing or reviewing any test |
+| `web-stack` | Anything under `web/` (Svelte 5 runes, runed, bits-ui v2, Tailwind v4) |
 
 Full no-slop rule list: `.agents/references/no-ai-slop-rules.md`
 Banned-words reference: `.agents/skills/no-ai-slop/references/ai-writing-detection.md`
@@ -35,11 +37,14 @@ Tooling cheat sheet: `.agents/tools.md`
 
 1. Before writing or editing prose, read `.agents/skills/no-ai-slop/SKILL.md`.
 2. Before returning prose, self-check against the banned-words reference.
-3. For code or UI work, follow `.agents/skills/athenaeum-conventions/SKILL.md`.
-4. For docs site or install guides, also follow `.agents/skills/athenaeum-docs/SKILL.md`.
-5. Do not invent features, flags, or API routes. Confirm against the tree or tests.
-6. Prefer reusable packages and shared constants over one-off copies.
-7. After a major feature, run format/lint and the relevant tests (see `.agents/tools.md`).
+3. For code or UI work, follow `.agents/skills/athenaeum-conventions/SKILL.md`
+   and `.agents/skills/code-quality/SKILL.md`.
+4. For tests, follow `.agents/skills/testing/SKILL.md`. No tautological,
+   mock-mirror, or happy-path-only tests.
+5. For docs site or install guides, also follow `.agents/skills/athenaeum-docs/SKILL.md`.
+6. Do not invent features, flags, or API routes. Confirm against the tree or tests.
+7. Prefer reusable packages and shared constants over one-off copies.
+8. After a major feature, run format/lint and the relevant tests (see `.agents/tools.md`).
 
 ## Non-negotiable project conventions
 

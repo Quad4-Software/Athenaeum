@@ -36,16 +36,36 @@ Run these on touched packages/files before finishing a change. Fix failures.
 
 ```sh
 task test               # Go + Vitest
-task test:go
+task test:go            # PKG=./internal/auth narrows scope
 task test:web
 task test:contract      # OpenAPI / route / i18n / env drift
 task test:e2e           # Playwright (builds binary if needed)
 task test:race          # Go race detector
+task test:property      # Go testing/quick + web fast-check suites
+task test:fuzz          # Go fuzz targets, 10s each (test:fuzz:long for 1m)
+task test:coverage      # Go coverage report (test:coverage:web for Vitest)
+task test:mutation      # Gremlins on Go (test:mutation:web for Stryker)
+task test:bench         # Go benchmarks
+task test:all           # unit + race + property + contract + short fuzz + coverage
 ```
 
 After a major feature: `task fmt` (or format via lint tools), `task lint`, then
 `task test` (or the smallest suite that covers the change, then expand if risk
 is high). API or route changes also need `task generate` and `task test:contract`.
+When you add or change tests, see `.agents/skills/testing/SKILL.md`; mutation
+and property targets above are how you verify the tests actually constrain
+behavior.
+
+## Hygiene and security
+
+```sh
+task generate:check     # generated files are in sync
+task deadcode           # unreachable Go code
+task knip               # unused web exports/deps
+task security           # gosec + govulncheck + pnpm audit
+```
+
+Run `deadcode`/`knip` after refactors that may have orphaned code.
 
 ## Docs site
 

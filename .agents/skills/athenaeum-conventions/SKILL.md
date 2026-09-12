@@ -7,6 +7,11 @@ description: >-
 
 # Athenaeum conventions
 
+This file covers repo-specific stack and layout rules. For general code
+quality practice (smallest change, no speculative abstraction, dead code,
+self-review), read `.agents/skills/code-quality/SKILL.md`. For test work,
+read `.agents/skills/testing/SKILL.md`.
+
 ## Hard rules
 
 1. **No emojis** in code, comments, UI copy, markdown, or commit messages you draft.
@@ -41,7 +46,11 @@ description: >-
 
 ## Svelte / web
 
-- Follow existing Svelte 5 runes patterns in neighboring files.
+- Follow existing Svelte 5 runes patterns in neighboring files. The repo is
+  runes-only; no `on:`, `<slot>`, `createEventDispatcher`, or `export let`.
+- Stack versions and upstream doc endpoints (runed, bits-ui v2, Tailwind v4,
+  Vite 8, TS 6) live in `.agents/skills/web-stack/SKILL.md`. Installed
+  versions are newer than most training data; fetch docs instead of recalling.
 - Reuse components under `web/src/lib/components/` and reader modules under `web/src/lib/reader/`.
 - New UI strings go in `web/src/lib/i18n/locales/en.json`, then sync locales.
 - Do not hand-roll icons or emoji as decoration.
