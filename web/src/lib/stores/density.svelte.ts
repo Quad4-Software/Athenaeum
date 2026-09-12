@@ -3,23 +3,31 @@
  */
 
 import { storageKey } from "$lib/brand/storage";
+import { PersistedState } from "runed";
 
 export type GridDensity = "comfortable" | "compact";
 
 const STORAGE_KEY = storageKey("grid-density");
 
-function load(): GridDensity {
-  if (typeof localStorage === "undefined") return "comfortable";
-  const v = localStorage.getItem(STORAGE_KEY);
-  return v === "compact" ? "compact" : "comfortable";
-}
-
 class DensityStore {
-  value = $state<GridDensity>(load());
+  #persisted = new PersistedState<GridDensity>(STORAGE_KEY, "comfortable", {
+    serializer: {
+      // Stored as a bare string, not JSON.
+      serialize: (value) => value,
+      deserialize: (value) => (value === "compact" ? "compact" : "comfortable"),
+    },
+  });
+
+  get value(): GridDensity {
+    return this.#persisted.current;
+  }
+
+  set value(next: GridDensity) {
+    this.#persisted.current = next;
+  }
 
   set(next: GridDensity) {
     this.value = next;
-    localStorage.setItem(STORAGE_KEY, next);
   }
 
   toggle() {

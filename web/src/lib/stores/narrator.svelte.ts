@@ -1,4 +1,5 @@
 import { storageKey } from "$lib/brand/storage";
+import { PersistedState } from "runed";
 import { createBrowserEngine, isBrowserTTSAvailable } from "$lib/narrator/browser";
 import {
   createKokoroEngine,
@@ -20,19 +21,34 @@ export type NarratorErrorCode =
   "unavailable" | "empty" | "speak_failed" | "kokoro_unavailable" | "aborted";
 
 class NarratorStore {
+  #providerState = new PersistedState<NarratorProvider>(PROVIDER_KEY, "browser", {
+    serializer: {
+      // Stored as a bare provider string, not JSON.
+      serialize: (value) => value,
+      deserialize: (value) => (value === "kokoro" ? "kokoro" : "browser"),
+    },
+  });
+  #voiceState = new PersistedState<string>(VOICE_KEY, "", {
+    serializer: {
+      // Stored as a bare voice id string, not JSON.
+      serialize: (value) => value,
+      deserialize: (value) => value,
+    },
+  });
+  #rateState = new PersistedState<number>(RATE_KEY, 1, {
+    serializer: {
+      // Stored as a bare number string, not JSON.
+      serialize: (value) => String(value),
+      deserialize: (value) => Number(value) || 1,
+    },
+  });
+
   active = $state(false);
   playing = $state(false);
   paused = $state(false);
-  provider = $state<NarratorProvider>(loadProvider());
   /** True when in-browser Kokoro WASM can run (WebAssembly present). */
   kokoroEnabled = $state(isKokoroWasmAvailable());
   kokoroLoading = $state(false);
-  voiceId = $state(
-    typeof localStorage !== "undefined" ? localStorage.getItem(VOICE_KEY) || "" : "",
-  );
-  rate = $state(
-    typeof localStorage !== "undefined" ? Number(localStorage.getItem(RATE_KEY)) || 1 : 1,
-  );
   voices = $state<NarratorVoice[]>([]);
   voicesLoading = $state(false);
   index = $state(0);
@@ -56,6 +72,30 @@ class NarratorStore {
     });
   }
 
+  get provider(): NarratorProvider {
+    return this.#providerState.current;
+  }
+
+  set provider(provider: NarratorProvider) {
+    this.#providerState.current = provider;
+  }
+
+  get voiceId(): string {
+    return this.#voiceState.current;
+  }
+
+  set voiceId(id: string) {
+    this.#voiceState.current = id;
+  }
+
+  get rate(): number {
+    return this.#rateState.current;
+  }
+
+  set rate(rate: number) {
+    this.#rateState.current = rate;
+  }
+
   get showBar(): boolean {
     return this.active;
   }
@@ -75,7 +115,6 @@ class NarratorStore {
     this.kokoroEnabled = isKokoroWasmAvailable();
     if (!this.kokoroEnabled && this.provider === "kokoro") {
       this.provider = "browser";
-      persistProvider("browser");
     }
     this.statusLoaded = true;
   }
@@ -118,7 +157,6 @@ class NarratorStore {
     const title = this.bookTitle;
     this.stopInternal(false);
     this.provider = provider;
-    persistProvider(provider);
     this.engine = null;
     if (provider === "kokoro") {
       void this.ensureKokoroReady();
@@ -132,13 +170,11 @@ class NarratorStore {
 
   setVoice(id: string) {
     this.voiceId = id;
-    if (typeof localStorage !== "undefined") localStorage.setItem(VOICE_KEY, id);
   }
 
   setRate(rate: number) {
     const next = Number.isFinite(rate) ? Math.min(2, Math.max(0.5, rate)) : 1;
     this.rate = next;
-    if (typeof localStorage !== "undefined") localStorage.setItem(RATE_KEY, String(next));
   }
 
   async start(utterances: string[], opts?: { title?: string; resume?: boolean }): Promise<boolean> {
@@ -306,16 +342,6 @@ class NarratorStore {
       this.stop();
     }
   }
-}
-
-function loadProvider(): NarratorProvider {
-  if (typeof localStorage === "undefined") return "browser";
-  const raw = localStorage.getItem(PROVIDER_KEY);
-  return raw === "kokoro" ? "kokoro" : "browser";
-}
-
-function persistProvider(provider: NarratorProvider) {
-  if (typeof localStorage !== "undefined") localStorage.setItem(PROVIDER_KEY, provider);
 }
 
 export const narrator = new NarratorStore();

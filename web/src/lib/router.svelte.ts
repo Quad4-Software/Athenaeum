@@ -1,3 +1,4 @@
+import { useEventListener } from "runed";
 import { resolveAppBase, stripBase, withBase } from "./router-base";
 
 export type RouteName =
@@ -65,8 +66,11 @@ class Router {
   current = $state<Route>(match(appPathFromLocation(window.location.pathname)));
 
   constructor() {
-    window.addEventListener("popstate", () => {
-      this.current = match(appPathFromLocation(window.location.pathname));
+    // Singleton: the root lives for the app lifetime, so no teardown needed.
+    $effect.root(() => {
+      useEventListener(window, "popstate", () => {
+        this.current = match(appPathFromLocation(window.location.pathname));
+      });
     });
   }
 

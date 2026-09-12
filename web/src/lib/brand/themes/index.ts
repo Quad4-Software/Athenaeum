@@ -1,5 +1,16 @@
+import { MediaQuery } from "svelte/reactivity";
 import { defaultDarkTheme, defaultLightTheme } from "./default";
 import type { AppTheme } from "./tokens";
+
+const PREFERS_LIGHT_QUERY = "(prefers-color-scheme: light)";
+
+// Lazily created so importing this module in non-DOM contexts stays safe.
+let prefersLight: MediaQuery | undefined;
+
+function lightSchemeQuery(): MediaQuery {
+  prefersLight ??= new MediaQuery(PREFERS_LIGHT_QUERY);
+  return prefersLight;
+}
 
 const themes = new Map<string, AppTheme>([
   [defaultLightTheme.id, defaultLightTheme],
@@ -20,7 +31,7 @@ export function listAppThemes(): AppTheme[] {
 }
 
 export function resolveSystemThemeId(): "light" | "dark" {
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  return lightSchemeQuery().current ? "light" : "dark";
 }
 
 export function resolveThemeId(preference: string): string {

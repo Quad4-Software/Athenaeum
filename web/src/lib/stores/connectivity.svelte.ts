@@ -1,4 +1,6 @@
 import { router } from "$lib/router.svelte";
+import { watch } from "runed";
+import { online as onlineWindow } from "svelte/reactivity/window";
 
 const SKIP_OFFLINE_NAV = new Set(["error", "login", "setup", "reader"]);
 
@@ -8,8 +10,17 @@ class ConnectivityStore {
 
   constructor() {
     if (typeof window === "undefined") return;
-    window.addEventListener("online", () => this.onOnline());
-    window.addEventListener("offline", () => this.onOffline());
+    $effect.root(() => {
+      watch(
+        () => onlineWindow.current,
+        (now, prev) => {
+          if (now === prev || now === undefined) return;
+          if (now) this.onOnline();
+          else this.onOffline();
+        },
+        { lazy: true },
+      );
+    });
   }
 
   onOffline() {

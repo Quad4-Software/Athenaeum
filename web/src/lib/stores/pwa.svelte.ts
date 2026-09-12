@@ -1,3 +1,6 @@
+import { useEventListener, watch } from "runed";
+import { MediaQuery } from "svelte/reactivity";
+
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -38,23 +41,30 @@ class PwaStore {
     this.refreshInstalled();
     this.refreshUnavailableReason();
 
-    window.addEventListener("beforeinstallprompt", (event) => {
-      event.preventDefault();
-      this.deferredPrompt = event as BeforeInstallPromptEvent;
-      this.canInstall = true;
-      this.installUnavailableReason = "";
-    });
+    const standalone = new MediaQuery("(display-mode: standalone)");
+    $effect.root(() => {
+      useEventListener(window, "beforeinstallprompt", (event) => {
+        event.preventDefault();
+        this.deferredPrompt = event as BeforeInstallPromptEvent;
+        this.canInstall = true;
+        this.installUnavailableReason = "";
+      });
 
-    window.addEventListener("appinstalled", () => {
-      this.deferredPrompt = null;
-      this.canInstall = false;
-      this.installed = true;
-      this.installUnavailableReason = "";
-    });
+      useEventListener(window, "appinstalled", () => {
+        this.deferredPrompt = null;
+        this.canInstall = false;
+        this.installed = true;
+        this.installUnavailableReason = "";
+      });
 
-    window.matchMedia("(display-mode: standalone)").addEventListener("change", () => {
-      this.refreshInstalled();
-      this.refreshUnavailableReason();
+      watch(
+        () => standalone.current,
+        () => {
+          this.refreshInstalled();
+          this.refreshUnavailableReason();
+        },
+        { lazy: true },
+      );
     });
   }
 

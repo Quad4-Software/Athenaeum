@@ -1,6 +1,7 @@
 import type { SidebarPrefs, SidebarSectionId } from "$lib/api/types";
 
 import { storageKey } from "$lib/brand/storage";
+import { PersistedState } from "runed";
 
 const STORAGE_KEY = storageKey("sidebar-prefs");
 const COLLAPSED_SECTIONS_KEY = storageKey("sidebar-section-collapsed");
@@ -15,48 +16,73 @@ const DEFAULT_ORDER: SidebarSectionId[] = [
   "series",
 ];
 
-function load(): SidebarPrefs {
-  if (typeof localStorage === "undefined") {
-    return { order: [...DEFAULT_ORDER], hidden: [] };
-  }
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { order: [...DEFAULT_ORDER], hidden: [] };
-    const parsed = JSON.parse(raw) as SidebarPrefs;
-    const order = parsed.order?.length ? parsed.order : [...DEFAULT_ORDER];
-    const hidden = parsed.hidden ?? [];
-    for (const id of DEFAULT_ORDER) {
-      if (!order.includes(id)) order.push(id);
+function defaultPrefs(): SidebarPrefs {
+  return { order: [...DEFAULT_ORDER], hidden: [] };
+}
+
+const prefsSerializer = {
+  serialize: (prefs: SidebarPrefs) => JSON.stringify(prefs),
+  deserialize: (raw: string): SidebarPrefs => {
+    try {
+      const parsed = JSON.parse(raw) as SidebarPrefs;
+      const order = parsed.order?.length ? parsed.order : [...DEFAULT_ORDER];
+      const hidden = parsed.hidden ?? [];
+      for (const id of DEFAULT_ORDER) {
+        if (!order.includes(id)) order.push(id);
+      }
+      return { order, hidden };
+    } catch {
+      return defaultPrefs();
     }
-    return { order, hidden };
-  } catch {
-    return { order: [...DEFAULT_ORDER], hidden: [] };
-  }
-}
+  },
+};
 
-function save(prefs: SidebarPrefs) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-}
-
-function loadCollapsedSections(): Record<string, boolean> {
-  if (typeof localStorage === "undefined") return {};
-  try {
-    const raw = localStorage.getItem(COLLAPSED_SECTIONS_KEY);
-    if (!raw) return {};
-    return JSON.parse(raw) as Record<string, boolean>;
-  } catch {
-    return {};
-  }
-}
-
-function saveCollapsedSections(collapsed: Record<string, boolean>) {
-  localStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify(collapsed));
-}
+const collapsedSerializer = {
+  serialize: (collapsed: Record<string, boolean>) => JSON.stringify(collapsed),
+  deserialize: (raw: string): Record<string, boolean> => {
+    try {
+      return JSON.parse(raw) as Record<string, boolean>;
+    } catch {
+      return {};
+    }
+  },
+};
 
 class SidebarPrefsStore {
-  order = $state<SidebarSectionId[]>(load().order);
-  hidden = $state<SidebarSectionId[]>(load().hidden);
-  sectionCollapsed = $state<Record<string, boolean>>(loadCollapsedSections());
+  #prefs = new PersistedState<SidebarPrefs>(STORAGE_KEY, defaultPrefs(), {
+    serializer: prefsSerializer,
+  });
+  #collapsed = new PersistedState<Record<string, boolean>>(
+    COLLAPSED_SECTIONS_KEY,
+    {},
+    {
+      serializer: collapsedSerializer,
+    },
+  );
+
+  get order(): SidebarSectionId[] {
+    return this.#prefs.current.order;
+  }
+
+  set order(order: SidebarSectionId[]) {
+    this.#prefs.current = { order, hidden: this.hidden };
+  }
+
+  get hidden(): SidebarSectionId[] {
+    return this.#prefs.current.hidden;
+  }
+
+  set hidden(hidden: SidebarSectionId[]) {
+    this.#prefs.current = { order: this.order, hidden };
+  }
+
+  get sectionCollapsed(): Record<string, boolean> {
+    return this.#collapsed.current;
+  }
+
+  set sectionCollapsed(collapsed: Record<string, boolean>) {
+    this.#collapsed.current = collapsed;
+  }
 
   visibleSections(): SidebarSectionId[] {
     return this.order.filter((id) => !this.hidden.includes(id));
@@ -72,7 +98,6 @@ class SidebarPrefsStore {
     } else {
       this.hidden = [...this.hidden, id];
     }
-    save({ order: this.order, hidden: this.hidden });
   }
 
   moveSection(id: SidebarSectionId, dir: -1 | 1) {
@@ -82,13 +107,11 @@ class SidebarPrefsStore {
     const order = [...this.order];
     [order[idx], order[next]] = [order[next], order[idx]];
     this.order = order;
-    save({ order: this.order, hidden: this.hidden });
   }
 
   reset() {
     this.order = [...DEFAULT_ORDER];
     this.hidden = [];
-    save({ order: this.order, hidden: this.hidden });
   }
 
   isSectionExpanded(id: string, defaultExpanded = true): boolean {
@@ -101,12 +124,10 @@ class SidebarPrefsStore {
   toggleSectionExpanded(id: string) {
     const expanded = this.isSectionExpanded(id);
     this.sectionCollapsed = { ...this.sectionCollapsed, [id]: expanded };
-    saveCollapsedSections(this.sectionCollapsed);
   }
 
   setSectionExpanded(id: string, expanded: boolean) {
     this.sectionCollapsed = { ...this.sectionCollapsed, [id]: !expanded };
-    saveCollapsedSections(this.sectionCollapsed);
   }
 }
 

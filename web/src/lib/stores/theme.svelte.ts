@@ -3,6 +3,8 @@
  */
 
 import { applyThemeTokens, brand, getAppTheme, resolveThemeId, storageKey } from "$lib/brand";
+import { PersistedState, watch } from "runed";
+import { MediaQuery } from "svelte/reactivity";
 
 export type ThemePreference = "light" | "dark" | "system" | (string & {});
 export type ThemeMode = "light" | "dark";
@@ -19,29 +21,46 @@ function setThemeColorMeta(mode: ThemeMode): void {
   el.setAttribute("content", brand.themeColor[mode]);
 }
 
-function initial(): ThemePreference {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved === "light" || saved === "dark" || saved === "system") return saved;
-  if (saved && getAppTheme(saved)) return saved;
-  return "system";
+function isThemePreference(value: string): value is ThemePreference {
+  return (
+    value === "light" || value === "dark" || value === "system" || getAppTheme(value) !== undefined
+  );
 }
 
 class ThemeStore {
-  preference = $state<ThemePreference>("system");
+  #persisted = new PersistedState<ThemePreference>(STORAGE_KEY, "system", {
+    serializer: {
+      // Stored as a bare string ("light" | "dark" | "system" | theme id), not JSON.
+      serialize: (value) => value,
+      deserialize: (value) => (isThemePreference(value) ? value : "system"),
+    },
+  });
+
   mode = $state<ThemeMode>("dark");
   activeThemeId = $state<string>("dark");
-  #media: MediaQueryList | null = null;
-  #onSystemChange = () => {
-    if (this.preference === "system") this.apply();
-  };
 
   constructor() {
-    this.preference = initial();
     this.apply();
     if (typeof window !== "undefined") {
-      this.#media = window.matchMedia("(prefers-color-scheme: light)");
-      this.#media.addEventListener("change", this.#onSystemChange);
+      const prefersLight = new MediaQuery("(prefers-color-scheme: light)");
+      $effect.root(() => {
+        watch(
+          () => prefersLight.current,
+          () => {
+            if (this.preference === "system") this.apply();
+          },
+          { lazy: true },
+        );
+      });
     }
+  }
+
+  get preference(): ThemePreference {
+    return this.#persisted.current;
+  }
+
+  set preference(preference: ThemePreference) {
+    this.#persisted.current = preference;
   }
 
   private apply() {
@@ -62,7 +81,6 @@ class ThemeStore {
 
   set(preference: ThemePreference) {
     this.preference = preference;
-    localStorage.setItem(STORAGE_KEY, preference);
     this.apply();
   }
 

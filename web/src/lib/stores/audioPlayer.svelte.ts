@@ -12,6 +12,7 @@ import {
   parseAudioLocation,
 } from "$lib/audio/progress";
 import { storageKey } from "$lib/brand/storage";
+import { PersistedState, useEventListener, useInterval } from "runed";
 
 export type AudioProgressFn = (
   location: string,
@@ -24,6 +25,20 @@ const RATE_KEY = storageKey("audio-rate");
 const SKIP_KEY = storageKey("audio-skip");
 
 class AudioPlayerStore {
+  #rateState = new PersistedState<number>(RATE_KEY, 1, {
+    serializer: {
+      // Stored as a bare number string, not JSON.
+      serialize: (value) => String(value),
+      deserialize: (value) => Number(value) || 1,
+    },
+  });
+  #skipState = new PersistedState<number>(SKIP_KEY, 10, {
+    serializer: {
+      serialize: (value) => String(value),
+      deserialize: (value) => Number(value) || 10,
+    },
+  });
+
   book = $state<Book | null>(null);
   streamUrl = $state("");
   active = $state(false);
@@ -35,14 +50,8 @@ class AudioPlayerStore {
   playing = $state(false);
   current = $state(0);
   duration = $state(0);
-  rate = $state(
-    typeof localStorage !== "undefined" ? Number(localStorage.getItem(RATE_KEY)) || 1 : 1,
-  );
   volume = $state(1);
   muted = $state(false);
-  skipSeconds = $state(
-    typeof localStorage !== "undefined" ? Number(localStorage.getItem(SKIP_KEY)) || 10 : 10,
-  );
   scrubbing = $state(false);
   scrubValue = $state(0);
 
@@ -65,11 +74,25 @@ class AudioPlayerStore {
 
   private audio: HTMLAudioElement | null = null;
   private onProgress: AudioProgressFn | null = null;
-  private progressTimer: ReturnType<typeof setInterval> | null = null;
-  private sleepTimer: ReturnType<typeof setInterval> | null = null;
   private unsubCache: (() => void) | null = null;
   private releaseMedia: (() => void) | null = null;
-  private releaseConnectivity: (() => void) | null = null;
+  private releaseEffects: (() => void) | null = null;
+
+  get rate(): number {
+    return this.#rateState.current;
+  }
+
+  set rate(rate: number) {
+    this.#rateState.current = rate;
+  }
+
+  get skipSeconds(): number {
+    return this.#skipState.current;
+  }
+
+  set skipSeconds(seconds: number) {
+    this.#skipState.current = seconds;
+  }
 
   get showBar(): boolean {
     return this.active && !this.expanded;
@@ -208,30 +231,27 @@ class AudioPlayerStore {
       this.startTrackPrefetch();
     }
 
-    const onOnline = () => {
-      this.online = true;
-      if (this.book?.id === bookId) this.startTrackPrefetch();
-    };
-    const onOffline = () => {
-      this.online = false;
-      void this.setupSource();
-    };
-    window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
-    this.releaseConnectivity = () => {
-      window.removeEventListener("online", onOnline);
-      window.removeEventListener("offline", onOffline);
-    };
+    this.releaseEffects = $effect.root(() => {
+      useEventListener(window, "online", () => {
+        this.online = true;
+        if (this.book?.id === bookId) this.startTrackPrefetch();
+      });
+      useEventListener(window, "offline", () => {
+        this.online = false;
+        void this.setupSource();
+      });
+      useInterval(5000, { callback: () => this.reportProgress(true) });
+      useInterval(1000, {
+        callback: () => {
+          this.sleepTick = Date.now();
+        },
+      });
+    });
 
     void this.setupSource();
     void api.getChapters(bookId).then((items) => {
       if (this.book?.id === bookId) this.chapters = items;
     });
-
-    this.progressTimer = setInterval(() => this.reportProgress(true), 5000);
-    this.sleepTimer = setInterval(() => {
-      this.sleepTick = Date.now();
-    }, 1000);
 
     this.releaseMedia = bindMediaSession(
       {
@@ -261,12 +281,8 @@ class AudioPlayerStore {
   }
 
   private teardownPartial() {
-    if (this.progressTimer) clearInterval(this.progressTimer);
-    if (this.sleepTimer) clearInterval(this.sleepTimer);
-    this.progressTimer = null;
-    this.sleepTimer = null;
-    this.releaseConnectivity?.();
-    this.releaseConnectivity = null;
+    this.releaseEffects?.();
+    this.releaseEffects = null;
     this.unsubCache?.();
     this.unsubCache = null;
     this.releaseMedia?.();
@@ -393,7 +409,6 @@ class AudioPlayerStore {
 
   setRate(next: number) {
     this.rate = next;
-    localStorage.setItem(RATE_KEY, String(next));
     if (this.audio) this.audio.playbackRate = next;
     this.reportProgress(true);
   }

@@ -1,3 +1,4 @@
+import { untrack } from "svelte";
 import { api } from "$lib/api/client";
 import { toast } from "$lib/stores/toast.svelte";
 import { scan } from "$lib/stores/scan.svelte";
@@ -6,16 +7,19 @@ import type { Book, BookFormat, LibraryStats, SortKey } from "$lib/api/types";
 const PAGE_SIZE = 60;
 const MAX_RETAINED_BOOKS = 240;
 import { storageKey } from "$lib/brand/storage";
+import { PersistedState, useDebounce } from "runed";
 
 const SORT_KEY = storageKey("sort");
+const SEARCH_DEBOUNCE_MS = 250;
 
-function loadSort(): SortKey {
-  if (typeof localStorage === "undefined") return "recent";
-  const v = localStorage.getItem(SORT_KEY);
-  if (v === "recent" || v === "oldest" || v === "title" || v === "author" || v === "progress") {
-    return v;
-  }
-  return "recent";
+function isSortKey(value: string): value is SortKey {
+  return (
+    value === "recent" ||
+    value === "oldest" ||
+    value === "title" ||
+    value === "author" ||
+    value === "progress"
+  );
 }
 
 class LibraryStore {
@@ -25,8 +29,15 @@ class LibraryStore {
   seriesList = $state<{ name: string; count: number }[]>([]);
   authorList = $state<{ name: string; count: number }[]>([]);
 
+  #sortState = new PersistedState<SortKey>(SORT_KEY, "recent", {
+    serializer: {
+      // Stored as a bare sort key string, not JSON.
+      serialize: (value) => value,
+      deserialize: (value) => (isSortKey(value) ? value : "recent"),
+    },
+  });
+
   search = $state("");
-  sort = $state<SortKey>(loadSort());
   formatFilter = $state<BookFormat | "">("");
   seriesFilter = $state("");
   authorFilter = $state("");
@@ -40,7 +51,18 @@ class LibraryStore {
   error = $state<string | null>(null);
 
   private offset = 0;
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private scheduleSearchRefresh = useDebounce(
+    () => void this.refresh({ facets: false }),
+    SEARCH_DEBOUNCE_MS,
+  );
+
+  get sort(): SortKey {
+    return this.#sortState.current;
+  }
+
+  set sort(sort: SortKey) {
+    this.#sortState.current = sort;
+  }
 
   get hasMore(): boolean {
     return this.books.length < this.total;
@@ -150,13 +172,13 @@ class LibraryStore {
 
   setSearch(value: string) {
     this.search = value;
-    if (this.searchTimer) clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => void this.refresh({ facets: false }), 250);
+    // debounced() touches runed $state internally; untrack so callers inside
+    // $effect are not invalidated when the timer context mutates.
+    untrack(() => void this.scheduleSearchRefresh().catch(() => undefined));
   }
 
   setSort(sort: SortKey) {
     this.sort = sort;
-    localStorage.setItem(SORT_KEY, sort);
     void this.refresh({ facets: false });
   }
 
