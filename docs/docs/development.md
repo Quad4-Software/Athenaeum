@@ -12,15 +12,23 @@ task tools:install    # air, golangci-lint, govulncheck, deadcode, lefthook, git
 task hooks:install    # lefthook pre-commit / pre-push (or: lefthook install)
 task doctor           # toolchain, optional tools, ports
 task dev              # Vite :5173 + Go live reload (air) on :8080
+task dev:web          # Vite dev server only
+task dev:server       # Go server only (air, or go run fallback)
 task build            # frontend + single binary -> ./bin/athenaeum
 task build:slim       # same without in-browser Kokoro -> ./bin/athenaeum-slim
 # Full web builds download q8 ONNX weights via scripts/fetch-kokoro-models.sh
+task build:web        # production SPA into internal/assets/dist
+task build:web:slim   # SPA without Kokoro WASM (smaller embed)
+task build:cross      # cross-compile all release targets via scripts/build-release.sh
+task build:cross:slim # slim binaries for all release targets
+task build:cross:all  # full + slim binaries for all release targets
+task self-check       # build then run ./bin/athenaeum --self-check
 task run              # build then run local server
 task demo             # Go server with --demo seeded library
 task reset:data       # wipe ./data
 task reset:demo       # wipe ./data and start --demo
-task build:web        # production SPA into internal/assets/dist
 task build:demo       # static SPA -> ./site (offline / GitHub Pages)
+task docs:setup       # install docs dependencies
 task docs:dev         # Docusaurus at http://localhost:3000
 task docs:build       # docs/build
 task docs:serve       # preview production docs build
@@ -35,6 +43,8 @@ task vendor           # go mod vendor
 task clean            # remove build artifacts
 task fetch-samples    # optional sample media
 task test             # Go + Vitest
+task test:go          # Go tests only
+task test:web         # Vitest only
 task test:race        # Go tests with the race detector
 task test:property    # Go testing/quick + frontend fast-check properties
 task test:contract    # OpenAPI/route/i18n/env drift + generate/i18n checks
@@ -52,6 +62,9 @@ task lint             # gofmt + golangci-lint + eslint + prettier + svelte-check
 task lint:go          # Go linters only
 task lint:web         # frontend linters only
 task security         # gosec + govulncheck + pnpm audit
+task security:gosec   # gosec only
+task security:vuln    # govulncheck only
+task security:audit   # pnpm audit only
 task deadcode         # unused Go symbols
 task knip             # unused frontend dependency scan
 task profile          # CPU profile from ATHENAEUM_PPROF (default 127.0.0.1:6060)
@@ -61,7 +74,7 @@ task docker:down      # docker compose down
 task docker:logs      # follow container logs
 ```
 
-See also [CONTRIBUTING.md](https://github.com/ivan/reader/blob/main/CONTRIBUTING.md) and `.devcontainer/` for a full
+See also [CONTRIBUTING.md](https://github.com/Quad4-Software/Athenaeum/blob/main/CONTRIBUTING.md) and `.devcontainer/` for a full
 devcontainer. VS Code / Cursor debug configs live in `.vscode/launch.json`.
 
 task test:lighthouse builds the binary if needed, serves it on :18080, and runs

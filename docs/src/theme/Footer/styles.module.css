@@ -85,7 +85,6 @@
 .primaryAction {
   background: var(--ifm-color-primary);
   color: #fff !important;
-  box-shadow: 0 10px 22px -16px var(--ifm-color-primary);
 }
 
 .primaryAction:hover {

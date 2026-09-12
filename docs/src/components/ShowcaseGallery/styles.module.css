@@ -59,7 +59,7 @@
 }
 
 [data-theme='dark'] .filterActive {
-  color: #0b0d10;
+  color: oklch(0.17 0.015 55);
 }
 
 .stage {

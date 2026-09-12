@@ -205,8 +205,9 @@
   font-weight: 600;
   line-height: 1;
   text-decoration: none;
-  box-shadow: 0 10px 22px -16px var(--ifm-color-primary);
-  transition: background-color 140ms ease;
+  transition:
+    background-color 140ms ease,
+    transform 140ms ease;
   white-space: nowrap;
 }
 
@@ -214,6 +215,7 @@
   background: var(--ifm-color-primary-dark);
   color: #fff !important;
   text-decoration: none;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 996px) {

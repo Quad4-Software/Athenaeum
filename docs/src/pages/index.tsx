@@ -5,10 +5,15 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
+import CodeBlock from '@theme/CodeBlock';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import ShowcaseGallery from '@site/src/components/ShowcaseGallery';
 
 import styles from './index.module.css';
+
+const FORMAT_CHIPS = ['EPUB', 'PDF', 'MOBI / AZW3', 'CBZ / CBR', 'MP3 / M4B / FLAC'];
+
+const FACTS = ['One binary or one container', 'MIT licensed', 'No telemetry'];
 
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
@@ -24,6 +29,11 @@ function HomepageHeader() {
             {siteConfig.title}
           </Heading>
           <p className={styles.subtitle}>{siteConfig.tagline}</p>
+          <ul className={styles.chips} aria-label="Supported formats">
+            {FORMAT_CHIPS.map((chip) => (
+              <li key={chip}>{chip}</li>
+            ))}
+          </ul>
           <div className={styles.actions}>
             <Link
               className="button button--primary button--lg"
@@ -37,6 +47,11 @@ function HomepageHeader() {
               Try the demo
             </Link>
           </div>
+          <ul className={styles.facts}>
+            {FACTS.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </ul>
         </div>
         <div className={styles.heroVisual}>
           <div className={styles.frame}>
@@ -73,6 +88,15 @@ export default function Home(): ReactNode {
               <code>./install.sh</code>. Point it at a folder of books and open
               the web UI. Build from source when you want to hack on it.
             </p>
+            <div className={styles.ctaCode}>
+              <CodeBlock language="bash">
+                {`docker run -d --name athenaeum \\
+  -p 8080:8080 \\
+  -v athenaeum-data:/data \\
+  -v /path/to/books:/library \\
+  ghcr.io/quad4-software/athenaeum:latest`}
+              </CodeBlock>
+            </div>
             <div className={styles.actions}>
               <Link
                 className="button button--primary button--lg"

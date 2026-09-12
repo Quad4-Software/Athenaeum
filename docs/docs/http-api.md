@@ -8,7 +8,8 @@ description: REST, OpenAPI, OPDS, KOSync, and admin endpoints.
 
 Interactive API docs (served by a running Athenaeum instance): `/docs`.
 Machine-readable: `GET /api/openapi.json` (OpenAPI 3) and `GET /api/docs` (JSON).
-Key management is under Settings -> API.
+The generated reference covers the core endpoints; this page is the complete
+route list. Key management is under Settings -> API.
 
 Mutating browser requests require the `X-CSRF-Token` header (not needed for
 Basic Auth or API keys). Auth when users exist: session cookie, HTTP Basic, or
@@ -65,7 +66,7 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 | POST | /api/auth/setup | Create first admin |
 | POST | /api/auth/totp/disable | Disable TOTP |
 | POST | /api/auth/totp/enable | Confirm TOTP with code |
-| POST | /api/auth/totp/setup | Create first admin |
+| POST | /api/auth/totp/setup | Start TOTP enrollment (returns secret) |
 | POST | /api/auth/totp/verify | Verify TOTP during login |
 | GET | /api/auth/users | List users |
 | POST | /api/auth/users/guest | Create guest account |
@@ -127,7 +128,7 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 | POST | `/api/books/{id}/bookmarks` | Add bookmark |
 | DELETE | `/api/books/{id}/bookmarks/{bookmarkId}` | Delete bookmark |
 | GET | `/api/books/{id}/chapters` | Audiobook chapters |
-| POST | `/api/books/{id}/convert` | Convert book format |
+| POST | `/api/books/{id}/convert` | Convert book (admin; `?target=epub` or `pdf`, PDF needs Calibre) |
 | DELETE | `/api/books/{id}/cover` | Remove cover |
 | GET | `/api/books/{id}/cover` | Cover image |
 | PUT | `/api/books/{id}/cover` | Upload cover |
@@ -160,7 +161,7 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 | PUT | `/api/books/{id}/tags` | Replace book tags |
 | DELETE | `/api/books/{id}/tags/{tagId}` | Remove tag from book |
 | GET | `/api/books/{id}/tracks` | Audiobook tracks |
-| GET | /api/favorites | Favorite status / toggle |
+| GET | /api/favorites | List favorite book IDs |
 | GET | /api/series | Series with counts |
 | GET | /api/stats/reading | User reading stats |
 | GET | /api/tags | List tags |
@@ -180,18 +181,12 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 
 ## Sharing and delivery
 
+Share links, SMTP/Kindle delivery, and the per-user delivery address are listed
+under Books, Authentication, and Admin above. Public endpoints:
+
 | Method | Path | Description |
 | ------ | ---- | ----------- |
-| GET | /api/admin/smtp | SMTP delivery settings |
-| PUT | /api/admin/smtp | SMTP delivery settings |
-| GET | /api/auth/kindle-email | Per-user Kindle/email delivery address |
-| PUT | /api/auth/kindle-email | Per-user Kindle/email delivery address |
-| POST | `/api/books/{id}/send` | Send via SMTP/Kindle |
-| GET | `/api/books/{id}/share` | List share links |
-| POST | `/api/books/{id}/share` | Create share link |
-| DELETE | `/api/books/{id}/share/{shareId}` | Revoke share link |
 | GET | `/api/share/{token}` | Share metadata (public) |
-| GET | /opds/kindle | OPDS Kindle-friendly feed |
 | GET | `/share/{token}/download` | Download attachment |
 
 ## Narration (TTS)
@@ -239,9 +234,6 @@ API key (`Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`).
 | POST | /api/admin/tasks/regenerate-covers | Regenerate covers |
 | GET | /api/admin/tasks/status | Maintenance task status |
 | POST | /api/admin/tasks/verify | Verify library integrity |
-| GET | /api/admin/tts | Kokoro TTS settings |
-| PUT | /api/admin/tts | Update Kokoro TTS settings |
-| POST | /api/admin/tts/test | Ping Kokoro sidecar |
 | DELETE | /api/offline | Revoke offline grant |
 | GET | /api/offline | List offline grants |
 | POST | /api/offline | Grant offline book |

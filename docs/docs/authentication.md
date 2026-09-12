@@ -129,7 +129,8 @@ Signup-token helpers: `GET/POST/DELETE /api/admin/pocketid/signup-tokens`.
 
 Create per-user API keys under Settings -> API. Authenticate with
 `Authorization: Bearer ath_<token>` or `X-API-Key: ath_<token>`. The full
-secret is shown only once at creation.
+secret is shown only once at creation. Keys minted by older releases carry
+the `rdr_` prefix and still work.
 
 Interactive API reference lives in the web UI at Settings -> API and at
 `/docs` on a running instance. Machine-readable docs: `GET /api/docs`.

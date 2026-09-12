@@ -14,13 +14,14 @@ automation.
 ./bin/athenaeum users help
 ./bin/athenaeum users list --data ./data
 ./bin/athenaeum users add alice --password 'secretpass'
+./bin/athenaeum users add carol --password 'secretpass' --admin
 ./bin/athenaeum users set-admin bob
 ./bin/athenaeum users set-admin bob --no-admin
-./bin/athenaeum users set-permissions alice --permissions read,edit_metadata
+./bin/athenaeum users set-permissions alice --set read,edit_metadata
 ./bin/athenaeum users reset-password alice
 ./bin/athenaeum users rename alice alice2
 ./bin/athenaeum users show alice
-./bin/athenaeum users delete alice
+./bin/athenaeum users delete alice --force
 ```
 
 ## Commands
@@ -28,13 +29,13 @@ automation.
 | Command | Description |
 | ------- | ----------- |
 | `list` / `ls` | List users |
-| `add` / `create <username>` | Create a local user |
-| `reset-password` / `passwd` | Reset password |
+| `add` / `create <username>` | Create a local user (`--admin` grants admin) |
+| `reset-password` / `passwd` / `password` | Reset password (`--revoke-sessions=false` keeps active sessions) |
 | `rename <user> <name>` | Rename a user |
 | `set-admin` / `admin` | Grant admin (`--no-admin` to revoke) |
-| `set-permissions` | Set non-admin permission names |
+| `set-permissions` / `permissions` | Set non-admin permission names (`--set read,edit_metadata`) |
 | `show` / `get` | Show one user |
-| `delete` / `rm` | Delete a user |
+| `delete` / `rm` | Delete a user (`--force` skips the confirmation prompt) |
 
 ## Global flags
 

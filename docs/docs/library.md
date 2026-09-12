@@ -15,7 +15,7 @@ description: Formats, metadata, narration, sharing, SMTP/Kindle, and offline gra
 | MOBI / AZW / AZW3 | Yes | Section navigation via `/api/books/{id}/mobi-sections` |
 | KFX | Download | Served as a file download |
 | CBZ / CBR | Yes | Dual-page, fit modes, RTL/manga, page API |
-| MP3 / M4B / M4A / OGG / FLAC | Yes | HTML5 audio, chapters/tracks, range streaming |
+| MP3 / M4B / M4A / OGG / FLAC | Yes | HTML5 audio, chapters/tracks, range streaming (`.ogg` = Vorbis) |
 
 Multi-file audiobook folders are merged automatically. Local library mounts
 are watched for changes in addition to periodic auto-scan. S3 mounts use
@@ -75,7 +75,9 @@ BibTeX:
 - Export papers (or `?ids=`): `GET /api/books/bibtex`
 - Import against existing files: `POST /api/library/bibtex/import` (JSON `{ "bibtex": "..." }` or raw `.bib` body)
 
-Optional format conversion: `POST /api/books/{id}/convert?target=...`.
+Optional format conversion (admin): `POST /api/books/{id}/convert?target=epub|pdf`.
+EPUB output uses a native converter; PDF output requires Calibre's
+`ebook-convert` in `PATH` on the host.
 
 ## Tags, ratings, favorites
 

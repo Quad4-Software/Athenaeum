@@ -60,7 +60,9 @@ See [OPDS and KOSync](./catalogs) and [Library and readers](./library).
 - Invites (permanent or guest), optional SMTP and Pocket ID passkey provisioning.
 - TOTP 2FA, optional self-registration, OIDC and admin groups.
 - Optional ALTCHA proof-of-work on login and setup.
-- Admin webhooks for user, invite, upload, and scan events (HMAC + delivery log).
+- Admin webhooks (`user.create`, `user.delete`, `invite.created`,
+  `invite.accepted`, `book.upload`, `library.scan.complete`) with HMAC
+  signatures and a delivery log.
 
 See [Authentication](./authentication).
 

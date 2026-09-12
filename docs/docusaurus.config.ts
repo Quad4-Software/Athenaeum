@@ -30,6 +30,17 @@ const config: Config = {
 
   onBrokenLinks: 'throw',
 
+  headTags: [
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'describedby',
+        type: 'text/plain',
+        href: `${baseUrl}llms.txt`,
+      },
+    },
+  ],
+
   markdown: {
     hooks: {
       onBrokenMarkdownLinks: 'warn',

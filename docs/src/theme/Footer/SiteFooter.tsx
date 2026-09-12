@@ -69,6 +69,7 @@ export default function SiteFooter(): ReactNode {
       items: [
         {label: 'Roadmap', to: '/roadmap'},
         {label: 'Privacy', to: '/privacy'},
+        {label: 'llms.txt', href: 'pathname:///llms.txt'},
         {label: 'Changelog', href: `${githubUrl}/blob/main/CHANGELOG.md`},
         {label: 'Contributing', href: `${githubUrl}/blob/main/CONTRIBUTING.md`},
       ],

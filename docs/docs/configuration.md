@@ -39,7 +39,7 @@ Flags override environment variables. Shell exports override values loaded from
 | --sentry-traces-sample-rate | ATHENAEUM_SENTRY_TRACES_SAMPLE_RATE | 0 | Performance trace sample rate (0-1) |
 | --altcha | ATHENAEUM_ALTCHA_ENABLED | false | Require ALTCHA PoW on protected auth forms |
 | --altcha-mode | ATHENAEUM_ALTCHA_MODE | builtin | builtin or sentinel |
-| --altcha-hmac-secret | ATHENAEUM_ALTCHA_HMAC_SECRET | auto | Builtin challenge HMAC (persisted under data/) |
+| --altcha-hmac-secret | ATHENAEUM_ALTCHA_HMAC_SECRET | | HMAC secret for builtin challenges (auto-persisted under data/ when empty) |
 | --altcha-hmac-key-secret | ATHENAEUM_ALTCHA_HMAC_KEY_SECRET | | Optional secondary HMAC key secret |
 | --altcha-challenge-url | ATHENAEUM_ALTCHA_CHALLENGE_URL | | Widget challenge URL override |
 | --altcha-sentinel-url | ATHENAEUM_ALTCHA_SENTINEL_URL | | Sentinel base URL |
@@ -48,7 +48,15 @@ Flags override environment variables. Shell exports override values loaded from
 | --altcha-cost | ATHENAEUM_ALTCHA_COST | 5000 | Builtin PoW cost |
 | --altcha-expires | ATHENAEUM_ALTCHA_EXPIRES | 300 | Challenge expiry seconds |
 | --altcha-protect | ATHENAEUM_ALTCHA_PROTECT | login,setup | Comma-separated forms to protect |
-| --altcha-widget-* | ATHENAEUM_ALTCHA_WIDGET_* | | Theme, display, type, auto, language, name, workers, hide logo/footer |
+| --altcha-widget-auto | ATHENAEUM_ALTCHA_WIDGET_AUTO | onsubmit | Widget auto mode: off, onfocus, onload, onsubmit |
+| --altcha-widget-display | ATHENAEUM_ALTCHA_WIDGET_DISPLAY | standard | Widget display: standard, bar, floating, overlay, invisible |
+| --altcha-widget-type | ATHENAEUM_ALTCHA_WIDGET_TYPE | checkbox | Widget type: checkbox, switch, native |
+| --altcha-widget-theme | ATHENAEUM_ALTCHA_WIDGET_THEME | auto | Widget theme: auto, light, dark, or a named ALTCHA theme |
+| --altcha-widget-language | ATHENAEUM_ALTCHA_WIDGET_LANGUAGE | | Widget language ISO code (empty follows UI locale) |
+| --altcha-widget-name | ATHENAEUM_ALTCHA_WIDGET_NAME | altcha | Hidden input name for the ALTCHA payload |
+| --altcha-widget-workers | ATHENAEUM_ALTCHA_WIDGET_WORKERS | 0 | PoW web workers (0 = library default) |
+| --altcha-widget-hide-logo | ATHENAEUM_ALTCHA_WIDGET_HIDE_LOGO | false | Hide ALTCHA logo in the widget |
+| --altcha-widget-hide-footer | ATHENAEUM_ALTCHA_WIDGET_HIDE_FOOTER | false | Hide ALTCHA footer attribution |
 | --password-min-length | ATHENAEUM_PASSWORD_MIN_LENGTH | 8 | Minimum password length |
 | --password-long-length | ATHENAEUM_PASSWORD_LONG_LENGTH | 12 | Length that satisfies diversity without min-kinds (0 disables) |
 | --password-min-kinds | ATHENAEUM_PASSWORD_MIN_KINDS | 3 | Minimum character classes (0 disables diversity rule) |

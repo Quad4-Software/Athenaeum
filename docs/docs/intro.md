@@ -31,4 +31,4 @@ the Kokoro sidecar are optional. SQLite is the default database.
 3. [Deploying](./deploying) - Compose, services, backups, sidecars
 4. [Configuration](./configuration) - flags and environment variables
 
-Release notes: [`CHANGELOG.md`](https://github.com/ivan/reader/blob/main/CHANGELOG.md)
+Release notes: [`CHANGELOG.md`](https://github.com/Quad4-Software/Athenaeum/blob/main/CHANGELOG.md)

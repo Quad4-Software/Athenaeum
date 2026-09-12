@@ -9,8 +9,9 @@ description: Metrics, maintenance, i18n, PWA, profiling, server settings, and ba
 ## Metrics and health
 
 - `GET /metrics`. Prometheus exposition format. Disabled by default. Enable
-  under Settings -> Administration -> Server. Optional HTTP Basic Auth
-  protects the endpoint when enabled.
+  under Settings -> Administration -> Server. When `metricsAuth` is off, the
+  endpoint only answers loopback requests (127.0.0.1/::1); turn on Basic Auth
+  and set credentials to scrape from another host.
 - `GET /api/health`. Public JSON health probe: status, database, scanning,
   lastScan, diskFreeBytes, version, webVersion. When error reporting is
   configured, includes telemetry with the browser Sentry/GlitchTip DSN and
@@ -100,16 +101,20 @@ and metrics via Settings -> Administration -> Server or
 | Field | Description |
 | ----- | ----------- |
 | metricsEnabled | Expose `/metrics` |
-| metricsAuth | Require Basic Auth on `/metrics` |
+| metricsAuth | Require Basic Auth on `/metrics` (off = loopback only) |
+| metricsUsername / metricsPassword | Basic Auth credentials for `/metrics` |
 | trustedProxies | Comma-separated IPs/CIDRs that may send X-Forwarded-* headers |
 | corsEnabled / corsOrigins | CORS for cross-origin API access |
 | cspEnabled / cspPolicy | Content-Security-Policy header (empty = default) |
 | autoScanEnabled / autoScanIntervalSec | Background library rescan (min 60s) |
+| scanWorkers | Parallel index workers used by scans |
 
 ## Webhooks
 
-Configure outbound event URLs under Settings -> Administration -> Webhooks
-(`GET/POST /api/admin/webhooks`). Each delivery POSTs JSON:
+Configure outbound event URLs under Settings -> Administration -> Webhooks.
+Full CRUD plus a test ping: `GET/POST /api/admin/webhooks`,
+`GET/PUT/DELETE /api/admin/webhooks/{id}`, and
+`POST /api/admin/webhooks/{id}/test`. Each delivery POSTs JSON:
 
 ```json
 { "id": "...", "event": "user.create", "createdAt": "...", "data": { } }

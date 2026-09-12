@@ -32,12 +32,14 @@ chmod +x install.sh
 | `--library` / `--data` | Library root and data directory |
 | `--prefix` | Binary install prefix (default `/usr/local`) |
 | `--service` | `systemd`, `openrc`, `runit`, `dinit`, `s6`, or `none` |
-| `--user` / `--no-user` | System user (default `athenaeum`) |
+| `--user <name>` | System user (default `athenaeum`) |
+| `--no-user` | Run the service as the invoking user |
 | `--no-service` | Skip service unit installation |
 | `--version` / `--repo` / `--release-base` | Release asset selection |
 | `--image` / `--compose` | Docker image and compose file |
 | `--admin-user` / `--admin-pass` | Optional first-admin bootstrap |
-| `--dry-run` / `-y` / `--no-color` | Behavior flags |
+| `--dry-run` / `-y` | Preview actions / assume yes |
+| `--color` / `--no-color` | Force or disable ANSI color (`-h` shows full help) |
 
 Failed installs roll back tracked filesystem and service changes. Use
 `--method source` when no release assets are published yet.
@@ -100,7 +102,9 @@ stored in the database per mount, not as compose env vars.
 | -------- | ------- | ----------- |
 | ATHENAEUM_LIBRARY_HOST_PATH | ./library | Host folder bind-mounted to /library |
 | ATHENAEUM_PUBLISH_PORT | 8080 | Host port published to container :8080 |
-| ATHENAEUM_VERSION | 0.1.0 | Image build version label |
+| ATHENAEUM_IMAGE | ghcr.io/quad4-software/athenaeum:&lt;version&gt; | Image to pull (tag from ATHENAEUM_VERSION) |
+| ATHENAEUM_VERSION | latest | Image tag (Coolify compose defaults to 0.1.0) |
+| ATHENAEUM_REVISION / ATHENAEUM_CREATED | | Image build labels for local builds |
 | ATHENAEUM_ADMIN_USER / ATHENAEUM_ADMIN_PASS | | Optional first-admin bootstrap via .env |
 | ATHENAEUM_SENTRY_DSN | | Optional Sentry/GlitchTip DSN (passed through env_file) |
 | ATHENAEUM_ALTCHA_ENABLED | false | Optional ALTCHA PoW on login/setup |
