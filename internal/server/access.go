@@ -76,6 +76,21 @@ func (s *Server) requireBookAccess(w http.ResponseWriter, r *http.Request, book 
 	return s.requireLibraryAccess(w, r, book.LibraryID)
 }
 
+// requireBookAccessByID is the explicit-ID variant of bookByIDChecked for
+// routes whose book id lives in a different path parameter.
+func (s *Server) requireBookAccessByID(w http.ResponseWriter, r *http.Request, bookID int64) bool {
+	book, err := s.store.GetBook(r.Context(), bookID)
+	if errors.Is(err, storage.ErrNotFound) {
+		writeError(w, http.StatusNotFound, errBookNotFound)
+		return false
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return false
+	}
+	return s.requireBookAccess(w, r, book)
+}
+
 func (s *Server) bookByIDChecked(w http.ResponseWriter, r *http.Request) (models.Book, error) {
 	book, err := s.bookByID(w, r)
 	if err != nil {

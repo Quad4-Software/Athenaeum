@@ -144,6 +144,9 @@ func (s *Server) handleAddToCollection(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if !s.requireBookAccessByID(w, r, bid) {
+		return
+	}
 	if err := s.store.AddToCollection(r.Context(), userID, cid, bid); errors.Is(err, storage.ErrNotFound) {
 		writeError(w, http.StatusNotFound, err)
 		return
@@ -162,6 +165,9 @@ func (s *Server) handleRemoveFromCollection(w http.ResponseWriter, r *http.Reque
 	}
 	bid, ok := bookPathID(w, r)
 	if !ok {
+		return
+	}
+	if !s.requireBookAccessByID(w, r, bid) {
 		return
 	}
 	if err := s.store.RemoveFromCollection(r.Context(), userID, cid, bid); errors.Is(err, storage.ErrNotFound) {

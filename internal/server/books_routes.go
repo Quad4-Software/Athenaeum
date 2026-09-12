@@ -172,6 +172,9 @@ func (s *Server) handleGetProgress(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if _, err := s.bookByIDChecked(w, r); err != nil {
+		return
+	}
 	userID := UserIDFromContext(r.Context())
 	p, err := s.store.GetProgress(r.Context(), userID, id)
 	if err != nil {
@@ -192,6 +195,9 @@ func (s *Server) handlePutProgress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p.BookID = id
+	if _, err := s.bookByIDChecked(w, r); err != nil {
+		return
+	}
 	userID := UserIDFromContext(r.Context())
 	if err := s.store.SaveProgress(r.Context(), userID, p); err != nil {
 		writeError(w, http.StatusInternalServerError, err)

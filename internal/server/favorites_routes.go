@@ -32,6 +32,9 @@ func (s *Server) handleGetFavorite(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if _, err := s.bookByIDChecked(w, r); err != nil {
+		return
+	}
 	userID := UserIDFromContext(r.Context())
 	fav, err := s.store.IsFavorite(r.Context(), userID, id)
 	if err != nil {
@@ -55,6 +58,9 @@ func (s *Server) handleSetFavorite(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<10)).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if _, err := s.bookByIDChecked(w, r); err != nil {
 		return
 	}
 	userID := UserIDFromContext(r.Context())
