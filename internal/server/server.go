@@ -58,6 +58,7 @@ func New(ctx context.Context, cfg config.Config, store *storage.Store, scanner *
 		ctx = context.Background()
 	}
 	jobsCtx, jobsCancel := context.WithCancel(ctx)
+	library.SetComicVineAPIKey(cfg.ComicVineAPIKey)
 	altchaSvc, err := altcha.New(cfg)
 	if err != nil {
 		jobsCancel()

@@ -18,10 +18,14 @@ var googleBooksAPIURL = "https://www.googleapis.com/books/v1/volumes"
 // MetadataProviders lists external sources available in the metadata editor.
 func MetadataProviders() []models.MetadataProvider {
 	defs := metadataProviderDefs()
-	out := make([]models.MetadataProvider, len(defs))
-	for i, def := range defs {
-		out[i] = def.Info
-		out[i].RequiresASIN = def.RequiresASIN
+	out := make([]models.MetadataProvider, 0, len(defs))
+	for _, def := range defs {
+		if def.Ready != nil && !def.Ready() {
+			continue
+		}
+		info := def.Info
+		info.RequiresASIN = def.RequiresASIN
+		out = append(out, info)
 	}
 	return out
 }
@@ -69,7 +73,7 @@ func SearchMetadata(ctx context.Context, q models.MetadataSearchQuery) []models.
 		go func(providerID string) {
 			defer wg.Done()
 			def, ok := metadataProviderByID(providerID)
-			if !ok || def.Search == nil {
+			if !ok || def.Search == nil || (def.Ready != nil && !def.Ready()) {
 				return
 			}
 			found := def.Search(ctx, searcher, in)

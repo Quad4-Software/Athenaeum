@@ -40,6 +40,8 @@ type Config struct {
 	DatabaseDriver         string
 	DatabaseURL            string
 
+	ComicVineAPIKey string
+
 	AltchaEnabled          bool
 	AltchaMode             string
 	AltchaHMACSecret       string
@@ -158,6 +160,7 @@ func Parse(args []string) (Config, error) {
 	pprofAddr := fs.String("pprof", Env("ATHENAEUM_PPROF", ""), "loopback pprof listen address (e.g. 127.0.0.1:6060, empty disables)")
 	databaseDriver := fs.String("database-driver", Env("ATHENAEUM_DATABASE_DRIVER", "sqlite"), "database driver: sqlite (default) or postgres")
 	databaseURL := fs.String("database-url", Env("ATHENAEUM_DATABASE_URL", ""), "PostgreSQL connection URL (required when --database-driver=postgres)")
+	comicVineAPIKey := fs.String("comicvine-api-key", Env("ATHENAEUM_COMICVINE_API_KEY", ""), "Comic Vine API key for comic metadata lookup")
 	altchaEnabled := fs.Bool("altcha", EnvBool("ATHENAEUM_ALTCHA_ENABLED", false), "require ALTCHA proof-of-work on protected auth forms")
 	altchaMode := fs.String("altcha-mode", Env("ATHENAEUM_ALTCHA_MODE", "builtin"), "ALTCHA mode: builtin or sentinel")
 	altchaHMAC := fs.String("altcha-hmac-secret", Env("ATHENAEUM_ALTCHA_HMAC_SECRET", ""), "HMAC secret for builtin challenges (auto-persisted when empty)")
@@ -245,6 +248,7 @@ func Parse(args []string) (Config, error) {
 		PprofAddr:              strings.TrimSpace(*pprofAddr),
 		DatabaseDriver:         strings.TrimSpace(*databaseDriver),
 		DatabaseURL:            strings.TrimSpace(*databaseURL),
+		ComicVineAPIKey:        strings.TrimSpace(*comicVineAPIKey),
 		AltchaEnabled:          *altchaEnabled,
 		AltchaMode:             strings.TrimSpace(*altchaMode),
 		AltchaHMACSecret:       strings.TrimSpace(*altchaHMAC),

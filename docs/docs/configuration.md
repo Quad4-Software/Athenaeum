@@ -37,6 +37,7 @@ Flags override environment variables. Shell exports override values loaded from
 | --sentry-environment | ATHENAEUM_SENTRY_ENVIRONMENT | | Sentry environment tag |
 | --sentry-release | ATHENAEUM_SENTRY_RELEASE | app version | Sentry release name |
 | --sentry-traces-sample-rate | ATHENAEUM_SENTRY_TRACES_SAMPLE_RATE | 0 | Performance trace sample rate (0-1) |
+| --comicvine-api-key | ATHENAEUM_COMICVINE_API_KEY | | Comic Vine API key for comic metadata lookup |
 | --altcha | ATHENAEUM_ALTCHA_ENABLED | false | Require ALTCHA PoW on protected auth forms |
 | --altcha-mode | ATHENAEUM_ALTCHA_MODE | builtin | builtin or sentinel |
 | --altcha-hmac-secret | ATHENAEUM_ALTCHA_HMAC_SECRET | | HMAC secret for builtin challenges (auto-persisted under data/ when empty) |

@@ -24,7 +24,10 @@ type MetadataSearchInput struct {
 type MetadataProviderDef struct {
 	Info         models.MetadataProvider
 	RequiresASIN bool
-	Search       func(ctx context.Context, s *metadataSearcher, in MetadataSearchInput) []models.MetadataMatch
+	// Ready reports whether the provider is configured and usable.
+	// Nil means the provider is always available.
+	Ready  func() bool
+	Search func(ctx context.Context, s *metadataSearcher, in MetadataSearchInput) []models.MetadataMatch
 }
 
 var (
@@ -98,6 +101,17 @@ func init() {
 		},
 		Search: func(ctx context.Context, s *metadataSearcher, in MetadataSearchInput) []models.MetadataMatch {
 			return s.searchPubmed(ctx, in)
+		},
+	})
+	RegisterMetadataProvider(MetadataProviderDef{
+		Info: models.MetadataProvider{
+			ID:          comicVineProviderID,
+			Label:       "Comic Vine",
+			Description: "Comic volumes and issues",
+		},
+		Ready: comicVineReady,
+		Search: func(ctx context.Context, s *metadataSearcher, in MetadataSearchInput) []models.MetadataMatch {
+			return s.searchComicVine(ctx, in)
 		},
 	})
 }
