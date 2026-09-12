@@ -303,6 +303,12 @@ func bookWhereClause(q models.BookQuery, ftsIDs []int64, useFTS bool, contentIDs
 		where = append(where, "books.series = ?")
 		args = append(args, q.Series)
 	}
+	if clause, arg, ok := startsWithClause(q.StartsWith); ok {
+		where = append(where, clause)
+		if arg != "" {
+			args = append(args, arg)
+		}
+	}
 	if q.Format != "" {
 		if q.Format == models.FormatAudio {
 			where = append(where, audioFormatClause())
@@ -350,6 +356,21 @@ func bookWhereClause(q models.BookQuery, ftsIDs []int64, useFTS bool, contentIDs
 		args = append(args, condArgs...)
 	}
 	return where, args
+}
+
+// startsWithClause maps the letter browse filter to a title predicate.
+// A single A-Z letter matches that initial; "#" or "0" matches titles
+// that do not start with a letter. Anything else yields no filter.
+// UPPER/SUBSTR/BETWEEN are valid in both SQLite and Postgres.
+func startsWithClause(value string) (clause, arg string, ok bool) {
+	v := strings.ToUpper(strings.TrimSpace(value))
+	if v == "#" || v == "0" {
+		return "UPPER(SUBSTR(books.title,1,1)) NOT BETWEEN 'A' AND 'Z'", "", true
+	}
+	if len(v) == 1 && v[0] >= 'A' && v[0] <= 'Z' {
+		return "UPPER(SUBSTR(books.title,1,1)) = ?", v, true
+	}
+	return "", "", false
 }
 
 func audioFormatClause() string {

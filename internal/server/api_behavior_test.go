@@ -513,6 +513,34 @@ func TestTOTPChallengeRequiredAfterEnable(t *testing.T) {
 	}
 }
 
+func TestListBooksLetterFilter(t *testing.T) {
+	srv, c := newAdminClient(t)
+	_, alphaID := seedLibraryBook(t, srv, c.store, "alpha", []byte("%PDF-1.4 a"))
+	seedLibraryBook(t, srv, c.store, "beta", []byte("%PDF-1.4 b"))
+	_, numID := seedLibraryBook(t, srv, c.store, "9lives", []byte("%PDF-1.4 9"))
+
+	rec := c.do(http.MethodGet, "/api/books?letter=a", nil)
+	c.mustStatus(rec, http.StatusOK)
+	var page models.BookPage
+	if err := json.NewDecoder(rec.Body).Decode(&page); err != nil {
+		t.Fatal(err)
+	}
+	if page.Total != 1 || len(page.Items) != 1 || page.Items[0].ID != alphaID {
+		t.Fatalf("letter=a page=%+v", page)
+	}
+
+	// "#" percent-encoded selects titles that do not start with a letter.
+	rec = c.do(http.MethodGet, "/api/books?letter=%23", nil)
+	c.mustStatus(rec, http.StatusOK)
+	page = models.BookPage{}
+	if err := json.NewDecoder(rec.Body).Decode(&page); err != nil {
+		t.Fatal(err)
+	}
+	if page.Total != 1 || len(page.Items) != 1 || page.Items[0].ID != numID {
+		t.Fatalf("letter=# page=%+v", page)
+	}
+}
+
 func TestKosyncProgressRoundTrip(t *testing.T) {
 	_, c := newAdminClient(t)
 

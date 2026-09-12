@@ -55,6 +55,7 @@ func (s *Server) handleListBooks(w http.ResponseWriter, r *http.Request) {
 		Favorites:    q.Get("favorites") == "1" || q.Get("favorites") == "true",
 		InProgress:   q.Get("inProgress") == "1" || q.Get("inProgress") == "true",
 		Tag:          q.Get("tag"),
+		StartsWith:   q.Get("letter"),
 		Limit:        atoiDefault(q.Get("limit"), 60),
 		Offset:       atoiDefault(q.Get("offset"), 0),
 	}

@@ -152,6 +152,72 @@ func TestListBooksSearchAndPaging(t *testing.T) {
 	}
 }
 
+func TestListBooksStartsWith(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+
+	seed := []models.Book{
+		{Title: "Dune", Format: models.FormatEPUB, RelPath: "dune.epub"},
+		{Title: "dune Messiah", Format: models.FormatEPUB, RelPath: "dm.epub"},
+		{Title: "1984", Format: models.FormatEPUB, RelPath: "1984.epub"},
+		{Title: "!Syntax Notes", Format: models.FormatEPUB, RelPath: "syn.epub"},
+		{Title: "Foundation", Format: models.FormatEPUB, RelPath: "found.epub"},
+	}
+	for i := range seed {
+		if _, err := s.UpsertBook(ctx, &seed[i], int64(i)); err != nil {
+			t.Fatalf("seed: %v", err)
+		}
+	}
+
+	titles := func(q models.BookQuery) []string {
+		page, err := s.ListBooks(ctx, q)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		var out []string
+		for _, b := range page.Items {
+			out = append(out, b.Title)
+		}
+		return out
+	}
+	sameTitles := func(got, want []string) bool {
+		if len(got) != len(want) {
+			return false
+		}
+		seen := map[string]int{}
+		for _, title := range want {
+			seen[title]++
+		}
+		for _, title := range got {
+			seen[title]--
+			if seen[title] < 0 {
+				return false
+			}
+		}
+		return true
+	}
+
+	for _, letter := range []string{"d", "D"} {
+		got := titles(models.BookQuery{StartsWith: letter})
+		if !sameTitles(got, []string{"Dune", "dune Messiah"}) {
+			t.Errorf("letter %q got %v", letter, got)
+		}
+	}
+	for _, bucket := range []string{"#", "0"} {
+		got := titles(models.BookQuery{StartsWith: bucket})
+		if !sameTitles(got, []string{"1984", "!Syntax Notes"}) {
+			t.Errorf("bucket %q got %v", bucket, got)
+		}
+	}
+	// Anything that is not one letter or the non-alpha bucket disables the filter.
+	for _, invalid := range []string{"", "zz", "5", "!"} {
+		got := titles(models.BookQuery{StartsWith: invalid})
+		if len(got) != len(seed) {
+			t.Errorf("letter %q got %d titles, want unfiltered %d", invalid, len(got), len(seed))
+		}
+	}
+}
+
 func TestProgressRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	s := newTestStore(t)

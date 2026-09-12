@@ -76,35 +76,42 @@ ORDER BY LOWER(t.name)`, bookID)
 // ListBookTagsBatch returns tag names keyed by book ID.
 func (s *Store) ListBookTagsBatch(ctx context.Context, bookIDs []int64) (map[int64][]string, error) {
 	out := make(map[int64][]string, len(bookIDs))
-	if len(bookIDs) == 0 {
-		return out, nil
-	}
-	placeholders := make([]string, len(bookIDs))
-	args := make([]any, len(bookIDs))
-	for i, id := range bookIDs {
-		placeholders[i] = "?"
-		args[i] = id
+	for _, id := range bookIDs {
 		out[id] = []string{}
 	}
-	q := fmt.Sprintf(`
+	for _, chunk := range chunkIDs(bookIDs, inListChunkSize) {
+		placeholders := make([]string, len(chunk))
+		args := make([]any, len(chunk))
+		for i, id := range chunk {
+			placeholders[i] = "?"
+			args[i] = id
+		}
+		q := fmt.Sprintf(`
 SELECT bt.book_id, t.name FROM book_tags bt
 JOIN tags t ON t.id = bt.tag_id
 WHERE bt.book_id IN (%s)
 ORDER BY LOWER(t.name)`, strings.Join(placeholders, ",")) // #nosec G201 -- placeholders are only "?" repeats
-	rows, err := s.queryContext(ctx, q, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var bookID int64
-		var name string
-		if err := rows.Scan(&bookID, &name); err != nil {
+		rows, err := s.queryContext(ctx, q, args...)
+		if err != nil {
 			return nil, err
 		}
-		out[bookID] = append(out[bookID], name)
+		for rows.Next() {
+			var bookID int64
+			var name string
+			if err := rows.Scan(&bookID, &name); err != nil {
+				_ = rows.Close()
+				return nil, err
+			}
+			out[bookID] = append(out[bookID], name)
+		}
+		if err := rows.Close(); err != nil {
+			return nil, err
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
 	}
-	return out, rows.Err()
+	return out, nil
 }
 
 // SetBookTags replaces all tags on a book with the given names.
@@ -203,29 +210,37 @@ func (s *Store) RatingsBatch(ctx context.Context, userID int64, bookIDs []int64)
 	if len(bookIDs) == 0 || userID <= 0 {
 		return out, nil
 	}
-	placeholders := make([]string, len(bookIDs))
-	args := make([]any, 0, len(bookIDs)+1)
-	args = append(args, userID)
-	for i, id := range bookIDs {
-		placeholders[i] = "?"
-		args = append(args, id)
-	}
-	q := fmt.Sprintf(`SELECT book_id, rating FROM book_ratings WHERE user_id=? AND book_id IN (%s)`,
-		strings.Join(placeholders, ",")) // #nosec G201 -- placeholders are only "?" repeats
-	rows, err := s.queryContext(ctx, q, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var bookID int64
-		var rating int
-		if err := rows.Scan(&bookID, &rating); err != nil {
+	for _, chunk := range chunkIDs(bookIDs, inListChunkSize) {
+		placeholders := make([]string, len(chunk))
+		args := make([]any, 0, len(chunk)+1)
+		args = append(args, userID)
+		for i, id := range chunk {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		q := fmt.Sprintf(`SELECT book_id, rating FROM book_ratings WHERE user_id=? AND book_id IN (%s)`,
+			strings.Join(placeholders, ",")) // #nosec G201 -- placeholders are only "?" repeats
+		rows, err := s.queryContext(ctx, q, args...)
+		if err != nil {
 			return nil, err
 		}
-		out[bookID] = rating
+		for rows.Next() {
+			var bookID int64
+			var rating int
+			if err := rows.Scan(&bookID, &rating); err != nil {
+				_ = rows.Close()
+				return nil, err
+			}
+			out[bookID] = rating
+		}
+		if err := rows.Close(); err != nil {
+			return nil, err
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
 	}
-	return out, rows.Err()
+	return out, nil
 }
 
 // SetRating stores a 1-5 rating. Rating 0 clears it.

@@ -192,6 +192,7 @@ type BookQuery struct {
 	Format       string
 	Author       string
 	Series       string
+	StartsWith   string `json:"-"`
 	LibraryID    int64
 	CollectionID int64
 	UserID       int64

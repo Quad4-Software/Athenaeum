@@ -171,35 +171,40 @@ ORDER BY d DESC LIMIT 400`, userID)
 
 func (s *Store) ProgressMap(ctx context.Context, userID int64, bookIDs []int64) (map[int64]models.Progress, error) {
 	out := map[int64]models.Progress{}
-	if len(bookIDs) == 0 {
-		return out, nil
-	}
-	var query strings.Builder
-	query.WriteString(`SELECT book_id, user_id, location, percent, COALESCE(read_seconds,0), updated_at FROM progress WHERE user_id=? AND book_id IN (`)
-	args := []any{userID}
-	for i, id := range bookIDs {
-		if i > 0 {
-			query.WriteString(",")
+	for _, chunk := range chunkIDs(bookIDs, inListChunkSize) {
+		var query strings.Builder
+		query.WriteString(`SELECT book_id, user_id, location, percent, COALESCE(read_seconds,0), updated_at FROM progress WHERE user_id=? AND book_id IN (`)
+		args := []any{userID}
+		for i, id := range chunk {
+			if i > 0 {
+				query.WriteString(",")
+			}
+			query.WriteString("?")
+			args = append(args, id)
 		}
-		query.WriteString("?")
-		args = append(args, id)
-	}
-	query.WriteString(")")
-	rows, err := s.queryContext(ctx, query.String(), args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var p models.Progress
-		var updated int64
-		if err := rows.Scan(&p.BookID, &p.UserID, &p.Location, &p.Percent, &p.ReadSeconds, &updated); err != nil {
+		query.WriteString(")")
+		rows, err := s.queryContext(ctx, query.String(), args...)
+		if err != nil {
 			return nil, err
 		}
-		p.UpdatedAt = time.Unix(updated, 0)
-		out[p.BookID] = p
+		for rows.Next() {
+			var p models.Progress
+			var updated int64
+			if err := rows.Scan(&p.BookID, &p.UserID, &p.Location, &p.Percent, &p.ReadSeconds, &updated); err != nil {
+				_ = rows.Close()
+				return nil, err
+			}
+			p.UpdatedAt = time.Unix(updated, 0)
+			out[p.BookID] = p
+		}
+		if err := rows.Close(); err != nil {
+			return nil, err
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
 	}
-	return out, rows.Err()
+	return out, nil
 }
 
 func (s *Store) PingDB(ctx context.Context) error {

@@ -88,7 +88,7 @@ func apiDocumentation() APIDoc {
 			{
 				Title: "Books",
 				Endpoints: []APIDocEndpoint{
-					{Method: "GET", Path: "/api/books", Summary: "List books (paginated)", Auth: "required", Query: "search, sort, format, series, author, library, collection, inProgress, favorites, tag, limit, offset"},
+					{Method: "GET", Path: "/api/books", Summary: "List books (paginated)", Auth: "required", Query: "search, sort, format, series, author, library, collection, inProgress, favorites, tag, letter, limit, offset"},
 					{Method: "GET", Path: "/api/books/{id}", Summary: "Book detail", Auth: "required"},
 					{Method: "PUT", Path: "/api/books/{id}", Summary: "Edit metadata", Auth: "admin"},
 					{Method: "GET", Path: "/api/books/{id}/cover", Summary: "Cover image", Auth: "required"},
