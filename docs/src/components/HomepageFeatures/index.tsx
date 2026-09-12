@@ -4,7 +4,10 @@ import Heading from '@theme/Heading';
 import {
   BookOpen,
   FolderSearch,
+  MonitorSmartphone,
+  Network,
   Package,
+  Podcast,
   Shield,
   Smartphone,
   Volume2,
@@ -17,6 +20,7 @@ type FeatureItem = {
   title: string;
   description: ReactNode;
   Icon: LucideIcon;
+  soon?: boolean;
 };
 
 const FeatureList: FeatureItem[] = [
@@ -80,14 +84,50 @@ const FeatureList: FeatureItem[] = [
       </>
     ),
   },
+  {
+    title: 'Podcasts',
+    Icon: Podcast,
+    soon: true,
+    description: (
+      <>
+        Subscribe to feeds, download episodes, and keep them beside books and
+        audiobooks in the library.
+      </>
+    ),
+  },
+  {
+    title: 'Desktop and mobile apps',
+    Icon: MonitorSmartphone,
+    soon: true,
+    description: (
+      <>
+        Installable apps for Windows, macOS, Linux, iOS, and Android, running
+        the same library and UI.
+      </>
+    ),
+  },
+  {
+    title: 'Sharing over Reticulum',
+    Icon: Network,
+    soon: true,
+    description: (
+      <>
+        Exchange titles with other Athenaeum instances over the Reticulum
+        network. No central relay.
+      </>
+    ),
+  },
 ];
 
-function Feature({title, description, Icon}: FeatureItem) {
+function Feature({title, description, Icon, soon}: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
-      <div className={styles.card}>
-        <div className={styles.cardIcon} aria-hidden="true">
-          <Icon size={22} strokeWidth={1.75} />
+      <div className={clsx(styles.card, soon && styles.cardSoon)}>
+        <div className={styles.cardTop}>
+          <div className={styles.cardIcon} aria-hidden="true">
+            <Icon size={22} strokeWidth={1.75} />
+          </div>
+          {soon ? <span className={styles.soonBadge}>Soon</span> : null}
         </div>
         <Heading as="h3" className={styles.cardTitle}>
           {title}

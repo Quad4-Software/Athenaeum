@@ -43,16 +43,52 @@
   transform: translateY(-2px);
 }
 
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
 .cardIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2.35rem;
   height: 2.35rem;
-  margin-bottom: 0.75rem;
   border-radius: 10px;
   color: var(--ifm-color-primary);
   background: color-mix(in srgb, var(--ifm-color-primary) 12%, transparent);
+}
+
+.soonBadge {
+  padding: 0.18rem 0.55rem;
+  border: 1px solid var(--athena-border-strong);
+  border-radius: 999px;
+  color: var(--athena-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cardSoon {
+  border-style: dashed;
+  border-color: var(--athena-border-strong);
+  background: color-mix(in srgb, var(--ifm-background-surface-color) 55%, transparent);
+  box-shadow: none;
+}
+
+.cardSoon:hover {
+  border-color: var(--athena-border-strong);
+  box-shadow: none;
+  transform: none;
+}
+
+.cardSoon .cardIcon {
+  color: var(--athena-muted);
+  background: color-mix(in srgb, var(--athena-mist) 75%, transparent);
 }
 
 .cardTitle {

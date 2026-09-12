@@ -337,7 +337,28 @@ pre code {
   padding: 0;
 }
 
+/* Border lives on the container so the rounded edge draws once. */
+.theme-code-block {
+  border: 1px solid var(--athena-border);
+  box-shadow: 0 12px 32px -20px rgb(0 0 0 / 0.4);
+}
 
+/* Scrollbars tint from the active prism theme instead of the OS greys. */
+.theme-code-block pre {
+  --ifm-scrollbar-track-background-color: transparent;
+  --ifm-scrollbar-thumb-background-color: color-mix(
+    in srgb,
+    var(--prism-color) 35%,
+    transparent
+  );
+  --ifm-scrollbar-thumb-hover-background-color: color-mix(
+    in srgb,
+    var(--prism-color) 55%,
+    transparent
+  );
+  scrollbar-color: color-mix(in srgb, var(--prism-color) 35%, transparent)
+    transparent;
+}
 
 /* --------------------------------------------------------------- buttons */
 
