@@ -13,7 +13,7 @@ func (s *Store) ReplaceBookContent(ctx context.Context, bookID int64, chunks []s
 	if _, err := tx.ExecContext(ctx, s.rebind(`DELETE FROM book_content WHERE book_id=?`), bookID); err != nil {
 		return err
 	}
-	if s.driver == DriverSQLite {
+	if s.driver.isSQLite() {
 		if _, err := tx.ExecContext(ctx, s.rebind(`DELETE FROM book_content_fts WHERE book_id=?`), bookID); err != nil {
 			return err
 		}
@@ -24,7 +24,7 @@ func (s *Store) ReplaceBookContent(ctx context.Context, bookID int64, chunks []s
 			bookID, i, chunk); err != nil {
 			return err
 		}
-		if s.driver == DriverSQLite {
+		if s.driver.isSQLite() {
 			if _, err := tx.ExecContext(ctx, s.rebind(
 				`INSERT INTO book_content_fts (content, book_id, chunk_index) VALUES (?,?,?)`),
 				chunk, bookID, i); err != nil {
@@ -38,7 +38,7 @@ func (s *Store) ReplaceBookContent(ctx context.Context, bookID int64, chunks []s
 // SearchBookContentIDs runs a full-text query against indexed book text and
 // returns matching book ids ordered by rank, deduplicated.
 func (s *Store) SearchBookContentIDs(ctx context.Context, query string) ([]int64, error) {
-	if s.driver == DriverPostgres {
+	if s.driver.isPostgres() {
 		return s.searchContentPostgres(ctx, query)
 	}
 	q := buildFTSQuery(query, " AND ")

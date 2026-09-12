@@ -10,7 +10,7 @@ import (
 const currentSchemaVersion = 25
 
 func (s *Store) migrate(ctx context.Context) error {
-	if s.driver == DriverPostgres {
+	if s.driver.isPostgres() {
 		return s.migratePostgres(ctx)
 	}
 	return s.migrateSQLite(ctx)
@@ -101,7 +101,7 @@ func (s *Store) migratePostgres(ctx context.Context) error {
 }
 
 func (s *Store) ensureFTS(ctx context.Context) error {
-	if s.driver == DriverPostgres {
+	if s.driver.isPostgres() {
 		return nil
 	}
 	const ftsDDL = `
@@ -163,7 +163,7 @@ SELECT id, title, author, series, description, doi, arxiv_id, pubmed_id, journal
 }
 
 func (s *Store) userVersion(ctx context.Context) (int, error) {
-	if s.driver == DriverPostgres {
+	if s.driver.isPostgres() {
 		var v sql.NullInt64
 		err := s.db.QueryRowContext(ctx, `SELECT version FROM schema_version LIMIT 1`).Scan(&v)
 		if err == sql.ErrNoRows {
@@ -186,7 +186,7 @@ func (s *Store) userVersion(ctx context.Context) (int, error) {
 }
 
 func (s *Store) setUserVersion(ctx context.Context, v int) error {
-	if s.driver == DriverPostgres {
+	if s.driver.isPostgres() {
 		tx, err := s.db.BeginTx(ctx, nil)
 		if err != nil {
 			return err
@@ -210,7 +210,7 @@ func (s *Store) exec(ctx context.Context, sqlText string) error {
 }
 
 func (s *Store) tableHasColumn(ctx context.Context, table, column string) (bool, error) {
-	if s.driver == DriverPostgres {
+	if s.driver.isPostgres() {
 		var n int
 		err := s.db.QueryRowContext(ctx, `
 SELECT COUNT(*) FROM information_schema.columns

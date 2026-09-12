@@ -9,10 +9,7 @@ import (
 
 // rebind converts ? placeholders to the dialect form ($1 for postgres).
 func (s *Store) rebind(query string) string {
-	if s.driver != DriverPostgres {
-		return query
-	}
-	return rebindDollar(query)
+	return s.driver.rebind(query)
 }
 
 func rebindDollar(query string) string {

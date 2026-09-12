@@ -70,7 +70,7 @@ func OpenWith(opts OpenOptions) (*Store, error) {
 			"file:%s?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(ON)&_pragma=cache_size(-65536)&_pragma=temp_store(MEMORY)",
 			opts.Path,
 		)
-		db, err = sql.Open("sqlite", dsn)
+		db, err = sql.Open(sqliteDBDriver, dsn)
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +80,7 @@ func OpenWith(opts OpenOptions) (*Store, error) {
 		if url == "" {
 			return nil, errors.New("postgres requires ATHENAEUM_DATABASE_URL")
 		}
-		db, err = sql.Open("pgx", url)
+		db, err = sql.Open(pgxDBDriver, url)
 		if err != nil {
 			return nil, err
 		}

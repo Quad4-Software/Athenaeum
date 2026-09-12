@@ -11,7 +11,7 @@ const maxFTSResults = 500
 
 // searchFTS runs a full-text query and returns matching book ids ordered by rank.
 func (s *Store) searchFTS(ctx context.Context, query string) ([]int64, error) {
-	if s.driver == DriverPostgres {
+	if s.driver.isPostgres() {
 		return s.searchBooksPostgres(ctx, query)
 	}
 	q := buildFTSQuery(query, " AND ")

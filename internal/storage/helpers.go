@@ -11,8 +11,5 @@ func (s *Store) insertID(ctx context.Context, query string, args ...any) (int64,
 
 // unixDateExpr returns SQL that formats a unix-seconds column as YYYY-MM-DD UTC.
 func (s *Store) unixDateExpr(column string) string {
-	if s.driver == DriverPostgres {
-		return `(to_timestamp(` + column + `) AT TIME ZONE 'UTC')::date::text`
-	}
-	return `date(` + column + `, 'unixepoch')`
+	return s.driver.unixDateExpr(column)
 }
