@@ -10,7 +10,7 @@ require (
 	github.com/getsentry/sentry-go v0.49.0
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/johannesboyne/gofakes3 v1.2.0
-	github.com/landlock-lsm/go-landlock v0.10.0
+	github.com/landlock-lsm/go-landlock v0.10.1
 	github.com/mattn/go-isatty v0.0.24
 	github.com/minio/minio-go/v7 v7.3.0
 	github.com/nwaples/rardecode/v2 v2.4.1
