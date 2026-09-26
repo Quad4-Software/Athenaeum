@@ -54,8 +54,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.2
       bits-ui:
-        specifier: 2.19.1
-        version: 2.19.1(@internationalized/date@3.12.4)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
+        specifier: 2.19.3
+        version: 2.19.3(@internationalized/date@3.12.4)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
       epubjs:
         specifier: ^0.3.93
         version: 0.3.93
@@ -2404,8 +2404,8 @@ packages:
   bidi-js@1.1.0:
     resolution: {integrity: sha512-fX1Onk0tdVPC7obPWB5EbJ1z7NVhLq4m2xZLq2YXBkxzMXIGRpNMU88n0EPgWseKl12J7zXs7qrDxPK4sRs2fg==}
 
-  bits-ui@2.19.1:
-    resolution: {integrity: sha512-NPgXkZQRU1upJB+c3lnWTxdY8vS6cLuXcS8dNtsH4DAjqpJLav8H6Fh3zUQFe8VT5NcH/domm0WWWTO3UqHK7w==}
+  bits-ui@2.19.3:
+    resolution: {integrity: sha512-04COIqqht1h0YRnVTJVHy3+F8NhzS5x0eSM8eqvavaWmK/GLDTgYJW2h1CA//8hh9vSk4rG7rOvJ3QAIpCuYIw==}
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
@@ -4697,8 +4697,8 @@ packages:
   third-party-web@0.26.7:
     resolution: {integrity: sha512-buUzX4sXC4efFX6xg2bw6/eZsCUh8qQwSavC4D9HpONMFlRbcHhD8Je5qwYdCpViR6q0qla2wPP+t91a2vgolg==}
 
-  third-party-web@0.29.2:
-    resolution: {integrity: sha512-fegtha91tq2DHphyoiBXVHjVi2YG9zFaRnboT9C28tO1en9Y3wJsfspuy40F+u5wl3hHVbw7cnd1b67kEGHb8g==}
+  third-party-web@0.30.0:
+    resolution: {integrity: sha512-p+PfyL5U0ediGzvwPzMSdD9MnC8rHW6nWJJVLIQvqN7RsSqfaZ+7n4c9GILqH36EYR0eXB9CzAeCRnKFr/9uJg==}
 
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
@@ -6692,7 +6692,7 @@ snapshots:
   '@paulirish/trace_engine@0.0.53':
     dependencies:
       legacy-javascript: 0.0.1
-      third-party-web: 0.29.2
+      third-party-web: 0.30.0
 
   '@playwright/test@1.63.0':
     dependencies:
@@ -7513,7 +7513,7 @@ snapshots:
     dependencies:
       require-from-string: 2.0.2
 
-  bits-ui@2.19.1(@internationalized/date@3.12.4)(svelte@5.57.0(@typescript-eslint/types@8.70.0)):
+  bits-ui@2.19.3(@internationalized/date@3.12.4)(svelte@5.57.0(@typescript-eslint/types@8.70.0)):
     dependencies:
       '@floating-ui/core': 1.8.0
       '@floating-ui/dom': 1.8.0
@@ -10113,7 +10113,7 @@ snapshots:
 
   third-party-web@0.26.7: {}
 
-  third-party-web@0.29.2: {}
+  third-party-web@0.30.0: {}
 
   through@2.3.8: {}
 
