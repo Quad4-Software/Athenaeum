@@ -76,7 +76,7 @@
     "@huggingface/transformers": "4.2.0",
     "@lucide/svelte": "^1.44.0",
     "@sentry/svelte": "^10.73.0",
-    "altcha": "^3.2.2",
+    "altcha": "^3.2.3",
     "bits-ui": "2.19.1",
     "epubjs": "^0.3.93",
     "kokoro-js": "^1.2.1",
