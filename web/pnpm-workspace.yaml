@@ -1,5 +1,6 @@
-# Athenaeum frontend workspace (pnpm 11+).
-# Security-sensitive settings live here, not in .npmrc (pnpm 11).
+# Athenaeum frontend workspace (pnpm 12).
+# Settings live here, not in .npmrc (pnpm 12 reads only auth/registry
+# keys from .npmrc; everything else comes from this file).
 packages:
   - "."
 
@@ -14,7 +15,11 @@ overrides:
   # No upstream fix for symlink path traversal yet. Vendored 2.0.2 with checks.
   extract-zip: link:vendor/extract-zip
 
-# Supply-chain defaults aligned with pnpm 11 (explicit for clarity).
+# Fail on packages that declare an incompatible Node engine.
+# (Previously in web/.npmrc, which pnpm 12 ignores for non-auth keys.)
+engineStrict: true
+
+# Supply-chain defaults aligned with pnpm 12 (explicit for clarity).
 minimumReleaseAge: 1440
 minimumReleaseAgeStrict: false
 blockExoticSubdeps: true
@@ -22,8 +27,23 @@ strictDepBuilds: true
 strictPeerDependencies: true
 trustPolicy: no-downgrade
 verifyDepsBeforeRun: install
-# Warn on packageManager mismatch so local pnpm 11.x can build when CI pins 11.17.0.
+# Warn on packageManager mismatch so local pnpm 11/12 can build when the
+# repo pins a specific pnpm version. "download" would auto-fetch the pin.
 pmOnFail: warn
+
+# Let `pnpm update` / `pnpm outdated` also check SHA-pinned GitHub
+# Actions in .github/workflows (Added in pnpm 11.16). ignoreDeps holds
+# back entries that need dedicated migration work.
+update:
+  githubActions: true
+  ignoreDeps:
+    # 30.1.x breaks URL.createObjectURL under the vitest jsdom env.
+    - jsdom
+    # TS 7 is the tsgo native compiler; svelte-check/eslint compat needs
+    # a dedicated migration pass.
+    - typescript
+    # Sentry 11 is a major bump; review its migration notes first.
+    - "@sentry/svelte"
 
 # Packages whose publisher history trips trustPolicy on fresh resolve.
 # Review periodically. Prefer removing once maintainers stabilize ownership.
@@ -32,6 +52,8 @@ trustPolicyExclude:
   - semver@5.7.2
   - semver@6.3.1
   - "@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1"
+  # Pre-provenance release (Jan 2025, unchanged maintainers) pulled by vitest 5.0.2.
+  - why-is-node-running@3.2.2
 
 # Explicit allowlist for packages that may run install scripts.
 allowBuilds:
