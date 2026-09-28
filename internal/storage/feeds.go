@@ -10,7 +10,7 @@ import (
 	"athenaeum/internal/models"
 )
 
-const feedTokenColumns = `SELECT id, token, user_id, name, library_id, collection_id, created_at FROM feed_tokens`
+const feedTokenColumns = `SELECT id, token, user_id, name, library_id, collection_id, created_at FROM feed_tokens` // #nosec G101 -- SQL column list, not a credential
 
 // CreateFeedToken inserts a token-scoped audio feed for userID and returns
 // the stored row. A libraryID or collectionID of 0 leaves the feed unscoped

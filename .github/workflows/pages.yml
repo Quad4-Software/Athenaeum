@@ -21,7 +21,7 @@ permissions:
 
 env:
   NODE_VERSION: "22"
-  PNPM_VERSION: "11.17.0"
+  PNPM_VERSION: "12.6.0"
 
 jobs:
   build:
@@ -62,6 +62,7 @@ jobs:
           DOCUSAURUS_URL: https://athenaeum.quad4.io
         run: |
           pnpm install --frozen-lockfile
+          pnpm typecheck
           pnpm build
 
       - name: Build offline demo SPA

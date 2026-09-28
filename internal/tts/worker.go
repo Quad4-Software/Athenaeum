@@ -250,7 +250,7 @@ func (w *Worker) synthChapter(ctx context.Context, client *Client, staging strin
 	final := filepath.Join(staging, chapterStagingName(idx))
 	part := final + ".part"
 	_ = os.Remove(part)
-	f, err := os.OpenFile(part, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o640)
+	f, err := os.OpenFile(part, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o640) // #nosec G304 G302 -- staging path under data dir with generated name; group-readable like library files
 	if err != nil {
 		return err
 	}
@@ -343,7 +343,7 @@ func (w *Worker) publish(ctx context.Context, fs libfs.LibraryFS, staging, outDi
 	}
 	for i, ch := range chapters {
 		src := filepath.Join(staging, chapterStagingName(i))
-		f, err := os.Open(src)
+		f, err := os.Open(src) // #nosec G304 -- staging path under data dir with generated name
 		if err != nil {
 			return err
 		}
@@ -395,9 +395,9 @@ func (w *Worker) finishBook(ctx context.Context, book models.Book, outDir string
 	}
 	if book.HasCover {
 		src := library.CoverPath(w.cfg.CoverDir(), book.ID)
-		if data, err := os.ReadFile(src); err == nil && len(data) > 0 {
+		if data, err := os.ReadFile(src); err == nil && len(data) > 0 { // #nosec G304 -- cover path under configured cover dir keyed by numeric book id
 			dst := library.CoverPath(w.cfg.CoverDir(), gen.ID)
-			if err := os.WriteFile(dst, data, 0o600); err == nil {
+			if err := os.WriteFile(dst, data, 0o600); err == nil { // #nosec G703 -- cover path under configured cover dir keyed by numeric book id
 				_ = w.store.SetBookHasCover(ctx, gen.ID, true)
 			}
 		}

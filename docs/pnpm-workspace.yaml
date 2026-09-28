@@ -1,5 +1,6 @@
-# Athenaeum docs workspace (pnpm 11+).
-# Security-sensitive settings live here, not in .npmrc (pnpm 11).
+# Athenaeum docs workspace (pnpm 12).
+# Settings live here, not in .npmrc (pnpm 12 reads only auth/registry
+# keys from .npmrc; everything else comes from this file).
 packages:
   - "."
 
@@ -11,7 +12,7 @@ overrides:
   # No upstream fix for ICNS/HEIF/JXL infinite loops yet. Vendored 2.0.3 with guards.
   image-size: link:vendor/image-size
 
-# Supply-chain defaults aligned with pnpm 11 (explicit for clarity).
+# Supply-chain defaults aligned with pnpm 12 (explicit for clarity).
 minimumReleaseAge: 1440
 minimumReleaseAgeStrict: false
 blockExoticSubdeps: true
@@ -19,14 +20,22 @@ strictDepBuilds: true
 strictPeerDependencies: true
 trustPolicy: no-downgrade
 verifyDepsBeforeRun: install
-# Warn on packageManager mismatch so local pnpm 11.x can build when CI pins 11.17.0.
+# Warn on packageManager mismatch so local pnpm 11/12 can build when the
+# repo pins a specific pnpm version. "download" would auto-fetch the pin.
 pmOnFail: warn
+
+# Let `pnpm update` / `pnpm outdated` also check SHA-pinned GitHub
+# Actions in .github/workflows (Added in pnpm 11.16).
+update:
+  githubActions: true
 
 # Packages whose publisher history trips trustPolicy on fresh resolve.
 # Review periodically. Prefer removing once maintainers stabilize ownership.
 trustPolicyExclude:
   - fastq@1.20.2
   - semver@6.3.1
+  # 7.x backport line predates the webpack org's OIDC provenance (8.x only).
+  - webpack-dev-middleware@7.4.6
 
 # Explicit allowlist for packages that may run install scripts.
 # @swc/core is required by @docusaurus/faster (native bindings).

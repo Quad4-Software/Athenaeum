@@ -6,7 +6,7 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import {useLocation} from '@docusaurus/router';
 import NavbarColorModeToggle from '@theme/Navbar/ColorModeToggle';
 import NavbarMobileSidebarToggle from '@theme/Navbar/MobileSidebar/Toggle';
-import {Github} from 'lucide-react';
+import {CodeXml} from 'lucide-react';
 
 import styles from './styles.module.css';
 
@@ -130,7 +130,7 @@ export default function NavbarContent(): ReactNode {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub repository">
-            <Github size={18} strokeWidth={1.75} aria-hidden="true" />
+            <CodeXml size={18} strokeWidth={1.75} aria-hidden="true" />
           </Link>
           <Link className={styles.cta} to={PRIMARY_CTA_TO}>
             Get started

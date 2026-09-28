@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import {BookOpen, Github} from 'lucide-react';
+import {BookOpen, CodeXml} from 'lucide-react';
 
 import styles from './styles.module.css';
 
@@ -101,7 +101,7 @@ export default function SiteFooter(): ReactNode {
               href={githubUrl}
               target="_blank"
               rel="noopener noreferrer">
-              <Github size={16} strokeWidth={1.75} aria-hidden="true" />
+              <CodeXml size={16} strokeWidth={1.75} aria-hidden="true" />
               GitHub
             </Link>
             <Link className={styles.secondaryAction} href={demoHref} target="_self">

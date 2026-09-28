@@ -3,9 +3,9 @@
 FROM node:26-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS web
 WORKDIR /src/web
 RUN apk add --no-cache bash curl \
-  && npm install -g pnpm@11.17.0
+  && npm install -g pnpm@12.6.0
 COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --config.dangerouslyAllowAllBuilds=true
+RUN pnpm install --frozen-lockfile
 COPY web/ ./
 COPY scripts/fetch-kokoro-models.sh /usr/local/bin/fetch-kokoro-models.sh
 ENV KOKORO_MODEL_DIR=/src/web/vendor/kokoro-model/Kokoro-82M-v1.0-ONNX

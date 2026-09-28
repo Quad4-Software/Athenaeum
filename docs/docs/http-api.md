@@ -219,9 +219,9 @@ and the owner's library access on every request.
 | PUT | /api/tts/prefs | Save narration preferences |
 | GET | /api/tts/jobs | List your audiobook jobs (admins can pass `?all=1`) |
 | POST | /api/tts/jobs | Queue a whole-book narration job (`{bookId, voice?, speed?}`) |
-| POST | /api/tts/jobs/{id}/cancel | Cancel a queued or running job |
-| POST | /api/tts/jobs/{id}/retry | Requeue a finished, failed, or cancelled job |
-| DELETE | /api/tts/jobs/{id} | Delete a finished job record |
+| POST | `/api/tts/jobs/{id}/cancel` | Cancel a queued or running job |
+| POST | `/api/tts/jobs/{id}/retry` | Requeue a finished, failed, or cancelled job |
+| DELETE | `/api/tts/jobs/{id}` | Delete a finished job record |
 
 ## Admin and maintenance
 
