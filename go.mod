@@ -14,7 +14,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24
 	github.com/minio/minio-go/v7 v7.3.0
 	github.com/nwaples/rardecode/v2 v2.4.1
-	github.com/pdfcpu/pdfcpu v0.15.0
+	github.com/pdfcpu/pdfcpu v0.16.0
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/crypto v0.57.0
 	golang.org/x/net v0.59.0
@@ -37,7 +37,7 @@ require (
 	github.com/klauspost/compress v1.20.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
-	github.com/mattn/go-runewidth v0.0.29 // indirect
+	github.com/mattn/go-runewidth v0.0.30 // indirect
 	github.com/minio/crc64nvme v1.1.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect

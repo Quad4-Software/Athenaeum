@@ -103,7 +103,7 @@ github.com/landlock-lsm/go-landlock/landlock/syscall
 # github.com/mattn/go-isatty v0.0.24
 ## explicit; go 1.20
 github.com/mattn/go-isatty
-# github.com/mattn/go-runewidth v0.0.29
+# github.com/mattn/go-runewidth v0.0.30
 ## explicit; go 1.23
 github.com/mattn/go-runewidth
 # github.com/minio/crc64nvme v1.1.1
@@ -135,11 +135,13 @@ github.com/ncruces/go-strftime
 # github.com/nwaples/rardecode/v2 v2.4.1
 ## explicit; go 1.21
 github.com/nwaples/rardecode/v2
-# github.com/pdfcpu/pdfcpu v0.15.0
-## explicit; go 1.25.0
+# github.com/pdfcpu/pdfcpu v0.16.0
+## explicit; go 1.26.0
+github.com/pdfcpu/pdfcpu/internal/contextutil
 github.com/pdfcpu/pdfcpu/internal/corefont/metrics
 github.com/pdfcpu/pdfcpu/internal/fileutil
 github.com/pdfcpu/pdfcpu/internal/filter/lzw
+github.com/pdfcpu/pdfcpu/internal/netutil
 github.com/pdfcpu/pdfcpu/pkg/api
 github.com/pdfcpu/pdfcpu/pkg/filter
 github.com/pdfcpu/pdfcpu/pkg/font
