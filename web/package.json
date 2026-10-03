@@ -86,7 +86,7 @@
     "@fontsource-variable/source-serif-4": "^5.3.0",
     "@huggingface/transformers": "4.3.0",
     "@lucide/svelte": "^1.48.0",
-    "@sentry/svelte": "^10.75.3",
+    "@sentry/svelte": "^11.1.0",
     "altcha": "^3.2.3",
     "bits-ui": "2.19.3",
     "epubjs": "^0.3.93",
