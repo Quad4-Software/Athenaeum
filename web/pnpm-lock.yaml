@@ -209,8 +209,8 @@ importers:
         specifier: ^10.75.3
         version: 10.75.3(svelte@5.57.1(@typescript-eslint/types@8.70.1))
       altcha:
-        specifier: ^3.2.3
-        version: 3.2.3
+        specifier: ^3.2.4
+        version: 3.2.4
       bits-ui:
         specifier: 2.19.3
         version: 2.19.3(@internationalized/date@3.12.4)(svelte@5.57.1(@typescript-eslint/types@8.70.1))
@@ -2384,8 +2384,8 @@ packages:
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
 
-  altcha@3.2.3:
-    resolution: {integrity: sha512-yBHJIOoGZyU4/ap3AnlL2kChEVw40QP142BtxYZN5dCjAeBlaScuAEWxmrLDVQjlRBplayapUIvARs0eG48OVw==}
+  altcha@3.2.4:
+    resolution: {integrity: sha512-+PN+MTzDtrXn7SBkliE+EYaojwLLS2rTtyk/O/wkQWNwl7PI91fXB8yiNa07Xy8b6rGD05oB8zpMfK/oEx00Og==}
 
   angular-html-parser@10.11.0:
     resolution: {integrity: sha512-3vERzJ65UFDr3C7uozLJwsNcQS3FS784dSh583oDgDTTZMgXe3/pdyXgKndxiP5R2lvYRfW6gSl145Hnyf2OFA==}
@@ -7531,7 +7531,7 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  altcha@3.2.3:
+  altcha@3.2.4:
     dependencies:
       hash-wasm: 4.12.0
 
