@@ -52,8 +52,8 @@ trustPolicyExclude:
   - semver@5.7.2
   - semver@6.3.1
   - "@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1"
-  # Pre-provenance release (Jan 2025, unchanged maintainers) pulled by vitest 5.0.2.
-  - why-is-node-running@3.2.2
+  # Pre-provenance release (Jan 2025, unchanged maintainers) pulled by vitest 5.0.5.
+  - why-is-node-running@3.2.1
 
 # Explicit allowlist for packages that may run install scripts.
 allowBuilds:
