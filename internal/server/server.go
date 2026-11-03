@@ -7,7 +7,6 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	"athenaeum/internal/config"
 	"athenaeum/internal/libfs"
 	"athenaeum/internal/library"
+	"athenaeum/internal/logging"
 	"athenaeum/internal/models"
 	"athenaeum/internal/sandbox"
 	"athenaeum/internal/storage"
@@ -127,7 +127,7 @@ func (s *Server) withMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(sw, r)
 		s.log.Debug("request",
 			"method", r.Method,
-			"path", strconv.Quote(r.URL.Path),
+			"path", logging.Value(r.URL.Path),
 			"status", sw.status,
 			"dur", time.Since(start).String(),
 		)

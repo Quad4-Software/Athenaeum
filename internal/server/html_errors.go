@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"net/http"
 	"path"
-	"strconv"
 	"strings"
 
+	"athenaeum/internal/logging"
 	"athenaeum/internal/telemetry"
 )
 
@@ -76,7 +76,7 @@ func recoverMiddleware(log *slog.Logger) func(http.Handler) http.Handler {
 				}
 				err := fmt.Errorf("panic: %v", rec)
 				if log != nil {
-					log.Error("panic recovered", "err", err, "path", strconv.Quote(r.URL.Path))
+					log.Error("panic recovered", "err", err, "path", logging.Value(r.URL.Path))
 				}
 				telemetry.CaptureException(err)
 				writePanicResponse(w, r)
