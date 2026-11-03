@@ -14,30 +14,30 @@ newer than what you probably know, so when an API detail matters, fetch the
 upstream doc instead of recalling it. Sources and llms.txt endpoints are
 listed per package below.
 
-## Installed versions (verified from node_modules, September 2026)
+## Installed versions (verified from node_modules, November 2026)
 
 | Package | Version |
 | ------- | ------- |
 | svelte | 5.57 |
-| runed | 0.37.1 |
-| bits-ui | 2.19 |
+| runed | 0.38.0 |
+| bits-ui | 2.20 |
 | tailwindcss | 4.3.3 (`@tailwindcss/vite` plugin) |
-| vite | 8.2 (`@sveltejs/vite-plugin-svelte` 7.3) |
+| vite | 8.3 (`@sveltejs/vite-plugin-svelte` 7.3) |
 | typescript | 6.0.3 |
-| vitest | 5.0 (`@vitest/coverage-v8`) |
+| vitest | 5.0.5 (`@vitest/coverage-v8`) |
 | @testing-library/svelte | 5.4 |
-| fast-check | 4.9 |
-| @stryker-mutator/core + vitest-runner | 10.0 |
-| @playwright/test | 1.63 |
-| eslint | 10.10 (`eslint-plugin-svelte` 3.23, typescript-eslint 8.70) |
+| fast-check | 4.10 |
+| @stryker-mutator/core + vitest-runner | 10.1 |
+| @playwright/test | 1.64 |
+| eslint | 10.14 (`eslint-plugin-svelte` 3.23, typescript-eslint 8.72) |
 | svelte-check | 4.7 |
-| @lucide/svelte | 1.42 |
-| @sentry/svelte | 10.73 |
-| vite-plugin-pwa + workbox-window | 1.3 / 7.4 |
+| @lucide/svelte | 1.66 |
+| @sentry/svelte | 10.75 |
+| vite-plugin-pwa + workbox-window | 2.0 / 7.4 |
 | epubjs | 0.3.93 |
-| pdfjs-dist | 6.3 |
-| kokoro-js + @huggingface/transformers | 1.2 / 4.2 |
-| altcha | 3.2 |
+| pdfjs-dist | 6.5 |
+| kokoro-js + @huggingface/transformers | 1.2 / 4.3 |
+| altcha | 3.5 |
 | qrcode | 1.5 |
 
 Check `web/package.json` for the current pins; this table ages.
