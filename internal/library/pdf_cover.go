@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	"io"
 	"os"
 	"os/exec"
@@ -40,7 +41,7 @@ func extractPDFCoverPdfcpu(filePath string) []byte {
 	conf := model.NewDefaultConfiguration()
 	conf.ValidationMode = model.ValidationRelaxed
 
-	pageMaps, err := api.ExtractImagesRaw(f, []string{"1", "2", "3"}, conf)
+	pageMaps, err := api.ExtractImagesRaw(context.Background(), f, []string{"1", "2", "3"}, conf)
 	if err != nil || len(pageMaps) == 0 {
 		return nil
 	}

@@ -73,7 +73,7 @@ func decodeUTF16String(b []byte) (string, error) {
 
 		val := (uint16(b[i]) << 8) + uint16(b[i+1])
 
-		if val <= 0xD7FF || val > 0xE000 && val <= 0xFFFF {
+		if val <= 0xD7FF || val >= 0xE000 && val <= 0xFFFF {
 			// Basic Multilingual Plane
 			u16 = append(u16, val)
 			i += 2
@@ -135,45 +135,41 @@ func EscapedUTF16String(s string) (*string, error) {
 	return Escape(EncodeUTF16String(s))
 }
 
-// StringLiteralToString returns the best possible string rep for a string literal.
-func StringLiteralToString(sl StringLiteral) (string, error) {
-	bb, err := Unescape(sl.Value())
-	if err != nil {
-		return "", err
-	}
-	if IsUTF16BE(bb) {
+// decodeTextString decodes PDFDocEncoding or BOM-marked Unicode bytes (7.9.2.2).
+func decodeTextString(bb []byte) (string, error) {
+	if bytes.HasPrefix(bb, []byte{0xFE, 0xFF}) {
 		return decodeUTF16String(bb)
 	}
-	// If no acceptable UTF16 encoding is found, accept real-world UTF8 before
-	// falling back to PDFDocEncoding.
-	bb = bytes.TrimPrefix(bb, []byte{239, 187, 191})
-	if utf8.Valid(bb) && !hasPDFDocEncodingControlByte(bb) {
+	if bytes.HasPrefix(bb, []byte{0xEF, 0xBB, 0xBF}) {
+		bb = bb[3:]
+		if !utf8.Valid(bb) {
+			return "", ErrInvalidUTF8
+		}
+		return string(bb), nil
+	}
+	// Preserve ASCII control bytes used by callers for name-tree keys.
+	if isPDFDocEncodingASCII(bb) {
 		return string(bb), nil
 	}
 	return decodePDFDocEncoding(bb), nil
 }
 
-// HexLiteralToString returns a possibly UTF16 encoded string for a hex string.
+// StringLiteralToString unescapes a literal string and decodes its text encoding.
+func StringLiteralToString(sl StringLiteral) (string, error) {
+	bb, err := Unescape(sl.Value())
+	if err != nil {
+		return "", err
+	}
+	return decodeTextString(bb)
+}
+
+// HexLiteralToString decodes a hexadecimal string's bytes using its text encoding.
 func HexLiteralToString(hl HexLiteral) (string, error) {
 	bb, err := hl.Bytes()
 	if err != nil {
 		return "", err
 	}
-	if IsUTF16BE(bb) {
-		return decodeUTF16String(bb)
-	}
-
-	bb, err = Unescape(string(bb))
-	if err != nil {
-		return "", err
-	}
-
-	bb = bytes.TrimPrefix(bb, []byte{239, 187, 191})
-	if utf8.Valid(bb) && !hasPDFDocEncodingControlByte(bb) {
-		return string(bb), nil
-	}
-
-	return decodePDFDocEncoding(bb), nil
+	return decodeTextString(bb)
 }
 
 // StringOrHexLiteral returns the string value for a string or hex literal.

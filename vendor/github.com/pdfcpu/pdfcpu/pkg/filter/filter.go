@@ -45,6 +45,7 @@ var ErrUnsupportedFilter = errors.New("filter not supported")
 // ErrDecodeLimitExceeded signals that decoded filter output exceeds the configured decode limit.
 var ErrDecodeLimitExceeded = errors.New("filter decode limit exceeded")
 
+// DefaultMaxDecodeBytes is the default maximum decoded stream size.
 const DefaultMaxDecodeBytes int64 = 512 << 20 // 512 MiB
 
 const maxInt = int(^uint(0) >> 1)
@@ -52,7 +53,9 @@ const maxInt64 = int64(^uint64(0) >> 1)
 
 // Filter defines an interface for encoding/decoding PDF object streams.
 type Filter interface {
+	// Encode returns a reader for the encoded contents of r.
 	Encode(r io.Reader) (io.Reader, error)
+	// Decode returns a reader for the decoded contents of r.
 	Decode(r io.Reader) (io.Reader, error)
 	// DecodeLength will decode at least maxLen bytes. For filters where decoding
 	// parts doesn't make sense (e.g. DCT), the whole stream is decoded.
@@ -149,7 +152,19 @@ func (f baseFilter) decodeLimit(maxLen int64) int64 {
 	return f.maxDecodeBytes
 }
 
+func (f baseFilter) checkDecodeLength(maxLen int64) error {
+	if maxLen >= 0 {
+		if limit := f.decodeLimit(-1); limit >= 0 && maxLen > limit {
+			return ErrDecodeLimitExceeded
+		}
+	}
+	return nil
+}
+
 func (f baseFilter) copyDecoded(r io.Reader, maxLen int64) (*bytes.Buffer, error) {
+	if err := f.checkDecodeLength(maxLen); err != nil {
+		return nil, err
+	}
 	if maxLen >= 0 {
 		var b bytes.Buffer
 		_, err := io.CopyN(&b, r, maxLen)
@@ -170,11 +185,23 @@ func (f baseFilter) copyDecoded(r io.Reader, maxLen int64) (*bytes.Buffer, error
 
 	lr := &io.LimitedReader{R: r, N: limit + 1}
 	var b bytes.Buffer
-	if _, err := io.Copy(&b, lr); err != nil {
-		return &b, err
-	}
+	_, err := io.Copy(&b, lr)
 	if int64(b.Len()) > limit {
 		return nil, ErrDecodeLimitExceeded
 	}
-	return &b, nil
+	return &b, err
+}
+
+type decodeLimitWriter struct {
+	w         io.Writer
+	remaining int64
+}
+
+func (w *decodeLimitWriter) Write(p []byte) (int, error) {
+	if int64(len(p)) > w.remaining {
+		return 0, ErrDecodeLimitExceeded
+	}
+	n, err := w.w.Write(p)
+	w.remaining -= int64(n)
+	return n, err
 }

@@ -27,13 +27,22 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 )
 
-func validateMetadataStream(xRefTable *model.XRefTable, d types.Dict, required bool, sinceVersion model.Version) (*types.StreamDict, error) {
-	if xRefTable.ValidationMode == model.ValidationRelaxed {
+func validateMetadataStream(xRefTable *model.XRefTable, d types.Dict, ownerObjNr int, required bool, sinceVersion model.Version) (sd *types.StreamDict, err error) {
+	// see 14.3.2
+	relaxed := xRefTable.ValidationMode == model.ValidationRelaxed
+	if relaxed {
 		sinceVersion = model.V10
 	}
 
 	rawEntry := d["Metadata"]
-	sd, err := validateStreamDictEntry(xRefTable, d, "dict", "Metadata", required, sinceVersion, nil)
+	metadataObjNr := validationObjectNumber(ownerObjNr, rawEntry)
+	defer func() {
+		err = model.WithValidationErrorObject(err, metadataObjNr)
+	}()
+
+	sd, err = validateStreamDictEntry(
+		xRefTable, d, ownerObjNr, "dict", "Metadata", required, sinceVersion, nil,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", dictEntryContext("dict", "Metadata", rawEntry), err)
 	}
@@ -43,15 +52,19 @@ func validateMetadataStream(xRefTable *model.XRefTable, d types.Dict, required b
 	}
 
 	dictName := "metaDataDict"
+	entryRequired := !relaxed
 
-	if _, err = validateNameEntry(xRefTable, sd.Dict, dictName, "Type", OPTIONAL, sinceVersion, func(s string) bool { return s == "Metadata" }); err != nil {
+	if _, err = validateNameEntry(
+		xRefTable, sd.Dict, metadataObjNr, dictName, "Type", entryRequired, sinceVersion,
+		func(s string) bool { return s == "Metadata" },
+	); err != nil {
 		return nil, fmt.Errorf("%s: %s.Type: %w", objectContext(dictEntryContext("dict", "Metadata", rawEntry), rawEntry), dictName, err)
 	}
 
-	relaxed := xRefTable.ValidationMode == model.ValidationRelaxed
-	subtype, err := validateNameEntry(xRefTable, sd.Dict, dictName, "Subtype", OPTIONAL, sinceVersion, func(s string) bool {
-		return s == "XML" || relaxed && s == "XMP"
-	})
+	subtype, err := validateNameEntry(
+		xRefTable, sd.Dict, metadataObjNr, dictName, "Subtype", entryRequired, sinceVersion,
+		func(s string) bool { return s == "XML" || relaxed && s == "XMP" },
+	)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s.Subtype: %w", objectContext(dictEntryContext("dict", "Metadata", rawEntry), rawEntry), dictName, err)
 	}
@@ -69,12 +82,19 @@ func validateMetadata(xRefTable *model.XRefTable, d types.Dict, required bool, s
 	// as opposed to serving as an implementation artifact.
 	// Some PDF constructs are considered implementational, and hence may not have associated metadata.
 
-	_, err := validateMetadataStream(xRefTable, d, required, sinceVersion)
+	_, err := validateMetadataStream(xRefTable, d, 0, required, sinceVersion)
 	return err
 }
 
-func catalogMetaData(xRefTable *model.XRefTable, rootDict types.Dict, required bool, sinceVersion model.Version) (*model.XMPMeta, error) {
-	sd, err := validateMetadataStream(xRefTable, rootDict, required, sinceVersion)
+func catalogMetaData(xRefTable *model.XRefTable, rootDict types.Dict, required bool, sinceVersion model.Version) (xmpMeta *model.XMPMeta, err error) {
+	// see 14.3.2
+	rootObjNr := validationRootObjectNumber(xRefTable)
+	metadataObjNr := validationEntryObjectNumber(rootObjNr, rootDict, "Metadata")
+	defer func() {
+		err = model.WithValidationErrorObject(err, metadataObjNr)
+	}()
+
+	sd, err := validateMetadataStream(xRefTable, rootDict, rootObjNr, required, sinceVersion)
 	if err != nil || sd == nil {
 		if err != nil {
 			return nil, fmt.Errorf("catalog metadata stream: %w", err)
@@ -87,7 +107,7 @@ func catalogMetaData(xRefTable *model.XRefTable, rootDict types.Dict, required b
 	// }
 
 	// Decode streamDict for supported filters only.
-	err = sd.Decode()
+	err = xRefTable.DecodeStream(sd)
 	if err == filter.ErrUnsupportedFilter {
 		return nil, nil
 	}

@@ -80,8 +80,7 @@ func (sd StreamDict) Clone() Object {
 	return sd1
 }
 
-// HasSoleFilterNamed returns true if sd has a
-// filterPipeline with 1 filter named filterName.
+// HasSoleFilterNamed returns true if sd has a filterPipeline with 1 filter named filterName.
 func (sd StreamDict) HasSoleFilterNamed(filterName string) bool {
 	fpl := sd.FilterPipeline
 	if fpl == nil || len(fpl) != 1 {
@@ -103,26 +102,40 @@ func (sd StreamDict) Image() bool {
 	return true
 }
 
+// DecodeLazyObjectStreamObjectFunc decodes one serialized object from an object stream.
 type DecodeLazyObjectStreamObjectFunc func(c context.Context, s string) (Object, error)
 
+// DecodeStreamFunc decodes a stream dictionary.
+type DecodeStreamFunc func(sd *StreamDict) error
+
+// LazyObjectStreamObject defers decoding an object-stream entry until it is accessed.
 type LazyObjectStreamObject struct {
 	osd         *ObjectStreamDict
 	startOffset int
 	endOffset   int
 
-	decodeFunc    DecodeLazyObjectStreamObjectFunc
-	decodedObject Object
-	decodedError  error
+	decodeFunc       DecodeLazyObjectStreamObjectFunc
+	decodeStreamFunc DecodeStreamFunc
+	decodedObject    Object
+	decodedError     error
 }
 
 // NewLazyObjectStreamObject returns a lazy object stream object.
 func NewLazyObjectStreamObject(osd *ObjectStreamDict, startOffset, endOffset int, decodeFunc DecodeLazyObjectStreamObjectFunc) Object {
+	return NewLazyObjectStreamObjectWithDecoder(osd, startOffset, endOffset, decodeFunc, nil)
+}
+
+// NewLazyObjectStreamObjectWithDecoder returns a lazy object stream object.
+// A non-nil decodeStreamFunc receives &osd.StreamDict and must decode it, leaving Content set on success.
+// A nil decodeStreamFunc uses the default object stream decoder.
+func NewLazyObjectStreamObjectWithDecoder(osd *ObjectStreamDict, startOffset, endOffset int, decodeFunc DecodeLazyObjectStreamObjectFunc, decodeStreamFunc DecodeStreamFunc) Object {
 	return LazyObjectStreamObject{
 		osd:         osd,
 		startOffset: startOffset,
 		endOffset:   endOffset,
 
-		decodeFunc: decodeFunc,
+		decodeFunc:       decodeFunc,
+		decodeStreamFunc: decodeStreamFunc,
 	}
 }
 
@@ -133,9 +146,10 @@ func (l LazyObjectStreamObject) Clone() Object {
 		startOffset: l.startOffset,
 		endOffset:   l.endOffset,
 
-		decodeFunc:    l.decodeFunc,
-		decodedObject: l.decodedObject,
-		decodedError:  l.decodedError,
+		decodeFunc:       l.decodeFunc,
+		decodeStreamFunc: l.decodeStreamFunc,
+		decodedObject:    l.decodedObject,
+		decodedError:     l.decodedError,
 	}
 }
 
@@ -156,8 +170,22 @@ func (l LazyObjectStreamObject) String() string {
 
 // GetData returns the stream data.
 func (l *LazyObjectStreamObject) GetData() ([]byte, error) {
-	if err := l.osd.DecodeWithLimit(l.osd.MaxDecodeBytes); err != nil {
+	var err error
+	if l.decodeStreamFunc == nil {
+		err = l.osd.DecodeWithLimit(l.osd.MaxDecodeBytes)
+	} else {
+		err = l.decodeStreamFunc(&l.osd.StreamDict)
+	}
+	if err != nil {
+		if l.decodeStreamFunc == nil && errors.Is(err, filter.ErrDecodeLimitExceeded) {
+			return nil, fmt.Errorf("object stream decode exceeds %d-byte limit: %w", l.osd.MaxDecodeBytes, err)
+		}
 		return nil, err
+	}
+	if !l.osd.preserveRawContent() && len(l.osd.Content) < cap(l.osd.Content) {
+		content := make([]byte, len(l.osd.Content))
+		copy(content, l.osd.Content)
+		l.osd.Content = content
 	}
 
 	var data []byte
@@ -248,7 +276,16 @@ func parmsForFilter(d Dict) map[string]int {
 	return m
 }
 
-// Encode applies sd's filter pipeline to sd.Content in order to produce sd.Raw.
+func (sd *StreamDict) nonCryptFilters() []PDFFilter {
+	// The security handler applies Crypt before decoding and after encoding (see 7.4.10).
+	fpl := sd.FilterPipeline
+	if len(fpl) > 0 && fpl[0].Name == "Crypt" {
+		return fpl[1:]
+	}
+	return fpl
+}
+
+// Encode applies sd's non-crypt filters to sd.Content in order to produce sd.Raw.
 func (sd *StreamDict) Encode() error {
 	if sd.Content == nil && sd.Raw != nil {
 		// Not decoded yet, no need to encode.
@@ -256,7 +293,8 @@ func (sd *StreamDict) Encode() error {
 	}
 
 	// No filter specified, nothing to encode.
-	if sd.FilterPipeline == nil {
+	fpl := sd.nonCryptFilters()
+	if len(fpl) == 0 {
 		if log.TraceEnabled() {
 			log.Trace.Println("encodeStream: returning uncompressed stream.")
 		}
@@ -272,8 +310,8 @@ func (sd *StreamDict) Encode() error {
 
 	// Apply each filter in the pipeline to result of preceding filter.
 
-	for i := len(sd.FilterPipeline) - 1; i >= 0; i-- {
-		f := sd.FilterPipeline[i]
+	for i := len(fpl) - 1; i >= 0; i-- {
+		f := fpl[i]
 		if log.TraceEnabled() {
 			if f.DecodeParms != nil {
 				log.Trace.Printf("encodeStream: encoding filter:%s\ndecodeParms:%s\n", f.Name, f.DecodeParms)
@@ -320,6 +358,8 @@ func fixParms(f PDFFilter, parms map[string]int, sd *StreamDict) error {
 	if f.Name == filter.CCITTFax {
 		// x/image/ccitt needs the optional decode parameter "Rows"
 		// if not available we supply image "Height".
+		// Xref-aware image callers resolve Rows and Height before Decode.
+		// This direct fallback supports programmatically constructed stream dictionaries.
 		_, ok := parms["Rows"]
 		if !ok {
 			ip := sd.IntEntry("Height")
@@ -350,7 +390,9 @@ func decodedContent(r io.Reader) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// Decode applies sd's filter pipeline to sd.Raw in order to produce sd.Content.
+// Decode applies sd's non-crypt filters to sd.Raw in order to produce sd.Content.
+//
+// Deprecated: Use DecodeWithLimit to supply the configured decoded-byte limit explicitly.
 func (sd *StreamDict) Decode() error {
 	_, err := sd.DecodeLengthWithLimit(-1, filter.DefaultMaxDecodeBytes)
 	return err
@@ -367,10 +409,11 @@ func (sd *StreamDict) decodeLength(maxLen, maxDecodeBytes int64) ([]byte, error)
 	b = bytes.NewReader(sd.Raw)
 
 	// Apply each filter in the pipeline to result of preceding filter.
-	for idx, f := range sd.FilterPipeline {
+	fpl := sd.nonCryptFilters()
+	for idx, f := range fpl {
 
 		if preserveEncodedImageFilter(f.Name) {
-			if idx != len(sd.FilterPipeline)-1 {
+			if idx != len(fpl)-1 {
 				return nil, fmt.Errorf("stream filter[%d] %q: decode: %w", idx, f.Name, filter.ErrUnsupportedFilter)
 			}
 			c = b
@@ -404,7 +447,7 @@ func (sd *StreamDict) decodeLength(maxLen, maxDecodeBytes int64) ([]byte, error)
 			return nil, fmt.Errorf("stream filter[%d] %q: construct: %w", idx, f.Name, err)
 		}
 
-		if maxLen >= 0 && idx == len(sd.FilterPipeline)-1 {
+		if maxLen >= 0 && idx == len(fpl)-1 {
 			c, err = fi.DecodeLength(b, maxLen)
 		} else {
 			c, err = fi.Decode(b)
@@ -434,44 +477,57 @@ func (sd *StreamDict) decodeLength(maxLen, maxDecodeBytes int64) ([]byte, error)
 }
 
 // DecodeLength decodes sd with a maximum output length.
+//
+// Deprecated: Use DecodeLengthWithLimit for prefix decoding or DecodeWithLimit for full decoding,
+// supplying the configured decoded-byte limit explicitly.
 func (sd *StreamDict) DecodeLength(maxLen int64) ([]byte, error) {
 	return sd.DecodeLengthWithLimit(maxLen, filter.DefaultMaxDecodeBytes)
 }
 
 // DecodeLengthWithLimit decodes sd with a maximum output length and resource limits.
+// Full decodes also check cached filter output against the supplied limit.
 func (sd *StreamDict) DecodeLengthWithLimit(maxLen, maxDecodeBytes int64) ([]byte, error) {
+	limit := maxDecodeBytes
+	if limit == 0 {
+		limit = filter.DefaultMaxDecodeBytes
+	}
+	if maxLen >= 0 && limit >= 0 && maxLen > limit {
+		return nil, filter.ErrDecodeLimitExceeded
+	}
 	if sd.Content != nil {
 		// This stream has already been decoded.
-		if maxLen < 0 {
-			return sd.Content, nil
-		}
-		if maxLen > int64(len(sd.Content)) {
-			return nil, io.ErrUnexpectedEOF
-		}
-
-		return sd.Content[:maxLen], nil
+		return sd.cachedContent(maxLen, limit)
 	}
-
-	fpl := sd.FilterPipeline
 
 	// No filter, sole DCT except CMYK, or terminal opaque image filters:
 	// nothing to decode for consumers that can preserve the original image stream.
-	if fpl == nil || len(fpl) == 1 && ((fpl[0].Name == filter.DCT && sd.CSComponents != 4) || preserveEncodedImageFilter(fpl[0].Name)) {
+	if sd.preserveRawContent() {
 		sd.Content = sd.Raw
-		//fmt.Printf("decodedStream returning %d(#%02x)bytes: \n%s\n", len(sd.Content), len(sd.Content), hex.Dump(sd.Content))
-		if maxLen < 0 {
-			return sd.Content, nil
-		}
-		if maxLen > int64(len(sd.Content)) {
-			return nil, io.ErrUnexpectedEOF
-		}
-
-		return sd.Content[:maxLen], nil
+		return sd.cachedContent(maxLen, limit)
 	}
 
 	//fmt.Printf("decodedStream before:\n%s\n", hex.Dump(sd.Raw))
 
 	return sd.decodeLength(maxLen, maxDecodeBytes)
+}
+
+func (sd *StreamDict) preserveRawContent() bool {
+	fpl := sd.nonCryptFilters()
+	return len(fpl) == 0 || len(fpl) == 1 &&
+		(fpl[0].Name == filter.DCT && sd.CSComponents != 4 || preserveEncodedImageFilter(fpl[0].Name))
+}
+
+func (sd *StreamDict) cachedContent(maxLen, limit int64) ([]byte, error) {
+	if maxLen < 0 {
+		if limit >= 0 && int64(len(sd.Content)) > limit && !sd.preserveRawContent() {
+			return nil, filter.ErrDecodeLimitExceeded
+		}
+		return sd.Content, nil
+	}
+	if maxLen > int64(len(sd.Content)) {
+		return nil, io.ErrUnexpectedEOF
+	}
+	return sd.Content[:maxLen], nil
 }
 
 // IndexedObject returns the object at given index from a ObjectStreamDict.

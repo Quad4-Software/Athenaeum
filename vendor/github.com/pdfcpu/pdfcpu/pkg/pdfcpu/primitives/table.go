@@ -30,6 +30,7 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 )
 
+// TableHeader defines table header values and their layout.
 type TableHeader struct {
 	Values          []string
 	ColAnchors      []string
@@ -357,8 +358,22 @@ func (t *Table) validateColors() error {
 	return t.validateEvenColor()
 }
 
-func (t *Table) validate() error {
+// validateDimensions checks rows, columns and line height and charges rows and columns to the document's table budget
+// before any per-row or per-column work.
+func (t *Table) validateDimensions() error {
+	if t.Rows < 1 {
+		return errors.New("table \"rows\" missing")
+	}
+	if t.Cols < 1 {
+		return errors.New("table \"cols\" missing")
+	}
+	if t.LineHeight <= 0 {
+		return errors.New("table \"lheight\" missing")
+	}
+	return t.pdf.chargeTableLines(t.Rows, t.Cols)
+}
 
+func (t *Table) validate() error {
 	t.x = t.Position[0]
 	t.y = t.Position[1]
 
@@ -367,20 +382,13 @@ func (t *Table) validate() error {
 	}
 
 	if err := t.validateAnchor(); err != nil {
-		return nil
+		return err
 	}
 
 	// TODO validate width against content box width
 
-	if t.Rows < 1 {
-		return errors.New("table \"rows\" missing")
-	}
-	if t.Cols < 1 {
-		return errors.New("table \"cols\" missing")
-	}
-
-	if t.LineHeight <= 0 {
-		return errors.New("table \"lheight\" missing")
+	if err := t.validateDimensions(); err != nil {
+		return err
 	}
 
 	if t.Header != nil {
@@ -445,7 +453,6 @@ func (t *Table) mergeInAnchor(t0 *Table) {
 }
 
 func (t *Table) mergeIn(t0 *Table) {
-
 	t.mergeInAnchor(t0)
 
 	if t.Dx == 0 {
@@ -721,11 +728,19 @@ func (t *Table) renderGrid(p *model.Page, colWidths []float64, bWidth float64, b
 	}
 }
 
-func (t *Table) cellLowerLeft(r *types.Rectangle, colWidths []float64, bWidth float64, row, col int) (float64, float64) {
+// columnOffsets returns the x offset of each column from the table's left edge.
+func columnOffsets(colWidths []float64) []float64 {
+	offsets := make([]float64, len(colWidths))
 	var x float64
-	for i := range col {
-		x += colWidths[i]
+	for i, w := range colWidths {
+		offsets[i] = x
+		x += w
 	}
+	return offsets
+}
+
+func (t *Table) cellLowerLeft(r *types.Rectangle, colOffsets []float64, bWidth float64, row, col int) (float64, float64) {
+	x := colOffsets[col]
 	y := r.UR.Y - bWidth/2 - float64(row*t.LineHeight)
 	if t.Header != nil {
 		y -= float64(t.Header.LineHeight)
@@ -733,12 +748,12 @@ func (t *Table) cellLowerLeft(r *types.Rectangle, colWidths []float64, bWidth fl
 	return r.LL.X + bWidth/2 + x, y
 }
 
-func (t *Table) valueCellLowerLeft(r *types.Rectangle, colWidths []float64, bWidth float64, row, col int) (float64, float64) {
-	return t.cellLowerLeft(r, colWidths, bWidth, row+1, col)
+func (t *Table) valueCellLowerLeft(r *types.Rectangle, colOffsets []float64, bWidth float64, row, col int) (float64, float64) {
+	return t.cellLowerLeft(r, colOffsets, bWidth, row+1, col)
 }
 
-func (t *Table) headerCellLowerLeft(r *types.Rectangle, colWidths []float64, bWidth float64, col int) (float64, float64) {
-	return t.cellLowerLeft(r, colWidths, bWidth, 0, col)
+func (t *Table) headerCellLowerLeft(r *types.Rectangle, colOffsets []float64, bWidth float64, col int) (float64, float64) {
+	return t.cellLowerLeft(r, colOffsets, bWidth, 0, col)
 }
 
 func (t *Table) prepareTextDescriptor() (model.TextDescriptor, error) {
@@ -819,7 +834,9 @@ func (t *Table) renderValues(p *model.Page, pageNr int, fonts model.FontMap, col
 			x, y := ll(i, j)
 			r := types.RectForWidthAndHeight(x, y, colWidths[j], float64(t.LineHeight))
 
-			bb, err := model.WriteMultiLineAnchored(pdf.XRefTable, p.Buf, r, nil, colTd, t.colAnchors[j])
+			bb, err := model.WriteMultiLineAnchored(
+				pdf.ctx, pdf.XRefTable, p.Buf, r, nil, colTd, t.colAnchors[j],
+			)
 			if err != nil {
 				return fmt.Errorf("table cell row %d column %d: %w", i+1, j+1, err)
 			}
@@ -896,7 +913,7 @@ func (t *Table) renderHeader(p *model.Page, pageNr int, fonts model.FontMap, col
 			a = th.colAnchors[i]
 		}
 
-		bb, err := model.WriteMultiLineAnchored(pdf.XRefTable, p.Buf, r, nil, colTd, a)
+		bb, err := model.WriteMultiLineAnchored(pdf.ctx, pdf.XRefTable, p.Buf, r, nil, colTd, a)
 		if err != nil {
 			return fmt.Errorf("table header column %d: %w", i+1, err)
 		}
@@ -925,7 +942,6 @@ func (t *Table) rectForFill(r *types.Rectangle, bWidth float64) *types.Rectangle
 }
 
 func (t *Table) render(p *model.Page, pageNr int, fonts model.FontMap) error {
-
 	if err := t.calcFont(); err != nil {
 		return err
 	}
@@ -966,12 +982,14 @@ func (t *Table) render(p *model.Page, pageNr int, fonts model.FontMap) error {
 		return err
 	}
 
+	colOffsets := columnOffsets(colWidths)
+
 	valueLL := func(row, col int) (float64, float64) {
-		return t.valueCellLowerLeft(r, colWidths, bWidth, row, col)
+		return t.valueCellLowerLeft(r, colOffsets, bWidth, row, col)
 	}
 
 	headerLL := func(col int) (float64, float64) {
-		return t.headerCellLowerLeft(r, colWidths, bWidth, col)
+		return t.headerCellLowerLeft(r, colOffsets, bWidth, col)
 	}
 
 	if len(t.Values) > 0 {
