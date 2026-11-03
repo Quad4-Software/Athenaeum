@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-- Go 1.26+
-- Node 22+
-- pnpm 11+
+- Go 1.27+
+- Node 26+
+- pnpm 12+
 - [Task](https://taskfile.dev)
 
 Optional but recommended: `air`, `golangci-lint`, `govulncheck`, `lefthook`, Chromium.

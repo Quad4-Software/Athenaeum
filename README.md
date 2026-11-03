@@ -56,7 +56,7 @@ Open http://localhost:8080. Create an admin in the setup wizard, or pass
 
 ## Build from source
 
-Requires Go 1.26+, Node 22+, and pnpm 11+. [Task](https://taskfile.dev) is
+Requires Go 1.27+, Node 26+, and pnpm 12+. [Task](https://taskfile.dev) is
 optional. Make works for build and install.
 
 ```sh
