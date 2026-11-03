@@ -3,7 +3,10 @@
 FROM --platform=$BUILDPLATFORM node:26-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS web
 WORKDIR /src/web
 RUN apk add --no-cache bash curl \
-  && npm install -g pnpm@12.16.1
+  && curl -fsSLo /tmp/pnpm.tgz https://registry.npmjs.org/pnpm/-/pnpm-12.16.1.tgz \
+  && echo "091d1dee7927575661b25dab3c2ae31cafc1c54d6b71ed6a6600cf0c1cb10434a447eae14015f1b23e2e6bedeed79df94a932e2164d2832280dce3fb32f656d1  /tmp/pnpm.tgz" | sha512sum -c - \
+  && npm install -g /tmp/pnpm.tgz \
+  && rm /tmp/pnpm.tgz
 COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY web/ ./

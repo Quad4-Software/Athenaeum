@@ -14,12 +14,8 @@ RUN apt-get update \
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir \
-  "kokoro>=0.9.2" \
-  "soundfile>=0.12" \
-  "fastapi>=0.115" \
-  "uvicorn[standard]>=0.32" \
-  "numpy>=1.26"
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir --require-hashes -r requirements.txt
 
 COPY app.py /app/app.py
 
