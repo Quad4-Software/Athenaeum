@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/mail"
 	"net/smtp"
 	"strings"
 
@@ -109,6 +110,11 @@ func (s *Server) handleSendBook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		to = email
+	}
+	parsed, err := mail.ParseAddress(to)
+	if err != nil || parsed.Address != to {
+		writeError(w, http.StatusBadRequest, errors.New("invalid recipient address"))
+		return
 	}
 	smtpCfg, err := s.store.GetSMTPSettings(r.Context())
 	if err != nil {
