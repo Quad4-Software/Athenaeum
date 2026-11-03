@@ -5,6 +5,7 @@ package backup
 import (
 	"archive/zip"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -164,7 +165,11 @@ func Restore(src io.Reader, dataDir, dbFilename string) error {
 		}
 		// Bound each entry at its declared uncompressed size to stop the
 		// compressor stream from expanding past the archive's own metadata.
-		_, err = io.Copy(out, io.LimitReader(rc, int64(f.UncompressedSize64))) // #nosec G110 -- entries confined to dataDir, size bounded
+		var limit int64 = math.MaxInt64
+		if f.UncompressedSize64 < math.MaxInt64 {
+			limit = int64(f.UncompressedSize64) // #nosec G115 -- bounded above
+		}
+		_, err = io.Copy(out, io.LimitReader(rc, limit)) // #nosec G110 -- entries confined to dataDir, size bounded
 		_ = out.Close()
 		_ = rc.Close()
 		if err != nil {
