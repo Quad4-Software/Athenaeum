@@ -1,3 +1,6 @@
+# configuration schema version, independent of the pdfcpu version.
+schemaVersion: 1
+
 # toggle for inFilename extension check (.pdf) 
 checkFileNameExt: true
 
@@ -66,6 +69,10 @@ needAppearances: false
 # internet availability.
 offline: false
 
+# Local create/form images: API disabled when empty; CLI defaults to the working directory.
+# Image paths are relative to this root; absolute paths and parent components are rejected.
+localImageRoot: ""
+
 # http timeout in seconds.
 timeout: 5
 
@@ -86,12 +93,19 @@ preferredCertRevocationChecker: crl
 
 # limit form field content for display purposes when using pdfcpu form list.
 # if > 0 affects the columns AltName, Default and Value.
-FormFieldListMaxColWidth: 0
+formFieldListMaxColWidth: 0
+
+# bytes per PDF input and stdin spool; zero means unlimited.
+maxInputBytes: 0
+
+# indirect-object buffer bytes, excluding stream payloads.
+maxObjectBytes: 64 MB
 
 # encoded stream bytes read from a PDF.
 maxStreamBytes: 512 MB
 
-# decoded stream bytes produced by filters.
+# decoded stream bytes produced by filters and combined page content. XRefTable.DecodeStream calls and object streams
+# each share separate cumulative limits of at least 1 GiB or twice this value. A negative value disables these limits.
 maxDecodeBytes: 512 MB
 
 # decoded/rendered image dimensions and buffers.

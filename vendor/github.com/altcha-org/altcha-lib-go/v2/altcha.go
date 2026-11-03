@@ -11,7 +11,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -29,6 +29,9 @@ const (
 	defaultKeyLength      = 32
 	defaultKeyPrefix      = "00"
 	defaultKeyPrefixRatio = 2
+	saltLength            = 16 // bytes
+	nonceLength           = 16 // bytes
+	defaultSolveTimeout   = 90 * time.Second
 )
 
 // Challenge represents a v2 challenge with parameters and signature.
@@ -50,6 +53,19 @@ type ChallengeParameters struct {
 	Parallelism  int                    `json:"parallelism,omitempty"`
 	ExpiresAt    int64                  `json:"expiresAt,omitempty"`
 	Data         map[string]interface{} `json:"data,omitempty"`
+
+	// rawData is the "data" value exactly as decoded by UnmarshalJSON. A Go map
+	// cannot hold key order, so it is re-emitted verbatim while Data still
+	// matches it; see MarshalJSON.
+	rawData json.RawMessage
+
+	// rawMemoryCost, rawParallelism and rawExpiresAt hold those keys exactly
+	// as decoded by UnmarshalJSON when they decoded to zero (0 or null).
+	// omitempty would drop them, but altcha-lib signs every key it sends, so
+	// they are re-emitted while the field is still zero; see MarshalJSON.
+	rawMemoryCost  json.RawMessage
+	rawParallelism json.RawMessage
+	rawExpiresAt   json.RawMessage
 }
 
 // Solution holds the result of solving a v2 challenge.
@@ -68,11 +84,33 @@ type Payload struct {
 // DeriveKeyFunc is a function that derives a key from KDF parameters.
 type DeriveKeyFunc func(params ChallengeParameters, salt []byte, password []byte) ([]byte, error)
 
+// CounterMode selects how the counter is appended to the nonce to form the
+// key derivation password.
+type CounterMode string
+
+const (
+	// CounterModeUint32 appends the counter as a big-endian uint32 (v2 default).
+	CounterModeUint32 CounterMode = "uint32"
+	// CounterModeString appends the counter as a decimal string, for
+	// backward compatibility with v1.
+	CounterModeString CounterMode = "string"
+)
+
+// validate rejects unknown modes; the zero value means CounterModeUint32.
+func (m CounterMode) validate() error {
+	switch m {
+	case "", CounterModeUint32, CounterModeString:
+		return nil
+	}
+	return fmt.Errorf("unsupported CounterMode %q", string(m))
+}
+
 // CreateChallengeOptions configures challenge creation.
 type CreateChallengeOptions struct {
 	Algorithm              string
 	Cost                   int
 	Counter                *int
+	CounterMode            CounterMode // default: CounterModeUint32
 	Data                   map[string]interface{}
 	DeriveKey              DeriveKeyFunc
 	ExpiresAt              *time.Time
@@ -89,16 +127,21 @@ type CreateChallengeOptions struct {
 // SolveChallengeOptions configures challenge solving.
 type SolveChallengeOptions struct {
 	Challenge    Challenge
+	CounterMode  CounterMode // default: CounterModeUint32
 	CounterStart int
 	CounterStep  int
 	DeriveKey    DeriveKeyFunc
 	StopChan     <-chan struct{}
+	// Timeout bounds the solving time (default: 90s, as in altcha-lib).
+	// A negative value disables it.
+	Timeout time.Duration
 }
 
 // VerifySolutionOptions configures solution verification.
 type VerifySolutionOptions struct {
 	Challenge              Challenge
 	Solution               Solution
+	CounterMode            CounterMode // default: CounterModeUint32
 	DeriveKey              DeriveKeyFunc
 	HMACAlgorithm          Algorithm
 	HMACKeySignatureSecret string
@@ -114,8 +157,15 @@ type VerifySolutionResult struct {
 	Verified         bool
 }
 
-// passwordWithCounter returns nonce with the counter appended as a big-endian uint32.
-func passwordWithCounter(nonce []byte, n int) []byte {
+// passwordWithCounter returns nonce with the counter appended as mode
+// specifies (a valid mode; see CounterMode.validate).
+func passwordWithCounter(nonce []byte, n int, mode CounterMode) []byte {
+	if mode == CounterModeString {
+		// Room for the longest int64, "-9223372036854775808".
+		buf := make([]byte, len(nonce), len(nonce)+20)
+		copy(buf, nonce)
+		return strconv.AppendInt(buf, int64(n), 10)
+	}
 	buf := make([]byte, len(nonce)+4)
 	copy(buf, nonce)
 	binary.BigEndian.PutUint32(buf[len(nonce):], uint32(n))
@@ -199,15 +249,15 @@ func bufferStartsWith(buf, prefix []byte) bool {
 }
 
 // keyPrefix is a parsed hex key prefix. Odd-length prefixes are supported:
-// the trailing hex digit is matched against the high nibble of the next byte,
-// mirroring the JS client's hex-string comparison.
+// the trailing hex digit is matched against the high nibble of the next byte.
+// Matching ignores hex case.
 type keyPrefix struct {
 	bytes     []byte
 	nibble    byte // high nibble of the byte following bytes, low nibble zero
 	hasNibble bool
 }
 
-// parseKeyPrefix decodes a hex key prefix of any length.
+// parseKeyPrefix decodes a hex key prefix of any length, in either case.
 func parseKeyPrefix(s string) (keyPrefix, error) {
 	even := len(s) &^ 1
 	b, err := hex.DecodeString(s[:even])
@@ -237,72 +287,6 @@ func (p keyPrefix) matches(key []byte) bool {
 	return len(key) > len(p.bytes) && key[len(p.bytes)]&0xf0 == p.nibble
 }
 
-// canonicalJSON marshals v to JSON with all object keys sorted recursively.
-func canonicalJSON(v interface{}) (string, error) {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return "", err
-	}
-	var parsed interface{}
-	if err := json.Unmarshal(b, &parsed); err != nil {
-		return "", err
-	}
-	out, err := marshalSorted(parsed)
-	if err != nil {
-		return "", err
-	}
-	return string(out), nil
-}
-
-// marshalSorted recursively serializes a value to JSON with sorted object keys.
-func marshalSorted(v interface{}) ([]byte, error) {
-	switch val := v.(type) {
-	case map[string]interface{}:
-		keys := make([]string, 0, len(val))
-		for k := range val {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		var buf strings.Builder
-		buf.WriteByte('{')
-		for i, k := range keys {
-			if i > 0 {
-				buf.WriteByte(',')
-			}
-			kb, err := json.Marshal(k)
-			if err != nil {
-				return nil, err
-			}
-			buf.Write(kb)
-			buf.WriteByte(':')
-			vb, err := marshalSorted(val[k])
-			if err != nil {
-				return nil, err
-			}
-			buf.Write(vb)
-		}
-		buf.WriteByte('}')
-		return []byte(buf.String()), nil
-	case []interface{}:
-		var buf strings.Builder
-		buf.WriteByte('[')
-		for i, item := range val {
-			if i > 0 {
-				buf.WriteByte(',')
-			}
-			vb, err := marshalSorted(item)
-			if err != nil {
-				return nil, err
-			}
-			buf.Write(vb)
-		}
-		buf.WriteByte(']')
-		return []byte(buf.String()), nil
-	default:
-		return json.Marshal(v)
-	}
-}
-
 // CreateChallenge creates a new v2 challenge.
 func CreateChallenge(options CreateChallengeOptions) (Challenge, error) {
 	algorithm := options.Algorithm
@@ -315,32 +299,44 @@ func CreateChallenge(options CreateChallengeOptions) (Challenge, error) {
 		return Challenge{}, fmt.Errorf("Cost parameter must be greater than zero")
 	}
 
+	if options.Counter != nil && options.DeriveKey == nil {
+		return Challenge{}, fmt.Errorf("DeriveKey function is required when Counter is set")
+	}
+	if err := options.CounterMode.validate(); err != nil {
+		return Challenge{}, err
+	}
+
 	keyLength := options.KeyLength
 	if keyLength <= 0 {
 		keyLength = defaultKeyLength
 	}
 
-	keyPrefix := options.KeyPrefix
+	// Lowercase before signing so every client, including ones that compare
+	// odd-length prefixes as strings against the lowercase hex key, can match it.
+	keyPrefix := strings.ToLower(options.KeyPrefix)
+	if keyPrefix == "" {
+		keyPrefix = defaultKeyPrefix
+	}
+	// With a counter the prefix is derived from the key instead.
+	if options.Counter == nil {
+		if _, err := parseKeyPrefix(keyPrefix); err != nil {
+			return Challenge{}, err
+		}
+	}
 	keyPrefixLength := options.KeyPrefixLength
 	if keyPrefixLength <= 0 {
 		keyPrefixLength = keyLength / defaultKeyPrefixRatio
 	}
 
-	if options.Counter == nil {
-		if keyPrefix == "" {
-			keyPrefix = defaultKeyPrefix
-		}
-	}
-
 	// Generate salt
-	saltBytes, err := randomBytes(12)
+	saltBytes, err := randomBytes(saltLength)
 	if err != nil {
 		return Challenge{}, err
 	}
 	salt := hex.EncodeToString(saltBytes)
 
 	// Generate nonce
-	nonceBytes, err := randomBytes(12)
+	nonceBytes, err := randomBytes(nonceLength)
 	if err != nil {
 		return Challenge{}, err
 	}
@@ -368,7 +364,7 @@ func CreateChallenge(options CreateChallengeOptions) (Challenge, error) {
 
 	// If a deterministic counter is provided, derive the key and set the key prefix
 	var derivedKey []byte
-	if options.Counter != nil && options.DeriveKey != nil {
+	if options.Counter != nil {
 		saltBytes2, err := hex.DecodeString(salt)
 		if err != nil {
 			return Challenge{}, fmt.Errorf("invalid salt hex: %w", err)
@@ -377,26 +373,28 @@ func CreateChallenge(options CreateChallengeOptions) (Challenge, error) {
 		if err != nil {
 			return Challenge{}, fmt.Errorf("invalid nonce hex: %w", err)
 		}
-		password := passwordWithCounter(nonceBytes2, *options.Counter)
+		password := passwordWithCounter(nonceBytes2, *options.Counter, options.CounterMode)
 		dk, err := options.DeriveKey(params, saltBytes2, password)
 		if err != nil {
 			return Challenge{}, err
 		}
 		derivedKey = dk
-		params.KeyPrefix = hex.EncodeToString(derivedKey[:keyPrefixLength])
+		// Clamp like JS slice(): a prefix longer than the key is the whole key.
+		params.KeyPrefix = hex.EncodeToString(derivedKey[:min(keyPrefixLength, len(derivedKey))])
 	}
 
 	return signChallenge(options.HMACAlgorithm, params, derivedKey, options.HMACSignatureSecret, options.HMACKeySignatureSecret)
 }
 
-// signChallenge signs challenge parameters and returns a Challenge.
+// signChallenge signs challenge parameters and returns a Challenge. Without
+// hmacSecret the challenge is returned unsigned, without a keySignature either
+// (as in altcha-lib): VerifySolution would reject it for the missing signature.
 func signChallenge(hmacAlgorithm Algorithm, params ChallengeParameters, derivedKey []byte, hmacSecret string, hmacKeySecret string) (Challenge, error) {
+	if hmacSecret == "" {
+		return Challenge{Parameters: params}, nil
+	}
 	if hmacAlgorithm == "" {
 		hmacAlgorithm = SHA256
-	}
-
-	challenge := Challenge{
-		Parameters: params,
 	}
 
 	if len(derivedKey) > 0 && hmacKeySecret != "" {
@@ -404,29 +402,27 @@ func signChallenge(hmacAlgorithm Algorithm, params ChallengeParameters, derivedK
 		if err != nil {
 			return Challenge{}, err
 		}
-		challenge.Parameters.KeySignature = keySignature
+		params.KeySignature = keySignature
 	}
 
-	if hmacSecret != "" {
-		paramsJSON, err := canonicalJSON(challenge.Parameters)
-		if err != nil {
-			return Challenge{}, err
-		}
-		signature, err := hmacHex(hmacAlgorithm, []byte(paramsJSON), hmacSecret)
-		if err != nil {
-			return Challenge{}, err
-		}
-		challenge.Signature = signature
+	paramsJSON, err := canonicalJSON(params)
+	if err != nil {
+		return Challenge{}, err
 	}
-
-	return challenge, nil
+	signature, err := hmacHex(hmacAlgorithm, []byte(paramsJSON), hmacSecret)
+	if err != nil {
+		return Challenge{}, err
+	}
+	return Challenge{Parameters: params, Signature: signature}, nil
 }
-
 
 // SolveChallenge attempts to solve a v2 challenge by brute-forcing the counter.
 func SolveChallenge(options SolveChallengeOptions) (*Solution, error) {
 	if options.DeriveKey == nil {
 		return nil, fmt.Errorf("DeriveKey function is required")
+	}
+	if err := options.CounterMode.validate(); err != nil {
+		return nil, err
 	}
 
 	counterStep := options.CounterStep
@@ -451,8 +447,13 @@ func SolveChallenge(options SolveChallengeOptions) (*Solution, error) {
 
 	startTime := time.Now()
 
+	timeout := options.Timeout
+	if timeout == 0 {
+		timeout = defaultSolveTimeout
+	}
+
 	for n := options.CounterStart; ; n += counterStep {
-		// Check for cancellation
+		// Check for cancellation and timeout
 		if options.StopChan != nil {
 			select {
 			case <-options.StopChan:
@@ -460,8 +461,11 @@ func SolveChallenge(options SolveChallengeOptions) (*Solution, error) {
 			default:
 			}
 		}
+		if timeout > 0 && time.Since(startTime) > timeout {
+			return nil, nil
+		}
 
-		password := passwordWithCounter(nonceBytes, n)
+		password := passwordWithCounter(nonceBytes, n, options.CounterMode)
 		derivedKey, err := options.DeriveKey(params, saltBytes, password)
 		if err != nil {
 			return nil, err
@@ -478,20 +482,38 @@ func SolveChallenge(options SolveChallengeOptions) (*Solution, error) {
 	}
 }
 
+// isExpired reports whether expiresAt (unix seconds) is before now, compared
+// with sub-second precision like JS `expiresAt && expiresAt < Date.now() / 1000`.
+// Zero means no expiry; negative values are in the past.
+func isExpired(expiresAt int64, now time.Time) bool {
+	if expiresAt == 0 {
+		return false
+	}
+	sec := now.Unix()
+	return expiresAt < sec || (expiresAt == sec && now.Nanosecond() > 0)
+}
+
 // VerifySolution verifies a v2 solution against the challenge.
 func VerifySolution(options VerifySolutionOptions) (VerifySolutionResult, error) {
 	startTime := time.Now()
 	result := VerifySolutionResult{}
 
+	if options.HMACSignatureSecret == "" {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, fmt.Errorf("HMACSignatureSecret is required")
+	}
+	if err := options.CounterMode.validate(); err != nil {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, err
+	}
+
 	params := options.Challenge.Parameters
 
 	// Check expiration
-	if params.ExpiresAt > 0 {
-		if time.Now().Unix() > params.ExpiresAt {
-			result.Expired = true
-			result.Time = time.Since(startTime).Milliseconds()
-			return result, nil
-		}
+	if isExpired(params.ExpiresAt, startTime) {
+		result.Expired = true
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, nil
 	}
 
 	hmacAlgorithm := options.HMACAlgorithm
@@ -500,38 +522,42 @@ func VerifySolution(options VerifySolutionOptions) (VerifySolutionResult, error)
 	}
 
 	// Verify challenge signature
-	if options.HMACSignatureSecret != "" {
-		invalidSig := true
-		result.InvalidSignature = &invalidSig
+	invalidSig := true
+	result.InvalidSignature = &invalidSig
 
-		paramsJSON, err := canonicalJSON(params)
-		if err != nil {
-			result.Time = time.Since(startTime).Milliseconds()
-			return result, err
-		}
-		expectedSig, err := hmacHex(hmacAlgorithm, []byte(paramsJSON), options.HMACSignatureSecret)
-		if err != nil {
-			result.Time = time.Since(startTime).Milliseconds()
-			return result, err
-		}
-
-		if constantTimeEqual(expectedSig, options.Challenge.Signature) {
-			*result.InvalidSignature = false
-		} else {
-			result.Time = time.Since(startTime).Milliseconds()
-			return result, nil
-		}
+	if options.Challenge.Signature == "" {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, nil
 	}
+
+	paramsJSON, err := canonicalJSON(params)
+	if err != nil {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, err
+	}
+	expectedSig, err := hmacHex(hmacAlgorithm, []byte(paramsJSON), options.HMACSignatureSecret)
+	if err != nil {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, err
+	}
+
+	if !constantTimeEqual(expectedSig, options.Challenge.Signature) {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, nil
+	}
+	*result.InvalidSignature = false
 
 	// Fast path: verify solution via key signature (no re-derivation needed)
 	if params.KeySignature != "" && options.HMACKeySignatureSecret != "" {
 		invalidSol := true
 		result.InvalidSolution = &invalidSol
 
+		// Malformed hex is attacker input, not a server error: it can never
+		// match, so report an invalid solution.
 		derivedKeyBytes, err := hex.DecodeString(options.Solution.DerivedKey)
 		if err != nil {
 			result.Time = time.Since(startTime).Milliseconds()
-			return result, fmt.Errorf("invalid derived key hex: %w", err)
+			return result, nil
 		}
 		expectedKeySig, err := hmacHex(hmacAlgorithm, derivedKeyBytes, options.HMACKeySignatureSecret)
 		if err != nil {
@@ -547,44 +573,42 @@ func VerifySolution(options VerifySolutionOptions) (VerifySolutionResult, error)
 	}
 
 	// Slow path: re-derive and compare
-	if options.DeriveKey != nil {
-		invalidSol := true
-		result.InvalidSolution = &invalidSol
+	if options.DeriveKey == nil {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, fmt.Errorf("DeriveKey function is required")
+	}
 
-		saltBytes, err := hex.DecodeString(params.Salt)
-		if err != nil {
-			result.Time = time.Since(startTime).Milliseconds()
-			return result, fmt.Errorf("invalid salt hex: %w", err)
-		}
-		nonceBytes, err := hex.DecodeString(params.Nonce)
-		if err != nil {
-			result.Time = time.Since(startTime).Milliseconds()
-			return result, fmt.Errorf("invalid nonce hex: %w", err)
-		}
-		password := passwordWithCounter(nonceBytes, options.Solution.Counter)
-		derivedKey, err := options.DeriveKey(params, saltBytes, password)
-		if err != nil {
-			result.Time = time.Since(startTime).Milliseconds()
-			return result, err
-		}
+	invalidSol := true
+	result.InvalidSolution = &invalidSol
 
-		expectedDerivedKey := hex.EncodeToString(derivedKey)
+	saltBytes, err := hex.DecodeString(params.Salt)
+	if err != nil {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, fmt.Errorf("invalid salt hex: %w", err)
+	}
+	nonceBytes, err := hex.DecodeString(params.Nonce)
+	if err != nil {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, fmt.Errorf("invalid nonce hex: %w", err)
+	}
+	password := passwordWithCounter(nonceBytes, options.Solution.Counter, options.CounterMode)
+	derivedKey, err := options.DeriveKey(params, saltBytes, password)
+	if err != nil {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, err
+	}
 
-		prefix, err := parseKeyPrefix(params.KeyPrefix)
-		if err != nil {
-			result.Time = time.Since(startTime).Milliseconds()
-			return result, err
-		}
+	expectedDerivedKey := hex.EncodeToString(derivedKey)
 
-		if constantTimeEqual(expectedDerivedKey, options.Solution.DerivedKey) && prefix.matches(derivedKey) {
-			*result.InvalidSolution = false
-			result.Verified = true
-		}
-	} else {
-		// No DeriveKey and no key signature — verify by signature only
-		if result.InvalidSignature != nil && !*result.InvalidSignature {
-			result.Verified = true
-		}
+	prefix, err := parseKeyPrefix(params.KeyPrefix)
+	if err != nil {
+		result.Time = time.Since(startTime).Milliseconds()
+		return result, err
+	}
+
+	if constantTimeEqual(expectedDerivedKey, options.Solution.DerivedKey) && prefix.matches(derivedKey) {
+		*result.InvalidSolution = false
+		result.Verified = true
 	}
 
 	result.Time = time.Since(startTime).Milliseconds()
