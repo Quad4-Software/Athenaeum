@@ -56,6 +56,13 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@sentry/svelte"
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
       - frontend
@@ -76,6 +83,10 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
       - docs
