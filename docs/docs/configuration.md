@@ -32,6 +32,7 @@ Flags override environment variables. Shell exports override values loaded from
 | --sandbox-seccomp | ATHENAEUM_SANDBOX_SECCOMP | true | Toggle seccomp-bpf when sandbox is on |
 | --demo | ATHENAEUM_DEMO | false | Seed generated demo books, audiobooks, and covers |
 | --self-check | | | Verify dirs, database, and HTTP health then exit |
+| --healthcheck | | | Probe /api/health on loopback then exit (container healthchecks) |
 | --sentry-dsn | ATHENAEUM_SENTRY_DSN | | Sentry/GlitchTip DSN (server) |
 | --sentry-dsn-public | ATHENAEUM_SENTRY_DSN_PUBLIC | | Browser DSN (defaults to server DSN) |
 | --sentry-environment | ATHENAEUM_SENTRY_ENVIRONMENT | | Sentry environment tag |

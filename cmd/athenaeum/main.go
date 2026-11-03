@@ -44,6 +44,14 @@ func main() {
 		return
 	}
 
+	if cli.WantsHealthcheck(os.Args[1:]) {
+		if err := cli.RunHealthcheck(cli.StripHealthcheck(os.Args[1:])); err != nil {
+			fmt.Fprintln(os.Stderr, term.Error(os.Stderr, "error:"), err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "users":
