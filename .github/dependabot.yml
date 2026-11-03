@@ -5,6 +5,17 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+      semver-patch-days: 3
+      semver-minor-days: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      actions:
+        update-types:
+          - minor
+          - patch
     labels:
       - dependencies
       - github-actions
@@ -14,6 +25,17 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+      semver-patch-days: 3
+      semver-minor-days: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      go-modules:
+        update-types:
+          - minor
+          - patch
     labels:
       - dependencies
       - go
@@ -23,6 +45,17 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+      semver-patch-days: 3
+      semver-minor-days: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      npm-web:
+        update-types:
+          - minor
+          - patch
     labels:
       - dependencies
       - frontend
@@ -32,6 +65,47 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+      semver-patch-days: 3
+      semver-minor-days: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      npm-docs:
+        update-types:
+          - minor
+          - patch
     labels:
       - dependencies
       - docs
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+      semver-patch-days: 3
+      semver-minor-days: 5
+    commit-message:
+      prefix: chore(deps)
+    labels:
+      - dependencies
+      - docker
+
+  - package-ecosystem: docker
+    directory: /docker/kokoro
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+      semver-patch-days: 3
+      semver-minor-days: 5
+    commit-message:
+      prefix: chore(deps)
+    labels:
+      - dependencies
+      - docker
