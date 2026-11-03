@@ -140,21 +140,16 @@ func Restore(src io.Reader, dataDir, dbFilename string) error {
 		return clientError("archive must contain " + dbFilename)
 	}
 	for _, f := range zr.File {
-		if f.FileInfo().IsDir() {
+		if f.FileInfo().IsDir() || !f.Mode().IsRegular() {
 			continue
 		}
-		name := filepath.Clean(filepath.FromSlash(f.Name))
-		if name == "." || name == "" || strings.HasPrefix(name, ".."+string(os.PathSeparator)) || name == ".." {
+		// filepath.IsLocal rejects .. and absolute forms. Backslashes are
+		// also rejected outright: zip entry names use forward slashes, and
+		// on Windows a literal backslash would act as a separator.
+		if !filepath.IsLocal(f.Name) || strings.ContainsAny(f.Name, "\\") {
 			continue
 		}
-		if filepath.IsAbs(name) {
-			continue
-		}
-		dest := filepath.Join(dataDir, name)
-		rel, err := filepath.Rel(dataDir, dest)
-		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-			continue
-		}
+		dest := filepath.Join(dataDir, filepath.FromSlash(f.Name))
 		if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
 			return err
 		}
@@ -167,7 +162,9 @@ func Restore(src io.Reader, dataDir, dbFilename string) error {
 			_ = rc.Close()
 			return err
 		}
-		_, err = io.Copy(out, rc) // #nosec G110 -- admin-only restore; entries validated under dataDir
+		// Bound each entry at its declared uncompressed size to stop the
+		// compressor stream from expanding past the archive's own metadata.
+		_, err = io.Copy(out, io.LimitReader(rc, int64(f.UncompressedSize64))) // #nosec G110 -- entries confined to dataDir, size bounded
 		_ = out.Close()
 		_ = rc.Close()
 		if err != nil {
