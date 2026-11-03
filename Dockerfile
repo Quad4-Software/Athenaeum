@@ -45,25 +45,27 @@ LABEL org.opencontainers.image.title="Athenaeum" \
       org.opencontainers.image.description="Self-hosted library for EPUB, PDF, comics, and audiobooks" \
       org.opencontainers.image.url="https://github.com/Quad4-Software/Athenaeum" \
       org.opencontainers.image.source="https://github.com/Quad4-Software/Athenaeum" \
-      org.opencontainers.image.documentation="https://github.com/Quad4-Software/Athenaeum" \
+      org.opencontainers.image.documentation="https://athenaeum.quad4.io" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.vendor="Quad4 Software" \
+      org.opencontainers.image.authors="Quad4" \
+      org.opencontainers.image.base.name="docker.io/library/alpine:3.24.3" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}" \
       org.opencontainers.image.created="${CREATED}"
-RUN apk add --no-cache ca-certificates tzdata wget \
-    && addgroup -S athenaeum \
-    && adduser -S -G athenaeum -h /app -s /sbin/nologin athenaeum \
+RUN apk add --no-cache ca-certificates tzdata \
+    && addgroup -g 10001 -S athenaeum \
+    && adduser -u 10001 -S -G athenaeum -h /app -s /sbin/nologin athenaeum \
     && mkdir -p /data /library \
-    && chown -R athenaeum:athenaeum /data /library /app
+    && chown -R 10001:10001 /data /library /app
 COPY --from=go /out/athenaeum /usr/local/bin/athenaeum
-USER athenaeum:athenaeum
+USER 10001:10001
 WORKDIR /app
 ENV ATHENAEUM_ADDR=:8080 \
     ATHENAEUM_DATA=/data \
     ATHENAEUM_LIBRARY=/library
 VOLUME ["/data", "/library"]
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD wget -qO- http://127.0.0.1:8080/api/health >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=6s --start-period=15s --retries=3 \
+    CMD ["/usr/local/bin/athenaeum", "--healthcheck"]
 ENTRYPOINT ["/usr/local/bin/athenaeum"]

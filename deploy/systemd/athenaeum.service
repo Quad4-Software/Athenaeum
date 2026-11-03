@@ -28,6 +28,16 @@ MemoryDenyWriteExecute=true
 RestrictRealtime=true
 RestrictSUIDSGID=true
 SystemCallArchitectures=native
+ProtectClock=true
+ProtectHostname=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+UMask=0077
 
 [Install]
 WantedBy=multi-user.target
