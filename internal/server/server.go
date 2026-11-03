@@ -7,6 +7,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -126,7 +127,7 @@ func (s *Server) withMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(sw, r)
 		s.log.Debug("request",
 			"method", r.Method,
-			"path", r.URL.Path,
+			"path", strconv.Quote(r.URL.Path),
 			"status", sw.status,
 			"dur", time.Since(start).String(),
 		)

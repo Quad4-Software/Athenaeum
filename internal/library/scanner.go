@@ -331,7 +331,7 @@ func (s *Scanner) process(ctx context.Context, fs libfs.LibraryFS, j job, indexe
 	if j.backend == libfs.BackendS3 || (fs != nil && fs.Backend() == libfs.BackendS3) {
 		tmp, err := libfs.Materialize(ctx, fs, j.relPath, s.tempDir)
 		if err != nil {
-			s.log.Warn("materialize failed", "path", j.relPath, "err", err)
+			s.log.Warn("materialize failed", "path", strconv.Quote(j.relPath), "err", err)
 			return false
 		}
 		parsePath = tmp
@@ -362,7 +362,7 @@ func (s *Scanner) process(ctx context.Context, fs libfs.LibraryFS, j job, indexe
 			applyEPUB(book, meta)
 			coverData = meta.CoverData
 		} else {
-			s.log.Warn("epub parse failed", "path", j.relPath, "err", err)
+			s.log.Warn("epub parse failed", "path", strconv.Quote(j.relPath), "err", err)
 		}
 	case models.FormatPDF:
 		meta := parsePDF(parsePath)
@@ -441,7 +441,7 @@ func (s *Scanner) process(ctx context.Context, fs libfs.LibraryFS, j job, indexe
 
 	id, err := s.store.UpsertBook(ctx, book, mtime)
 	if err != nil {
-		s.log.Error("upsert failed", "path", j.relPath, "err", err)
+		s.log.Error("upsert failed", "path", strconv.Quote(j.relPath), "err", err)
 		return false
 	}
 
