@@ -199,3 +199,18 @@ not modified by Athenaeum.
 
 `backup.sh` uses `sqlite3 .backup` when available for a consistent database
 snapshot. Stop the service before restore, then restart it.
+
+## Verifying downloads and hardening the container
+
+Release binaries, checksums, and the GHCR image are signed keylessly by the
+release workflows and carry GitHub build provenance and SBOM attestations.
+See SECURITY.md in the repository for the exact `cosign verify`,
+`cosign verify-blob`, and `gh attestation verify` commands, the certificate
+identity patterns for each workflow, and hardened `docker run` / `podman run`
+examples (read-only root filesystem, dropped capabilities, no-new-privileges).
+
+The image runs as a fixed non-root user (uid/gid 10001) and writes only to
+`/data` and `/library`. The bundled compose files already set
+`read_only: true`, a `/tmp` tmpfs, `cap_drop: [ALL]`, and
+`no-new-privileges`, and the systemd unit in `deploy/systemd/` applies
+standard sandboxing directives.
