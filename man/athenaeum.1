@@ -168,6 +168,17 @@ are set. Also available as
 .B athenaeum self\-check
 or
 .BR athenaeum doctor .
+.TP
+.B \-\-healthcheck
+Probe a running server: GET
+.B /api/health
+on the loopback address derived from
+.BR \-\-addr
+/
+.BR ATHENAEUM_ADDR ,
+with a short timeout, then exit 0 on success or 1 on failure. Intended for
+container HEALTHCHECK directives and orchestrator probes; it does not start
+the server.
 .SH SUBCOMMANDS
 .TP
 .B self-check

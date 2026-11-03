@@ -326,6 +326,7 @@ func PrintHelp(w io.Writer) {
 	printFlag(w, "--password-require-digit", "require digit")
 	printFlag(w, "--password-require-symbol", "require symbol")
 	printFlag(w, "--self-check", "verify dirs, database, and HTTP then exit")
+	printFlag(w, "--healthcheck", "probe /api/health on loopback then exit (container healthchecks)")
 	printFlag(w, "--help", "show this help")
 	term.Fprintln(w)
 	term.Fprintln(w, term.Header(w, "Commands:"))
