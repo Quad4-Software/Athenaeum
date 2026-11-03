@@ -1,45 +1,93 @@
 # Security Policy
 
-## Supported versions
-
-Security fixes are applied to the latest release on the default branch.
-Older releases may not receive patches.
-
 ## Reporting a vulnerability
 
-Do not open a public issue for security problems.
+Please report security issues privately through GitHub's private vulnerability
+reporting on this repository (Security -> Report a vulnerability), not in a
+public issue. Include a description, reproduction steps, and the affected
+version or commit. We aim to acknowledge reports within a few days.
 
-Report privately through one of:
+## Release supply chain
 
-1. GitHub Security Advisories for this repository
-   (Security tab -> Report a vulnerability)
-2. Email: ivan@quad4.io
+Stable releases are built and published only by the
+`.github/workflows/release.yml` workflow on tag pushes. Nightly builds come
+from `.github/workflows/nightly.yml` and master image builds from
+`.github/workflows/ci.yml`. Both binaries and the GHCR image carry keyless
+Sigstore signatures and GitHub build provenance attestations.
 
-Include enough detail to reproduce the issue: affected version or commit,
-configuration, steps, and impact. Screenshots or proof-of-concept scripts
-help when they are safe to share privately.
+### Verify the container image
 
-## What to expect
+The image is pushed to `ghcr.io/quad4-software/athenaeum` with a cosign
+keyless signature, a build provenance attestation, and an SBOM attestation.
 
-- Acknowledgement within a few business days
-- A fix or mitigation plan when the report is accepted
-- Coordinated disclosure after a release is available, unless you ask us
-  not to credit you
+```sh
+# Signature (stable release)
+cosign verify ghcr.io/quad4-software/athenaeum:latest \
+  --certificate-identity-regexp '^https://github.com/Quad4-Software/Athenaeum/.github/workflows/release\.yml@.*' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
 
-Please give us reasonable time to ship a fix before any public discussion.
+# Provenance and SBOM attestations
+gh attestation verify oci://ghcr.io/quad4-software/athenaeum:latest \
+  --repo Quad4-Software/Athenaeum
+```
 
-## Scope
+For `:nightly` and `:sha-<short>` tags built by nightly.yml, replace the
+workflow path in the identity regexp with `nightly\.yml`; for the `:latest`
+master image built by ci.yml use `ci\.yml`.
 
-In scope: Athenaeum server, web UI, install and deploy scripts in this
-repository, and default configuration that can expose hosts or data.
+### Verify release binaries
 
-Out of scope: third-party dependencies reported only against upstream,
-local misconfiguration, and denial-of-service from unbounded legitimate
-traffic unless there is a clear, fixable bug.
+Each release binary ships a `<name>.sigstore.json` cosign bundle, plus a
+signed `SHA256SUMS.txt` covering all binaries. Attestations and binaries are
+published from `release.yml` (stable) or `nightly.yml` (nightly).
 
-## Safe harbor
+```sh
+sha256sum -c SHA256SUMS.txt --ignore-missing
 
-Good-faith research that follows this policy and avoids privacy harm,
-data destruction, and service disruption is welcome. Do not access other
-users' data or keep copies of sensitive information beyond what is needed
-to demonstrate the issue.
+cosign verify-blob --bundle SHA256SUMS.txt.sigstore.json \
+  --certificate-identity-regexp '^https://github.com/Quad4-Software/Athenaeum/.github/workflows/release\.yml@.*' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+  SHA256SUMS.txt
+
+gh attestation verify athenaeum-vX.Y.Z-linux-amd64 \
+  --repo Quad4-Software/Athenaeum
+```
+
+The SBOM (`athenaeum-sbom.spdx.json`) lists every Go module and npm package
+in SPDX JSON and is covered by a GitHub SBOM attestation.
+
+Build provenance uses GitHub artifact attestations (SLSA build level 2:
+keyless signing tied to the release workflow OIDC identity, non-forgeable
+provenance stored in the repository attestation store).
+
+## Container hardening
+
+The published image runs as a fixed non-root user (uid/gid 10001), has no
+shell login, and only writes under `/data` and `/library`. The shipped
+compose files already apply a read-only root filesystem, a `/tmp` tmpfs,
+`cap_drop: [ALL]`, and `no-new-privileges`. The app can additionally sandbox
+itself with Linux Landlock and seccomp (`ATHENAEUM_SANDBOX=try`, the compose
+default); these work without extra capabilities.
+
+Minimal hardened run:
+
+```sh
+docker run -d --name athenaeum \
+  --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+  --tmpfs /tmp:size=16m,mode=1777 \
+  -p 8080:8080 \
+  -v athenaeum-data:/data -v ./library:/library \
+  ghcr.io/quad4-software/athenaeum:latest
+```
+
+Rootless Podman works the same way:
+
+```sh
+podman run -d --name athenaeum --read-only --cap-drop ALL \
+  --security-opt no-new-privileges:true --tmpfs /tmp:size=16m,mode=1777 \
+  -p 8080:8080 -v athenaeum-data:/data -v ./library:/library \
+  ghcr.io/quad4-software/athenaeum:latest
+```
+
+Container HEALTHCHECK calls `athenaeum --healthcheck`, which probes
+`/api/health` on loopback and exits non-zero on failure.
