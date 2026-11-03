@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"athenaeum/internal/library"
+	"athenaeum/internal/logging"
 	"athenaeum/internal/models"
 )
 
@@ -175,7 +176,7 @@ func (s *Server) handleConvertBook(w http.ResponseWriter, r *http.Request) {
 		msg = "converted with calibre and indexed"
 	}
 	if idxErr != nil {
-		s.log.Warn("convert index", "path", strconv.Quote(relOut), "err", idxErr)
+		s.log.Warn("convert index", "path", logging.Value(relOut), "err", idxErr)
 		msg = "converted (index failed: " + idxErr.Error() + ")"
 	}
 	writeJSON(w, http.StatusOK, models.ConvertResult{

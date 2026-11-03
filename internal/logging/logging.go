@@ -72,3 +72,9 @@ func ParseLevel(s string) (slog.Level, error) {
 type nopCloser struct{}
 
 func (nopCloser) Close() error { return nil }
+
+// Value returns s formatted with %q so control characters such as newlines
+// cannot forge additional log records when user-controlled values are logged.
+func Value(s string) string {
+	return fmt.Sprintf("%q", s)
+}
