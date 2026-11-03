@@ -9,6 +9,8 @@ overrides:
   qs: ">=6.16.0"
   uuid: ">=11.1.1"
   serialize-javascript: ">=7.0.5"
+  tinypool: ">=2.1.2"
+  minimatch: ">=11.0.1"
   # No upstream fix for ICNS/HEIF/JXL infinite loops yet. Vendored 2.0.3 with guards.
   image-size: link:vendor/image-size
 
@@ -28,6 +30,10 @@ pmOnFail: warn
 # Actions in .github/workflows (Added in pnpm 11.16).
 update:
   githubActions: true
+  ignoreDeps:
+    # TS 7 is the tsgo native compiler without a JS API; Docusaurus and
+    # tsc-based tooling still need the 6.x line.
+    - typescript
 
 # Packages whose publisher history trips trustPolicy on fresh resolve.
 # Review periodically. Prefer removing once maintainers stabilize ownership.

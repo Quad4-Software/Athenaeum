@@ -4,7 +4,7 @@ Athenaeum docs are a [Docusaurus](https://docusaurus.io/) site.
 
 ## Local development
 
-Requires Node 22+ and pnpm 11+.
+Requires Node 26+ and pnpm 12+.
 
 ### Manual
 
