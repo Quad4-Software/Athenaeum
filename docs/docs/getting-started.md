@@ -96,7 +96,7 @@ changes (plus periodic auto-scan). Remote `s3://` mounts are not filesystem-watc
 
 ## Build from source
 
-Needs Go 1.26+, Node 22+, and pnpm 11+. [Task](https://taskfile.dev) is optional.
+Needs Go 1.27+, Node 26+, and pnpm 12+. [Task](https://taskfile.dev) is optional.
 
 ```sh
 git clone https://github.com/Quad4-Software/Athenaeum.git
