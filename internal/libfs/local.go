@@ -40,6 +40,9 @@ func (f *localFS) resolve(relPath string) (string, error) {
 	if relPath == "" {
 		return f.root, nil
 	}
+	if !filepath.IsLocal(relPath) {
+		return "", errors.New("path escapes mount")
+	}
 	if strings.Contains(relPath, "..") {
 		clean := filepath.Clean(filepath.FromSlash(relPath))
 		if clean == ".." || strings.HasPrefix(clean, ".."+string(os.PathSeparator)) {
