@@ -8,7 +8,7 @@
  */
 import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve, relative, isAbsolute } from "node:path";
+import { dirname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "node:http";
 import { createReadStream, existsSync, statSync } from "node:fs";
@@ -33,28 +33,22 @@ const mime = {
   ".webmanifest": "application/manifest+json",
 };
 
-function pathUnderRoot(root, candidate) {
-  const rootAbs = resolve(root);
-  const targetAbs = resolve(candidate);
-  const rel = relative(rootAbs, targetAbs);
-  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
-}
-
 function startStaticServer(dir, port) {
   return new Promise((resolvePromise, reject) => {
     const rootAbs = resolve(dir);
     const server = createServer((req, res) => {
       const urlPath = decodeURIComponent((req.url ?? "/").split("?")[0] || "/");
       const requested = urlPath === "/" ? "index.html" : urlPath.replace(/^\/+/, "");
+      const rootPrefix = rootAbs.endsWith(sep) ? rootAbs : rootAbs + sep;
       let filePath = resolve(rootAbs, requested);
-      if (!pathUnderRoot(rootAbs, filePath)) {
+      if (!filePath.startsWith(rootPrefix)) {
         res.writeHead(403).end();
         return;
       }
       if (!existsSync(filePath) || !statSync(filePath).isFile()) {
         filePath = resolve(rootAbs, "index.html");
       }
-      if (!pathUnderRoot(rootAbs, filePath) || !existsSync(filePath)) {
+      if (!filePath.startsWith(rootPrefix) || !existsSync(filePath)) {
         res.writeHead(404).end("missing demo build (run pnpm build:demo)");
         return;
       }
